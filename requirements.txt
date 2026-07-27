@@ -1,0 +1,15 @@
+# 웹 자동화 (우선 필수)
+selenium>=4.15.0
+webdriver-manager>=4.0.0
+
+# 유틸리티 (우선 필수)
+python-dotenv>=1.0.0
+requests>=2.31.0
+tqdm>=4.66.0
+
+# 데이터 처리 (나중에 설치)
+# pandas>=2.1.0
+# geopandas>=0.14.0
+# shapely>=2.0.0
+# duckdb>=0.9.0
+# geopy>=2.4.0
