@@ -70,6 +70,19 @@ DATASETS = [
     dict(key="welfare", name="사회복지시설", domain="D8",
          path=f"{RAW}/전국사회복지시설_좌표.csv", reader="csv",
          lon="경도", lat="위도"),   # VWorld 지오코딩(85% 커버) → 읍면동 정밀
+    # ── P0 편입(2026-07-30): 도메인당 2+지표로 보강(M1) ──
+    dict(key="childcare", name="어린이집", domain="D2",
+         path=f"{RAW}/전국어린이집_운영중_좌표.csv", reader="csv",
+         lon="경도", lat="위도"),   # prep_childcare.py 가공(운영중 21K)
+    dict(key="library", name="도서관", domain="D2",
+         path=f"{RAW}/전국도서관표준데이터.csv", reader="csv",
+         lon="경도", lat="위도"),
+    dict(key="parking", name="주차장", domain="D5",
+         path=f"{RAW}/전국주차장정보표준데이터.csv", reader="csv",
+         lon="경도", lat="위도"),
+    dict(key="childzone", name="어린이보호구역", domain="D6",
+         path=f"{RAW}/전국어린이보호구역표준데이터.csv", reader="csv",
+         lon="경도", lat="위도"),
 ]
 
 
