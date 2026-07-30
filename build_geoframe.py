@@ -53,6 +53,21 @@ def main():
         'ratio_elderly': s([f'in_age_{i:03d}' for i in range(14, 22)]) / denom,            # 고령 65+
     }).reset_index()
     wide = wide.merge(ar, on='adm_cd', how='left')
+
+    # 주택[S] 파생: 아파트비율 = 아파트(ho_gb_003)/전체 유형(ho_gb_001~006)
+    ht = dong[dong['code'].between('ho_gb_001', 'ho_gb_006')].copy()
+    ht['val'] = pd.to_numeric(ht['val'], errors='coerce')
+    hw = ht.pivot_table(index='adm_cd', columns='code', values='val', aggfunc='first').fillna(0)
+    # 노후주택비율 = 1999년 이전(ho_yr_001~003)/전체 건축년도(ho_yr_001~020)
+    oy = dong[dong['code'].between('ho_yr_001', 'ho_yr_020')].copy()
+    oy['val'] = pd.to_numeric(oy['val'], errors='coerce')
+    ow = oy.pivot_table(index='adm_cd', columns='code', values='val', aggfunc='first').fillna(0)
+    old = ow[[c for c in ['ho_yr_001', 'ho_yr_002', 'ho_yr_003'] if c in ow]].sum(axis=1)
+    hr = pd.DataFrame({
+        'ratio_apt': hw.get('ho_gb_003', 0) / hw.sum(axis=1).replace(0, pd.NA),
+        'ratio_oldhouse': old / ow.sum(axis=1).replace(0, pd.NA),
+    }).reset_index()
+    wide = wide.merge(hr, on='adm_cd', how='left')
     con.register('pop', wide)
 
     shp = BASE + "/2. 경계/3. 2025년 2분기 기준 행정동 경계/bnd_dong_00_2025_2Q.shp"
@@ -61,7 +76,7 @@ def main():
         SELECT b.adm_cd, b.adm_nm,
                p.pop_total, p.pop_male, p.pop_female, p.age_mean, p.pop_density, p.aging_index,
                p.hh_total, p.house_total, p.biz_total, p.emp_total,
-               p.ratio_infant, p.ratio_youth, p.ratio_working, p.ratio_elderly, b.geom
+               p.ratio_infant, p.ratio_youth, p.ratio_working, p.ratio_elderly, p.ratio_apt, p.ratio_oldhouse, b.geom
         FROM bnd b LEFT JOIN pop p USING(adm_cd)""")
 
     # 검증

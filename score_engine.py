@@ -8,7 +8,8 @@ NLI 스코어링 엔진 (Phase 1 스켈레톤) — config 기반
 실행:   ./venv/bin/python score_engine.py
 
 ★ 데이터 추가법: 아래 DATASETS 리스트에 dict 하나만 추가하면 자동으로 파이프라인에 편입.
-  {key, name, domain, path, reader, lon, lat, [filter], [proximity]}
+  {key, name, domain, path, reader, lon, lat, [prox], [w], [filter], [catcol/catkeep], [neg]}
+  neg=True → 부정지표(많을수록 나쁨): 백분위 반전. catcol/catkeep → 컬럼값으로 업종/유형 세분.
 """
 import duckdb, pandas as pd, os
 
@@ -18,9 +19,14 @@ RAW = "data/raw"
 PROX_RADII = (1000, 4000, 16000, 64000, 256000)  # 근접성 확장반경(m): 가까운 반경부터 넓혀감
 MIN_POP = 100       # 이 미만 인구 동은 밀도 정규화에서 제외(0/극소인구 왜곡 방지, 기획서 §4.2/§6-3)
 
-# 도메인 정의(가중치 균등, 기획서 8도메인 중 현재 데이터로 7개 커버)
+# 도메인 정의. D1~D8 모두 읍면동 시설점 기반(D8=사회복지 지오코딩)
 DOMAINS = {"D1": "의료·건강", "D2": "교육·보육", "D3": "생활편의·상업",
-           "D4": "문화·여가·체육", "D5": "교통·이동", "D6": "안전", "D7": "환경·기후"}
+           "D4": "문화·여가·체육", "D5": "교통·이동", "D6": "안전", "D7": "환경·기후",
+           "D8": "복지·돌봄"}
+
+# 도메인 가중치(NLI 기본 = 균등). 웹 대시보드의 페르소나 슬라이더가 이 기본을 실시간 덮어씀.
+DOMAIN_WEIGHTS = {d: 1.0 for d in DOMAINS}
+# 지표(도메인 내) 가중치: DATASETS 각 dict의 w(기본 1.0)로 지정. 도메인 내 가중평균에 사용.
 
 # ── 확보 데이터. 재수집분은 여기에 dict 추가만 하면 됨 ──
 #    prox=False → 근접성 산출 생략(대용량·근접성 무의미한 밀집시설). 기본 True.
@@ -37,9 +43,18 @@ DATASETS = [
     dict(key="school", name="초중등학교", domain="D2",
          path=f"{RAW}/한국교육시설안전원_초중등학교위치_20260320.csv", reader="csv",
          lon="경도", lat="위도"),
-    dict(key="store", name="상가(상권)", domain="D3",
+    # 상가(상권) 1개 파일을 상권업종대분류로 세분 → 도메인 정합↑(M5) & 단일지표 도메인 보강(M1)
+    #   생활편의(음식·소매·수리·숙박)=D3 / 학원·교육=D2 / 예술·스포츠 여가=D4. B2B(부동산·과학기술·시설관리)·보건의료(HIRA중복) 제외.
+    dict(key="store", name="생활편의상가", domain="D3",
          path=f"{RAW}/소상공인시장진흥공단_상가(상권)정보_20260331.zip", reader="zip_csv",
-         lon="경도", lat="위도", prox=False),  # 250만건, 근접성 무의미 → 밀도만
+         lon="경도", lat="위도", catcol="상권업종대분류명",
+         catkeep=["음식", "소매", "수리·개인", "숙박"], prox=False),  # 대량, 근접성 무의미 → 밀도만
+    dict(key="academy", name="학원·교육상가", domain="D2",
+         path=f"{RAW}/소상공인시장진흥공단_상가(상권)정보_20260331.zip", reader="zip_csv",
+         lon="경도", lat="위도", catcol="상권업종대분류명", catkeep=["교육"]),
+    dict(key="leisure", name="여가·스포츠상가", domain="D4",
+         path=f"{RAW}/소상공인시장진흥공단_상가(상권)정보_20260331.zip", reader="zip_csv",
+         lon="경도", lat="위도", catcol="상권업종대분류명", catkeep=["예술·스포츠"]),
     dict(key="park", name="도시공원", domain="D4",
          path=f"{RAW}/전국도시공원정보표준데이터.csv", reader="csv",
          lon="경도", lat="위도"),
@@ -52,6 +67,9 @@ DATASETS = [
     dict(key="ev", name="전기차충전소", domain="D7",
          path=f"{RAW}/한국전력공사_전기차충전소위경도_20251231.csv", reader="csv",
          lon="경도", lat="위도"),
+    dict(key="welfare", name="사회복지시설", domain="D8",
+         path=f"{RAW}/전국사회복지시설_좌표.csv", reader="csv",
+         lon="경도", lat="위도"),   # VWorld 지오코딩(85% 커버) → 읍면동 정밀
 ]
 
 
@@ -64,28 +82,41 @@ def _read_csv_any(path, usecols=None):
     return pd.read_csv(path, encoding="cp949", dtype=str, usecols=usecols, errors="replace")
 
 
+_ZIP_CACHE = {}   # 동일 zip(상가 2.7만건)을 업종 세분 데이터셋마다 재파싱하지 않도록 캐시
+
+
+def _read_zip_csv(path, cols):
+    """zip 안 여러 CSV(시도별 분할)를 cols만 읽어 concat. path 기준 캐시."""
+    if path in _ZIP_CACHE:
+        return _ZIP_CACHE[path]
+    import zipfile, io
+    z = zipfile.ZipFile(path)
+    frames = []
+    for n in z.namelist():
+        if not n.lower().endswith(".csv"):
+            continue
+        raw = z.read(n)
+        for enc in ("cp949", "utf-8-sig", "utf-8"):
+            try:
+                frames.append(pd.read_csv(io.BytesIO(raw), encoding=enc, usecols=cols, dtype=str)); break
+            except (UnicodeDecodeError, LookupError, ValueError):
+                continue
+    df = pd.concat(frames, ignore_index=True)
+    _ZIP_CACHE[path] = df
+    return df
+
+
 def read_points(ds):
     """시설 파일 → (lon, lat) DataFrame (유효 좌표만). reader: xlsx | csv | zip_csv."""
     if ds["reader"] == "xlsx":
         df = pd.read_excel(ds["path"], dtype=str)
     elif ds["reader"] == "zip_csv":
-        # zip 안 여러 CSV(시도별 분할)를 좌표 컬럼만 읽어 concat
-        import zipfile, io
-        z = zipfile.ZipFile(ds["path"])
-        frames = []
-        for n in z.namelist():
-            if not n.lower().endswith(".csv"):
-                continue
-            raw = z.read(n)
-            for enc in ("cp949", "utf-8-sig", "utf-8"):
-                try:
-                    frames.append(pd.read_csv(io.BytesIO(raw), encoding=enc,
-                                              usecols=[ds["lon"], ds["lat"]], dtype=str)); break
-                except (UnicodeDecodeError, LookupError, ValueError):
-                    continue
-        df = pd.concat(frames, ignore_index=True)
+        cols = [ds["lon"], ds["lat"]] + ([ds["catcol"]] if ds.get("catcol") else [])
+        df = _read_zip_csv(ds["path"], cols)
     else:
         df = _read_csv_any(ds["path"])
+    if ds.get("catkeep"):   # 상권업종대분류 세분 필터
+        df = df[df[ds["catcol"]].isin(ds["catkeep"])]
     if ds.get("filter"):
         df = df.query(ds["filter"])
     out = pd.DataFrame({
@@ -122,7 +153,7 @@ def main():
     con.execute("LOAD spatial;")
     # 읍면동 프레임(geom=5179). cen=기하중심(임시)
     con.execute("""CREATE OR REPLACE TEMP TABLE frame AS
-        SELECT adm_cd, adm_nm, pop_total, geom, ST_Centroid(geom) AS cen FROM dong""")
+        SELECT adm_cd, adm_nm, pop_total, pop_density, geom, ST_Centroid(geom) AS cen FROM dong""")
     ndong = con.execute("SELECT count(*) FROM frame").fetchone()[0]
 
     # ── 인구가중 중심점: 상가 밀집 위치로 대체(큰 동의 기하중심 산지 왜곡 방지) ──
@@ -138,14 +169,18 @@ def main():
         SELECT f.adm_cd, avg(ST_X(p.pt)) px, avg(ST_Y(p.pt)) py
         FROM frame f JOIN spts p ON ST_Contains(f.geom, p.pt) GROUP BY f.adm_cd""")
     con.execute("""CREATE OR REPLACE TEMP TABLE frame AS
-        SELECT f.adm_cd, f.adm_nm, f.pop_total, f.geom,
+        SELECT f.adm_cd, f.adm_nm, f.pop_total, f.pop_density, f.geom,
           CASE WHEN pc.px IS NOT NULL THEN ST_Point(pc.px, pc.py) ELSE ST_Centroid(f.geom) END AS cen
         FROM frame f LEFT JOIN popcen pc USING(adm_cd)""")
     con.execute("DROP TABLE IF EXISTS spts")
     fixed = con.execute("SELECT count(*) FROM popcen").fetchone()[0]
     print(f"인구가중 중심점 적용: {fixed}/{ndong}개 동(상가 기준), 나머지는 기하중심")
 
-    results = con.execute("SELECT adm_cd, adm_nm, pop_total FROM frame ORDER BY adm_cd").df()
+    # 인구가중 중심점을 4326 위경도로(통근 근접보정·지도 마커용)
+    results = con.execute("""SELECT adm_cd, adm_nm, pop_total, pop_density,
+        round(ST_X(ST_Transform(cen,'EPSG:5179','EPSG:4326',always_xy:=true)),5) AS cen_lon,
+        round(ST_Y(ST_Transform(cen,'EPSG:5179','EPSG:4326',always_xy:=true)),5) AS cen_lat
+        FROM frame ORDER BY adm_cd""").df()
     prox_flags = {}
 
     for ds in DATASETS:
@@ -190,9 +225,22 @@ def main():
         return "농촌" if s.endswith("면") else "도농복합" if s.endswith("읍") else "도시"
     results["cohort"] = results["adm_nm"].map(cohort)
 
+    # ── (M6) 인구밀도 기반 도농 3분류 — 행정동명이 실제 도시화도와 어긋나는 경우 보완 ──
+    #    통계청 도시지역 관행 임계에 근사: 농촌<500, 도농복합 500~4000, 도시>4000 (명/km²)
+    def cohort_by_density(d):
+        if d != d:
+            return "미상"
+        return "농촌" if d < 500 else "도농복합" if d < 4000 else "도시"
+    results["cohort_d"] = results["pop_density"].map(cohort_by_density)
+    both = results[results["cohort_d"] != "미상"]
+    agree = (both["cohort"] == both["cohort_d"]).mean() * 100
+    print(f"도농 코호트: 행정동명 vs 인구밀도 일치율 {agree:.1f}% "
+          f"(명칭기준 {results['cohort'].value_counts().to_dict()} / "
+          f"밀도기준 {results['cohort_d'].value_counts().to_dict()})")
+
     # ── 지표 신호: 밀도백분위 + 근접성백분위(가까울수록↑) 혼합 ──
     #   근접성이 도농 왜곡을 완충(시골은 1인당 밀도↑여도 최근접거리↑→접근성↓)
-    ind_sig = {}  # domain -> list of signal columns
+    ind_sig = {}  # domain -> list of (signal_col, weight)
     for ds in DATASETS:
         k = ds["key"]
         dens_pct = results[f"{k}_dens"].rank(pct=True) * 100
@@ -202,15 +250,23 @@ def main():
             parts.append((-results[near_col]).rank(pct=True) * 100)
         sig = f"{k}_sig"
         results[sig] = pd.concat(parts, axis=1).mean(axis=1)
-        ind_sig.setdefault(ds["domain"], []).append(sig)
+        if ds.get("neg"):        # 부정지표(교통사고·오염 등): 많을수록/가까울수록 나쁨 → 백분위 반전
+            results[sig] = 100 - results[sig]
+        ind_sig.setdefault(ds["domain"], []).append((sig, float(ds.get("w", 1.0))))
 
-    # ── 도메인 점수(도메인 내 지표 평균) → NLI(도메인 균등 가중) → 등급 ──
-    dom_cols = []
-    for dom, cols in ind_sig.items():
+    def wmean(cols, weights):
+        """NaN 무시 가중평균(있는 지표끼리만; 기획서 §4.3 결측 재정규화)."""
+        sub = results[cols]
+        wsum = (sub.notna() * weights).sum(axis=1)
+        return (sub.fillna(0) * weights).sum(axis=1) / wsum.where(wsum > 0)
+
+    # ── 도메인 점수(도메인 내 지표 가중평균) → NLI(도메인 가중합) → 등급 ──
+    dom_cols, dom_w = [], []
+    for dom, sigs in ind_sig.items():
         col = f"score_{dom}"
-        results[col] = results[cols].mean(axis=1)
-        dom_cols.append(col)
-    results["NLI"] = results[dom_cols].mean(axis=1)
+        results[col] = wmean([c for c, _ in sigs], [w for _, w in sigs])
+        dom_cols.append(col); dom_w.append(DOMAIN_WEIGHTS.get(dom, 1.0))
+    results["NLI"] = wmean(dom_cols, dom_w).round(1)
     r = results["NLI"].rank(pct=True)
     results["grade"] = pd.cut(r, [0, .10, .35, .65, .90, 1.0],
                               labels=["D", "C", "B", "A", "S"], include_lowest=True)
