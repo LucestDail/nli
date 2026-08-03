@@ -83,6 +83,9 @@ DATASETS = [
     dict(key="childzone", name="어린이보호구역", domain="D6",
          path=f"{RAW}/전국어린이보호구역표준데이터.csv", reader="csv",
          lon="경도", lat="위도"),
+    dict(key="sports", name="체육시설", domain="D4",
+         path=f"{RAW}/전국체육시설_공공_좌표.csv", reader="csv",
+         lon="시설좌표경도", lat="시설좌표위도"),   # prep_sports.py 가공(공공 40K, 여가상가와 비중복)
 ]
 
 
