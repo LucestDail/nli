@@ -1,11 +1,11 @@
 """동네살기지수 NLI — 배포용 SPA 대시보드 빌더 (모던 디자인 + 자동완성).
-입력: data/processed/nli_map.geojson · 출력: nli_map.html (자체완결 단일파일)
+입력: data/processed/nli_map.geojson · 출력: nli_map.html(경계 인라인) + nli_points.json(옆 파일, 지연로딩)
 재생성: ./venv/bin/python build_web.py
 """
-import os
+import os, shutil
 
 geojson = open("data/processed/nli_map.geojson", encoding="utf-8").read()
-points = open("data/processed/nli_points.json", encoding="utf-8").read()
+# 시설포인트(11MB)는 인라인하지 않고 배포 산출물 옆에 두어 지연로딩(fetch). 초기 로딩 경량화.
 
 TEMPLATE = r'''<!DOCTYPE html>
 <html lang="ko"><head>
@@ -269,7 +269,7 @@ TEMPLATE = r'''<!DOCTYPE html>
 </div>
 <script>
 const DATA=__GEOJSON__;
-const POINTS=__POINTS__;
+let POINTS=null;   // 시설포인트(11MB)는 첫 토글 시 nli_points.json 지연로딩(초기 로딩 경량화)
 const F=DATA.features;
 const DOMS=['D1','D2','D3','D4','D5','D6','D7','D8'];
 const METRICS={NLI:'종합 지수',D1:'의료·건강',D2:'교육·보육',D3:'생활편의·상업',D4:'문화·여가·체육',D5:'교통·이동',D6:'안전',D7:'환경·기후',D8:'복지·돌봄',grade:'등급'};
@@ -379,8 +379,14 @@ let ptOn={},ptLayer;const MINZ=12;
 function initPoints(){
   ptLayer=L.layerGroup().addTo(map);
   document.getElementById('ptToggles').innerHTML=Object.entries(PT_TYPES).map(([t,v])=>`<span class="ptchip" data-t="${t}"><span class="dot" style="background:${v[1]}"></span>${v[0]}</span>`).join('');
-  document.querySelectorAll('.ptchip').forEach(c=>c.onclick=()=>{const t=c.dataset.t;ptOn[t]=!ptOn[t];c.classList.toggle('on',ptOn[t]);drawPoints()});
+  document.querySelectorAll('.ptchip').forEach(c=>c.onclick=async()=>{const t=c.dataset.t;ptOn[t]=!ptOn[t];c.classList.toggle('on',ptOn[t]);if(ptOn[t])await ensurePoints();drawPoints()});
   map.on('moveend zoomend',drawPoints);drawPoints();
+}
+function ensurePoints(){   // 시설포인트 지연로딩(첫 토글 시 1회). 실패 시(로컬 file://) 안내.
+  if(POINTS)return Promise.resolve(true);
+  const hint=document.getElementById('ptHint');if(hint)hint.textContent='시설 데이터 불러오는 중…';
+  return fetch('nli_points.json').then(r=>{if(!r.ok)throw 0;return r.json()}).then(j=>{POINTS=j;return true})
+    .catch(()=>{POINTS={};if(hint)hint.textContent='시설 데이터를 불러오지 못했습니다(로컬 미리보기는 http 서버 필요).';return false});
 }
 function drawPoints(){
   if(!ptLayer)return;ptLayer.clearLayers();
@@ -388,7 +394,7 @@ function drawPoints(){
   if(!Object.values(ptOn).some(Boolean)){hint.textContent='시설을 선택하면 지도에 표시됩니다.';return}
   if(map.getZoom()<MINZ){hint.textContent=`더 확대하세요 (레벨 ${MINZ}+ · 현재 ${map.getZoom()})`;return}
   const b=map.getBounds(),CAP=6000;let drawn=0,trunc=false;
-  for(const t in PT_TYPES){if(!ptOn[t])continue;const o=POINTS[t]||{p:[],n:[]},col=PT_TYPES[t][1],tn=PT_TYPES[t][0];
+  for(const t in PT_TYPES){if(!ptOn[t])continue;const o=(POINTS&&POINTS[t])||{p:[],n:[]},col=PT_TYPES[t][1],tn=PT_TYPES[t][0];
     for(let i=0;i<o.p.length;i++){const p=o.p[i];
       if(p[1]<b.getSouth()||p[1]>b.getNorth()||p[0]<b.getWest()||p[0]>b.getEast())continue;
       if(drawn>=CAP){trunc=true;break}
@@ -653,6 +659,9 @@ growBars();
 setTimeout(()=>{if(map)map.invalidateSize();},120);
 </script></body></html>'''
 
-html = TEMPLATE.replace("__GEOJSON__", geojson).replace("__POINTS__", points)
+html = TEMPLATE.replace("__GEOJSON__", geojson)
 open("nli_map.html", "w", encoding="utf-8").write(html)
-print("생성 nli_map.html |", round(os.path.getsize("nli_map.html")/1e6, 1), "MB")
+# 시설포인트를 산출물 옆(리포 루트)에 복사 → index.html이 fetch('nli_points.json')로 지연로딩
+shutil.copy("data/processed/nli_points.json", "nli_points.json")
+print("생성 nli_map.html |", round(os.path.getsize("nli_map.html")/1e6, 1), "MB",
+      "| nli_points.json", round(os.path.getsize("nli_points.json")/1e6, 1), "MB (지연로딩)")

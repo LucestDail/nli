@@ -80,7 +80,8 @@ def check_index():
         ck(False, "파일 존재", INDEX); return
     html = open(INDEX, encoding="utf-8").read()
     sz = os.path.getsize(INDEX)/1e6
-    ck(20 < sz < 40, "파일 크기", f"{sz:.1f}MB")
+    ck(10 < sz < 22, "파일 크기", f"{sz:.1f}MB (경계 인라인, 시설점은 외부 지연로딩)")
+    ck("nli_points.json" in html and "ensurePoints" in html, "시설점 지연로딩", "fetch('nli_points.json')")
     n_old = len(re.findall(r'"r_old":', html))
     ck(n_old >= N_DONG - 10, "r_old 임베드", f"{n_old}개")
     for token in ("function applyHash", "🔗 공유", "정보량(엔트로피)", "통근 보정", "인구밀도 기준"):
