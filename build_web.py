@@ -110,6 +110,11 @@ TEMPLATE = r'''<!DOCTYPE html>
  .bar{height:8px;background:var(--line2);border-radius:5px;overflow:hidden;margin:4px 0}.bar>span{display:block;height:100%;border-radius:5px}
  .dom{margin-top:10px;padding-top:10px;border-top:1px solid var(--line2)}.dom .hd{display:flex;justify-content:space-between;font-weight:600;font-size:13px}
  .ev{font-size:12px;color:var(--mid);margin-top:2px}.warn{color:var(--terra);font-weight:700}
+ .swrap{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:12px 0 4px;padding:11px;background:var(--line2);border-radius:12px}
+ .slbl{font-size:10.5px;font-weight:700;color:var(--mid);margin-bottom:6px;letter-spacing:.03em}
+ .dchip{display:inline-flex;align-items:center;gap:3px;font-size:11px;background:#fff;border:1px solid var(--line);border-radius:8px;padding:3px 7px;margin:0 4px 4px 0;cursor:pointer;transition:.14s;color:var(--ink)}
+ .dchip:hover{border-color:var(--sage);transform:translateY(-1px)}.dchip b{font-size:12px}.dchip i{font-style:normal;font-weight:800;margin-left:1px}
+ .dsecs{margin-top:6px}
  .close{float:right;cursor:pointer;color:var(--light);font-size:18px;line-height:1}
  .rng{display:flex;align-items:center;gap:10px;margin:7px 0}.rng label{width:84px;font-size:12px;color:var(--mid)}.rng input{flex:1}.rng b{width:26px;text-align:right;font-size:12px;color:var(--ocean);font-weight:700}
  .heart{cursor:pointer;font-size:15px;color:var(--terra)}
@@ -146,7 +151,7 @@ TEMPLATE = r'''<!DOCTYPE html>
  .place{transition:background .12s,transform .12s}.place:hover{transform:translateX(2px)}
  /* 통계 정렬(데스크탑 균형) */
  #scatter{text-align:center}
- #corrHeat{overflow-x:auto}
+ #regHeat{overflow-x:auto}
  .card>.flex{align-items:center}
  /* 반응형 */
  @media(max-width:960px){
@@ -173,6 +178,9 @@ TEMPLATE = r'''<!DOCTYPE html>
    nav .brand{font-size:15px;margin-right:6px}nav .brand small{display:none}
    nav .tab{padding:7px 9px;font-size:12.5px;flex-shrink:0}
    nav .gsearch{flex-shrink:0}nav .gsearch input{width:130px}nav .gsearch input:focus{width:150px}
+   .detail{width:auto;left:10px;right:10px;top:auto;bottom:10px;max-height:72%}
+   .swrap{grid-template-columns:1fr}
+   .hero-t{font-size:24px}.sub{font-size:13px}
  }
 </style></head><body>
 <div id="app">
@@ -464,11 +472,16 @@ function detailHTML(p){
    <div class="muted">${p.cohort} · 인구 ${(p.pop_total||0).toLocaleString()}명 ${isBlind(p,'NLI')?'· <span class="warn">사각지대</span>':''}</div>
    ${(()=>{const rp=recPersona(p);return rp?`<div style="margin-top:5px;font-size:12px">👤 이 동네 추천: <b>${rp}</b> <span style="cursor:pointer;color:var(--sky);text-decoration:underline" onclick="setPreset('${rp}');document.querySelector('nav .tab[data-v=persona]').click()">적용</span></div>`:''})()}
    <div style="margin:10px 0"><b>종합 지수 ${nliW(p)}</b><div class="bar"><span data-w="${nliW(p)}" style="width:0;background:${color(nliW(p))}"></span></div></div>`;
-  for(const d in DOMFAC){let v=p['score_'+d];if(v==null)continue;
-    h+=`<div class="dom"><div class="hd"><span>${METRICS[d]}</span><span style="color:${color(v)}">${v}</span></div><div class="bar"><span data-w="${v}" style="width:0;background:${color(v)}"></span></div>`;
+  // 강점/약점 요약 (도메인 점수 정렬)
+  const ds=DOMS.map(d=>[d,p['score_'+d]]).filter(x=>x[1]!=null).sort((a,b)=>b[1]-a[1]);
+  const chip=([d,v])=>`<span class="dchip" style="border-color:${color(v)}55" onclick="showDom('${d}')"><b>${DOMINFO[d][0]}</b>${SHORT[d]} <i style="color:${color(v)}">${Math.round(v)}</i></span>`;
+  if(ds.length>=4)h+=`<div class="swrap"><div><div class="slbl">💪 강점</div>${ds.slice(0,3).map(chip).join('')}</div><div><div class="slbl">🔻 약점</div>${ds.slice(-3).reverse().map(chip).join('')}</div></div>`;
+  h+=`<div class="dsecs">`;
+  for(const d in DOMFAC){let v=p['score_'+d];if(v==null)continue;const ic=DOMINFO[d]?DOMINFO[d][0]:'';
+    h+=`<div class="dom"><div class="hd"><span>${ic} ${METRICS[d]}</span><span style="color:${color(v)};font-weight:700">${v}</span></div><div class="bar"><span data-w="${v}" style="width:0;background:${color(v)}"></span></div>`;
     for(const fac of DOMFAC[d]){let c=fac[0],label=fac[1],hn=fac[2],n=p[c+'_c'],near=p[c+'_n'];let cnt=(n===0)?'<span class="warn">0개 ⚠</span>':((n||0).toLocaleString()+'개');h+=`<div class="ev">· ${label} ${cnt}${hn?(' · 최근접 '+(n===0?'—':dist(near)+walk(near))):''}</div>`}
     h+=`</div>`}
-  h+=`<div style="margin-top:14px"><button class="btn" onclick="addCmp('${p.adm_nm}')">⊕ 비교담기</button></div>`;
+  h+=`</div><div style="margin-top:14px"><button class="btn" onclick="addCmp('${p.adm_nm}')">⊕ 비교담기</button></div>`;
   return h;}
 function showDetail(p){const d=document.getElementById('detail');d.innerHTML=detailHTML(p);d.style.display='block';growBars();curDetail=p.adm_nm;writeHash();
   if(p._l&&map){map.invalidateSize();const b=p._l.getBounds();if(b&&b.isValid())map.fitBounds(b,{maxZoom:13,padding:[24,24]});}}
