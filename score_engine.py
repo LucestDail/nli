@@ -89,6 +89,22 @@ DATASETS = [
     dict(key="shelter", name="무더위쉼터", domain="D7",
          path=f"{RAW}/전국무더위쉼터_API.csv", reader="csv",
          lon="LO", lat="LA"),   # collect_shelter.py 수집(safetydata API, 60.9K)
+    # ── LOCALDATA 인허가(2026-08-04): 영업중·5174→4326 변환(prep_localdata.py) ──
+    dict(key="bigstore", name="대규모점포", domain="D3",
+         path=f"{RAW}/localdata_bigstore.csv", reader="csv", lon="경도", lat="위도"),
+    dict(key="gas", name="주유소", domain="D3",
+         path=f"{RAW}/localdata_gas.csv", reader="csv", lon="경도", lat="위도"),
+    dict(key="museum", name="박물관·미술관", domain="D4",
+         path=f"{RAW}/localdata_museum.csv", reader="csv", lon="경도", lat="위도"),
+    dict(key="theater", name="공연장", domain="D4",
+         path=f"{RAW}/localdata_theater.csv", reader="csv", lon="경도", lat="위도"),
+    dict(key="cinema", name="영화상영관", domain="D4",
+         path=f"{RAW}/localdata_cinema.csv", reader="csv", lon="경도", lat="위도"),
+    # ── 표준데이터 단품(WGS84) ──
+    dict(key="bikepark", name="자전거보관소", domain="D5",
+         path=f"{RAW}/자전거보관소정보.csv", reader="csv", lon="WGS84경도", lat="WGS84위도"),
+    dict(key="safetybell", name="안전비상벨", domain="D6",
+         path=f"{RAW}/안전비상벨위치정보.csv", reader="csv", lon="WGS84경도", lat="WGS84위도"),
 ]
 
 
