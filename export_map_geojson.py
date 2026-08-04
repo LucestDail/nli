@@ -12,7 +12,7 @@ FAC = [('pharmacy','ph',1),('clinic','cl',1),('emergency','em',1),('school','sc'
        ('childcare','cd',1),('library','lb',1),('parking','pg',1),('childzone','cz',1),('sports','sp',1),('shelter','ht',1),
        ('bigstore','bg',1),('gas','gs',1),('museum','mu',1),('theater','th',1),('cinema','cn',1),
        ('bikepark','bk',1),('safetybell','sb',1),('vethospital','vh',1),('wifi','wi',1),
-       ('tree','tr',1),('civilshelter','cs',1)]
+       ('tree','tr',1),('civilshelter','cs',1),('seniorcenter','sr',1)]
 
 
 def simplify_boundary(dst):
