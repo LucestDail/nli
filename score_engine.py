@@ -86,6 +86,9 @@ DATASETS = [
     dict(key="sports", name="체육시설", domain="D4",
          path=f"{RAW}/전국체육시설_공공_좌표.csv", reader="csv",
          lon="시설좌표경도", lat="시설좌표위도"),   # prep_sports.py 가공(공공 40K, 여가상가와 비중복)
+    dict(key="shelter", name="무더위쉼터", domain="D7",
+         path=f"{RAW}/전국무더위쉼터_API.csv", reader="csv",
+         lon="LO", lat="LA"),   # collect_shelter.py 수집(safetydata API, 60.9K)
 ]
 
 

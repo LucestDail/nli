@@ -9,7 +9,7 @@ SHP = "data/processed/sgis/2. 경계/3. 2025년 2분기 기준 행정동 경계/
 SIMPLIFY = "5%"   # 낮을수록 부드럽고 가벼움. 위상 보존이라 %와 무관하게 틈 없음.
 FAC = [('pharmacy','ph',1),('clinic','cl',1),('emergency','em',1),('school','sc',1),('store','st',0),
        ('park','pk',1),('bus','bs',1),('cctv','cc',1),('ev','ev',1),('welfare','wf',1),
-       ('childcare','cd',1),('library','lb',1),('parking','pg',1),('childzone','cz',1),('sports','sp',1)]
+       ('childcare','cd',1),('library','lb',1),('parking','pg',1),('childzone','cz',1),('sports','sp',1),('shelter','ht',1)]
 
 
 def simplify_boundary(dst):
