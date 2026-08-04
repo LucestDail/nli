@@ -256,6 +256,12 @@
    <div class="card"><h3>지역 특성 × 도메인 상관</h3>
      <div class="muted" style="margin-bottom:12px">인구·밀도·연령구조가 각 도메인 점수와 어떻게 연관되는지 · <b style="color:#2f6b4e">초록=정비례(+)</b> / <b style="color:#b0603f">주황=반비례(−)</b> · |r|≥0.3부터 뚜렷</div>
      <div id="regHeat"></div></div>
+   <div class="card" style="margin-top:18px"><h3>도메인 간 상관 <span class="muted" style="font-weight:400">— 어떤 생활 인프라가 함께 몰리나</span></h3>
+     <div class="muted" style="margin-bottom:12px">두 도메인 점수가 같이 높아지는 정도 · <b style="color:#2f6b4e">초록=동반(+)</b> · 값 클수록 "한 동네에 함께 갖춰짐"</div>
+     <div id="domCorr"></div></div>
+   <div class="card" style="margin-top:18px"><h3>시도 × 도메인 프로파일 <span class="muted" style="font-weight:400">— 지역별 강점 도메인</span></h3>
+     <div class="muted" style="margin-bottom:12px">각 열(도메인)에서 <b style="color:#2f6b4e">진한 초록=그 도메인이 상대적으로 강한 시도</b> · 시도는 종합지수 순</div>
+     <div id="sidoDom"></div></div>
    <div class="grid2" style="margin-top:18px">
      <div class="card"><h3>도농 유형별 도메인 점수</h3>
        <div class="flex" style="justify-content:space-between;margin-bottom:10px"><span class="muted">도시·도농복합·농촌 평균 (막대 길수록 높음)</span>
@@ -573,6 +579,21 @@ function renderStats(){
   let ht='<table class="heat"><tr><th></th>'+dkAll.map(d=>`<th>${VARS[d]}</th>`).join('')+'</tr>';
   REG.forEach(([rk,rn],ri)=>{ht+=`<tr><td style="font-weight:700;background:#f7f5f1;text-align:left;white-space:nowrap">${rn}</td>`+dvAll.map((dv,di)=>{const r=pearson(regV[ri],dv);return `<td style="background:${corrColor(r)};color:${Math.abs(r)>=.5?'#fff':'#1a2530'};${Math.abs(r)>=.3?'font-weight:700':''}">${r.toFixed(2)}</td>`}).join('')+'</tr>';});
   document.getElementById('regHeat').innerHTML=ht+'</table>';
+
+  // 도메인 간 상관 (9×9): 어떤 인프라가 함께 몰리나
+  const dv9=DKEYS.map(d=>SP.map(p=>p['score_'+d]));
+  let hc='<table class="heat"><tr><th></th>'+DKEYS.map(d=>`<th>${DOMINFO[d][0]}</th>`).join('')+'</tr>';
+  DKEYS.forEach((d,i)=>{hc+=`<tr><td style="font-weight:700;background:#f7f5f1;text-align:left;white-space:nowrap">${DOMINFO[d][0]} ${SHORT[d]}</td>`+DKEYS.map((d2,j)=>{if(i===j)return '<td style="background:#f0ede7;color:#c9beac">·</td>';const r=pearson(dv9[i],dv9[j]);return `<td style="background:${corrColor(r)};color:${Math.abs(r)>=.5?'#fff':'#1a2530'};${Math.abs(r)>=.3?'font-weight:700':''}">${r.toFixed(2)}</td>`}).join('')+'</tr>';});
+  document.getElementById('domCorr').innerHTML=hc+'</table>';
+
+  // 시도 × 도메인 프로파일: 각 도메인 열에서 상대강점(열 정규화 색)
+  const sidos=[...new Set(SP.map(p=>p.sido))];
+  const sm={};sidos.forEach(s=>{sm[s]={};const sub=SP.filter(p=>p.sido===s);DKEYS.forEach(d=>{const v=sub.map(p=>p['score_'+d]).filter(x=>x!=null);sm[s][d]=v.reduce((a,b)=>a+b,0)/(v.length||1);});sm[s]._nli=sub.reduce((a,p)=>a+(nliW(p)||0),0)/(sub.length||1);});
+  sidos.sort((a,b)=>sm[b]._nli-sm[a]._nli);
+  const dmm={};DKEYS.forEach(d=>{const vs=sidos.map(s=>sm[s][d]);dmm[d]=[Math.min(...vs),Math.max(...vs)];});
+  let hsd='<table class="heat"><tr><th></th>'+DKEYS.map(d=>`<th>${DOMINFO[d][0]}<br><span style="font-weight:400;font-size:9px">${SHORT[d]}</span></th>`).join('')+'</tr>';
+  sidos.forEach(s=>{hsd+=`<tr><td style="font-weight:700;background:#f7f5f1;text-align:left;white-space:nowrap;font-size:10.5px">${s.replace('특별자치도','').replace('특별자치시','').replace('광역시','').replace('특별시','')}</td>`+DKEYS.map(d=>{const v=sm[s][d],[mn,mx]=dmm[d],t=(v-mn)/((mx-mn)||1);return `<td style="background:rgba(47,107,78,${(.08+.82*t).toFixed(2)});color:${t>.5?'#fff':'#1a2530'}">${Math.round(v)}</td>`}).join('')+'</tr>';});
+  document.getElementById('sidoDom').innerHTML=hsd+'</table>';
 
   // 도농 유형별 도메인 점수 — 가로 그룹 막대(값 라벨). 코호트 기준 토글(행정동명/인구밀도, M6)
   const coh=[['도시','#6f9e86'],['도농복합','#d4a056'],['농촌','#cf8a5c']];
