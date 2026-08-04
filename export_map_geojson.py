@@ -11,7 +11,8 @@ FAC = [('pharmacy','ph',1),('clinic','cl',1),('emergency','em',1),('school','sc'
        ('park','pk',1),('bus','bs',1),('cctv','cc',1),('ev','ev',1),('welfare','wf',1),
        ('childcare','cd',1),('library','lb',1),('parking','pg',1),('childzone','cz',1),('sports','sp',1),('shelter','ht',1),
        ('bigstore','bg',1),('gas','gs',1),('museum','mu',1),('theater','th',1),('cinema','cn',1),
-       ('bikepark','bk',1),('safetybell','sb',1)]
+       ('bikepark','bk',1),('safetybell','sb',1),('vethospital','vh',1),('wifi','wi',1),
+       ('tree','tr',1),('civilshelter','cs',1)]
 
 
 def simplify_boundary(dst):
@@ -27,7 +28,7 @@ def score_props():
     con.execute(f"CREATE OR REPLACE TEMP TABLE sgg AS SELECT SIGUNGU_CD,SIGUNGU_NM FROM ST_Read('{base}/2. 2025년 2분기 기준 시군구 경계/bnd_sigungu_00_2025_2Q.shp')")
     cnt = ",".join(f"s.{k}_cnt AS {c}_c" + (f", round(s.{k}_nearest_m) AS {c}_n" if n else "") for k,c,n in FAC)
     rows = con.execute(f"""SELECT s.adm_cd, sd.SIDO_NM||' '||sg.SIGUNGU_NM||' '||s.adm_nm AS full_nm, s.adm_nm, s.cohort, s.cohort_d, s.cen_lon AS clon, s.cen_lat AS clat, s.pop_total,
-       s.NLI, s.grade, s.score_D1,s.score_D2,s.score_D3,s.score_D4,s.score_D5,s.score_D6,s.score_D7,s.score_D8,
+       s.NLI, s.grade, s.score_D1,s.score_D2,s.score_D3,s.score_D4,s.score_D5,s.score_D6,s.score_D7,s.score_D8,s.score_D9,
        round(d.ratio_infant,3) AS r_inf, round(d.ratio_youth,3) AS r_yth, round(d.ratio_elderly,3) AS r_eld,
        round(d.pop_density,1) AS dens, round(d.ratio_apt,3) AS r_apt, round(d.ratio_oldhouse,3) AS r_old, {cnt}
        FROM nli_scores s LEFT JOIN dong d ON s.adm_cd=d.adm_cd

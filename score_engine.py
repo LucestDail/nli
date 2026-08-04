@@ -22,7 +22,7 @@ MIN_POP = 100       # 이 미만 인구 동은 밀도 정규화에서 제외(0/�
 # 도메인 정의. D1~D8 모두 읍면동 시설점 기반(D8=사회복지 지오코딩)
 DOMAINS = {"D1": "의료·건강", "D2": "교육·보육", "D3": "생활편의·상업",
            "D4": "문화·여가·체육", "D5": "교통·이동", "D6": "안전", "D7": "환경·기후",
-           "D8": "복지·돌봄"}
+           "D8": "복지·돌봄", "D9": "반려·동물"}
 
 # 도메인 가중치(NLI 기본 = 균등). 웹 대시보드의 페르소나 슬라이더가 이 기본을 실시간 덮어씀.
 DOMAIN_WEIGHTS = {d: 1.0 for d in DOMAINS}
@@ -105,6 +105,15 @@ DATASETS = [
          path=f"{RAW}/자전거보관소정보.csv", reader="csv", lon="WGS84경도", lat="WGS84위도"),
     dict(key="safetybell", name="안전비상벨", domain="D6",
          path=f"{RAW}/안전비상벨위치정보.csv", reader="csv", lon="WGS84경도", lat="WGS84위도"),
+    # ── 반려 신규도메인 D9 + 지표 폭 확장(2026-08-04) ──
+    dict(key="vethospital", name="동물병원", domain="D9",
+         path=f"{RAW}/localdata_vethospital.csv", reader="csv", lon="경도", lat="위도"),
+    dict(key="wifi", name="무료와이파이", domain="D3",
+         path=f"{RAW}/무료와이파이정보.csv", reader="csv", lon="WGS84경도", lat="WGS84위도"),
+    dict(key="tree", name="보호수", domain="D7",
+         path=f"{RAW}/보호수정보.csv", reader="csv", lon="WGS84경도", lat="WGS84위도"),
+    dict(key="civilshelter", name="민방위대피시설", domain="D6",
+         path=f"{RAW}/민방위대피시설.csv", reader="csv", lon="경도(EPSG4326)", lat="위도(EPSG4326)"),
 ]
 
 
