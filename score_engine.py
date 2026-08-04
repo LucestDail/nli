@@ -114,6 +114,9 @@ DATASETS = [
          path=f"{RAW}/보호수정보.csv", reader="csv", lon="WGS84경도", lat="WGS84위도"),
     dict(key="civilshelter", name="민방위대피시설", domain="D6",
          path=f"{RAW}/민방위대피시설.csv", reader="csv", lon="경도(EPSG4326)", lat="위도(EPSG4326)"),
+    dict(key="seniorcenter", name="경로당·마을회관", domain="D8",
+         path=f"{RAW}/전국마을회관및경로당표준데이터.csv", reader="csv",
+         lon="경도", lat="위도", filter="영업상태명 == '영업'"),   # 46K 표준데이터
 ]
 
 
