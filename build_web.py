@@ -271,29 +271,29 @@ TEMPLATE = r'''<!DOCTYPE html>
 const DATA=__GEOJSON__;
 let POINTS=null;   // 시설포인트(11MB)는 첫 토글 시 nli_points.json 지연로딩(초기 로딩 경량화)
 const F=DATA.features;
-const DOMS=['D1','D2','D3','D4','D5','D6','D7','D8'];
-const METRICS={NLI:'종합 지수',D1:'의료·건강',D2:'교육·보육',D3:'생활편의·상업',D4:'문화·여가·체육',D5:'교통·이동',D6:'안전',D7:'환경·기후',D8:'복지·돌봄',grade:'등급'};
-const DOMFAC={D1:[['ph','약국',1],['cl','의료기관',1],['em','응급의료기관',1]],D2:[['sc','학교',1],['cd','어린이집',1],['lb','도서관',1]],D3:[['st','상가',0],['bg','대규모점포',1],['gs','주유소',1]],D4:[['pk','공원',1],['sp','체육시설',1],['mu','박물관·미술관',1],['th','공연장',1],['cn','영화상영관',1]],D5:[['bs','버스정류장',1],['pg','주차장',1],['bk','자전거보관소',1]],D6:[['cc','CCTV',1],['cz','어린이보호구역',1],['sb','안전비상벨',1]],D7:[['ev','전기차충전소',1],['ht','무더위쉼터',1]],D8:[['wf','사회복지시설',1]]};
+const DOMS=['D1','D2','D3','D4','D5','D6','D7','D8','D9'];
+const METRICS={NLI:'종합 지수',D1:'의료·건강',D2:'교육·보육',D3:'생활편의·상업',D4:'문화·여가·체육',D5:'교통·이동',D6:'안전',D7:'환경·기후',D8:'복지·돌봄',D9:'반려·동물',grade:'등급'};
+const DOMFAC={D1:[['ph','약국',1],['cl','의료기관',1],['em','응급의료기관',1]],D2:[['sc','학교',1],['cd','어린이집',1],['lb','도서관',1]],D3:[['st','상가',0],['bg','대규모점포',1],['gs','주유소',1],['wi','무료와이파이',1]],D4:[['pk','공원',1],['sp','체육시설',1],['mu','박물관·미술관',1],['th','공연장',1],['cn','영화상영관',1]],D5:[['bs','버스정류장',1],['pg','주차장',1],['bk','자전거보관소',1]],D6:[['cc','CCTV',1],['cz','어린이보호구역',1],['sb','안전비상벨',1],['cs','민방위대피',1]],D7:[['ev','전기차충전소',1],['ht','무더위쉼터',1],['tr','보호수',1]],D8:[['wf','사회복지시설',1]],D9:[['vh','동물병원',1]]};
 const GC={S:'#2f6b4e',A:'#6f9e86',B:'#d4a056',C:'#cf8a5c',D:'#b0603f'};
 // 페르소나 프리셋 (D1의료 D2교육 D3생활편의 D4문화여가 D5교통 D6안전 D7환경 D8복지)
 // 객관 가중(정보량/CRITIC)은 weight_analysis.py 산출값(균등=1.0 기준). 데이터 분산 기반이라 '참고용' 프리셋.
 const PRESETS={
- '균등':[1,1,1,1,1,1,1,1],
- '정보량(엔트로피)':[1.40,0.89,0.78,0.67,0.77,0.61,0.72,2.16],
- 'CRITIC(중복보정)':[1.02,0.89,0.98,0.70,0.86,0.93,0.98,1.64],
- '중요도(AHP)':[2.15,0.89,0.34,0.34,0.89,2.15,0.34,0.89],
- '영유아 양육':[1.4,2,1,1.3,1,1.6,1,1.2],
- '고령':[2,1,1.2,1.2,1.4,1.2,1.3,2],
- '1인 청년':[1,1,2,1.5,1.5,1,1,1],
- '반려동물':[1,1,1,2,1,1.2,1.3,1],
- '신혼·예비부모':[1.3,1.5,1.2,1,1.2,1.6,1.1,1],
- '학군·자녀교육':[1,2,1,1.3,1.1,1.5,1,1],
- '직장인 통근':[1,1,1.4,1.1,2,1,1,1],
- '건강·웰니스':[2,1,1,1.3,1,1,1.6,1.3],
- '문화·여가족':[1,1,1.4,2,1.3,1,1,1]};
+ '균등':[1,1,1,1,1,1,1,1,1],
+ '정보량(엔트로피)':[1.25,0.80,0.55,0.60,0.69,0.56,0.47,1.94,2.14],
+ 'CRITIC(중복보정)':[0.97,0.86,0.82,0.67,0.84,0.74,1.00,1.63,1.47],
+ '중요도(AHP)':[2.02,0.88,0.33,0.33,0.88,2.02,0.33,0.88,0.33],
+ '영유아 양육':[1.4,2,1,1.3,1,1.6,1,1.2,1],
+ '고령':[2,1,1.2,1.2,1.4,1.2,1.3,2,1.2],
+ '1인 청년':[1,1,2,1.5,1.5,1,1,1,1.5],
+ '반려동물':[1,1,1,1.3,1,1.2,1.3,1,2.5],
+ '신혼·예비부모':[1.3,1.5,1.2,1,1.2,1.6,1.1,1,1],
+ '학군·자녀교육':[1,2,1,1.3,1.1,1.5,1,1,1],
+ '직장인 통근':[1,1,1.4,1.1,2,1,1,1,1],
+ '건강·웰니스':[2,1,1,1.3,1,1,1.6,1.3,1],
+ '문화·여가족':[1,1,1.4,2,1.3,1,1,1,1]};
 // 연령구조 기반 동네 추천 페르소나 (전국평균: 영유아2.5%·유소년10.5%·고령19.5%)
 function recPersona(p){if((p.r_inf!=null&&p.r_inf>=0.045)||(p.r_yth!=null&&p.r_yth>=0.16))return '영유아 양육';if(p.r_eld!=null&&p.r_eld>=0.40)return '고령';return null}
-let W=[1,1,1,1,1,1,1,1];
+let W=[1,1,1,1,1,1,1,1,1];
 let fav=JSON.parse(localStorage.getItem('nli_fav')||'[]');
 let cmp=[];
 let curDetail=null, applyingHash=false;   // 공유 딥링크: 현재 선택 동 / 복원 중 재기록 방지
@@ -368,7 +368,7 @@ function initMap(){
   {let o=document.createElement('option');o.value='';o.text='직접 조정';mp.add(o);}
   for(const k in PRESETS){let o=document.createElement('option');o.value=k;o.text=k;mp.add(o)}
   mp.onchange=e=>{if(e.target.value){setPreset(e.target.value);mMetric='NLI';sel.value='NLI';mRedraw();}};
-  document.getElementById('mReset').onclick=()=>{W=[1,1,1,1,1,1,1,1];mp.value='균등';renderMapSliders();mMetric='NLI';sel.value='NLI';recompRank();mRedraw();};
+  document.getElementById('mReset').onclick=()=>{W=[1,1,1,1,1,1,1,1,1];mp.value='균등';renderMapSliders();mMetric='NLI';sel.value='NLI';recompRank();mRedraw();};
   renderMapSliders();
   document.querySelectorAll('#modes button').forEach(b=>b.onclick=()=>{document.querySelectorAll('#modes button').forEach(x=>x.classList.remove('on'));b.classList.add('on');mMode=b.dataset.m;mRedraw()});
   document.getElementById('popmin').oninput=e=>{popmin=+e.target.value;document.getElementById('popval').textContent=popmin?popmin.toLocaleString()+'+':'전체';layer.setStyle(mStyle)};
@@ -413,7 +413,7 @@ function mStyle(f){const p=f.properties,sc=metricVal(p,mMetric);
   if(mMode==='blind'){const b=isBlind(p,mMetric);return{fillColor:b?'#bb3a24':'#e8e0d0',weight:b?.6:.12,color:b?'#8a2a18':'#d8cdb8',fillOpacity:b?.72:.14}}
   if(mMode==='pop')return{fillColor:color(sc),weight:.2,color:'#c9bda3',fillOpacity:.06+.42*popPct(p.pop_total||0)};
   return{fillColor:color(sc),weight:.3,color:'#c3b79d',fillOpacity:.32};}
-const SHORT={D1:'의료',D2:'교육',D3:'생활편의',D4:'문화여가',D5:'교통',D6:'안전',D7:'환경',D8:'복지'};
+const SHORT={D1:'의료',D2:'교육',D3:'생활편의',D4:'문화여가',D5:'교통',D6:'안전',D7:'환경',D8:'복지',D9:'반려'};
 function renderMapSliders(){const el=document.getElementById('mSliders');if(!el)return;
   el.innerHTML=DOMS.map((d,i)=>`<div class="rng"><label>${SHORT[d]}</label><input type="range" min="0" max="3" step="0.1" value="${W[i]}" oninput="W[${i}]=+this.value;this.nextElementSibling.textContent=(+this.value).toFixed(1);onWeightChange()"><b>${W[i].toFixed(1)}</b></div>`).join('');
 }
@@ -491,7 +491,7 @@ function renderCompare(){
 function renderPersona(){
   document.getElementById('presets').innerHTML=Object.keys(PRESETS).map(k=>`<button class="btn" onclick="setPreset('${k}')">${k}</button>`).join('');
   document.getElementById('sliders').innerHTML=DOMS.map((d,i)=>`<div class="rng"><label>${METRICS[d]}</label><input type="range" min="0" max="3" step="0.1" value="${W[i]}" oninput="W[${i}]=+this.value;this.nextElementSibling.textContent=(+this.value).toFixed(1);personaLive()"><b>${W[i].toFixed(1)}</b></div>`).join('');
-  document.getElementById('resetW').onclick=()=>{W=[1,1,1,1,1,1,1,1];renderPersona();personaLive()};
+  document.getElementById('resetW').onclick=()=>{W=[1,1,1,1,1,1,1,1,1];renderPersona();personaLive()};
   personaTop();
 }
 function setPreset(k){W=PRESETS[k].slice();const mp=document.getElementById('mpersona');if(mp&&PRESETS[k])mp.value=k;renderPersona();renderMapSliders();personaLive()}
@@ -501,9 +501,9 @@ function personaTop(){recompRank();
 function personaLive(){recompRank();personaTop();if(layer)layer.setStyle(mStyle);writeHash()}
 
 /* ---------- 지역 통계 탭 (지역 특성 × 도메인 중심) ---------- */
-const DKEYS=['D1','D2','D3','D4','D5','D6','D7','D8'];
+const DKEYS=['D1','D2','D3','D4','D5','D6','D7','D8','D9'];
 const REG=[['dens','인구밀도'],['pop','인구'],['eld','고령비중'],['yth','유소년비중'],['apt','아파트비율'],['old','노후주택비율']];
-const VARS={dens:'인구밀도(로그)',pop:'인구(로그)',eld:'고령비중%',yth:'유소년%',inf:'영유아%',apt:'아파트비율%',old:'노후주택비율%',NLI:'종합지수',D1:'의료',D2:'교육',D3:'생활편의',D4:'문화여가',D5:'교통',D6:'안전',D7:'환경',D8:'복지'};
+const VARS={dens:'인구밀도(로그)',pop:'인구(로그)',eld:'고령비중%',yth:'유소년%',inf:'영유아%',apt:'아파트비율%',old:'노후주택비율%',NLI:'종합지수',D1:'의료',D2:'교육',D3:'생활편의',D4:'문화여가',D5:'교통',D6:'안전',D7:'환경',D8:'복지',D9:'반려'};
 const SP=F.map(f=>f.properties);
 function sval(p,k){
   if(k==='NLI')return nliW(p);

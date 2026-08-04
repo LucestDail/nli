@@ -10,8 +10,8 @@
 """
 import duckdb, numpy as np
 
-DK = [f"score_D{i}" for i in range(1, 9)]
-NM = ['의료', '교육', '생활편의', '문화여가', '교통', '안전', '환경', '복지']
+DK = [f"score_D{i}" for i in range(1, 10)]
+NM = ['의료', '교육', '생활편의', '문화여가', '교통', '안전', '환경', '복지', '반려']
 
 
 def main():
