@@ -47,6 +47,18 @@
  .kpi span{color:var(--mid);font-size:12.5px;font-weight:500}
  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:20px}
  .card{background:var(--card);border:1px solid var(--line);border-radius:var(--r-lg);padding:24px;box-shadow:var(--sh);transition:.2s}
+ .domcard{margin-bottom:0}
+ .domgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+ .domcell{border:1px solid var(--line);border-radius:14px;padding:14px 15px;cursor:pointer;transition:.16s;background:linear-gradient(180deg,#fff,#fcfbf8)}
+ .domcell:hover{border-color:var(--sage);box-shadow:var(--sh2);transform:translateY(-2px)}
+ .domhd{display:flex;align-items:center;gap:11px;margin-bottom:9px}
+ .domic{width:38px;height:38px;border-radius:11px;display:flex;align-items:center;justify-content:center;font-size:19px;flex-shrink:0}
+ .domhd b{font-size:14.5px;color:var(--ink);display:block;line-height:1.2}
+ .domn{font-size:11.5px;color:var(--mid);font-weight:600}
+ .domtags{display:flex;flex-wrap:wrap;gap:5px}
+ .domtags span{font-size:11px;color:var(--mid);background:var(--line2);border-radius:6px;padding:3px 8px;white-space:nowrap}
+ @media(max-width:820px){.domgrid{grid-template-columns:repeat(2,1fr)}}
+ @media(max-width:560px){.domgrid{grid-template-columns:1fr}}
  .card h3{font-weight:700;margin:0 0 15px;font-size:16px;color:var(--ink);letter-spacing:-.02em}
  .barrow{display:flex;align-items:center;gap:10px;font-size:12.5px;margin:6px 0}
  .barrow .nm{width:120px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--mid)}
@@ -169,9 +181,10 @@
 
  <div class="view" id="v-home" style="display:none"><div class="wrap">
    <div class="hero-t">어디가 살기 좋은 동네일까</div>
-   <div class="sub">공공데이터 표준 300종을 읍면동 단위로 융합한 살기좋은동네 지수 · 전국 3,553개 읍면동 · 8개 도메인</div>
+   <div class="sub">공공데이터를 읍면동 단위로 융합한 살기좋은동네 지수 · 전국 <b>3,559개</b> 읍면동 · <b>9개 도메인 · 30개 지표</b></div>
    <div class="kpis" id="kpis"></div>
-   <div class="grid2">
+   <div class="card domcard"><div class="flex" style="justify-content:space-between;align-items:baseline;margin-bottom:14px"><h3 style="margin:0">9개 생활 도메인</h3><span class="muted">각 도메인을 여러 공공데이터 지표로 정량화 · 총 30개 지표</span></div><div class="domgrid" id="domGrid"></div></div>
+   <div class="grid2" style="margin-top:18px">
      <div class="card"><h3>시도별 평균 지수</h3><div id="sidoBars"></div></div>
      <div class="card"><h3>등급 분포</h3><div id="gradeBars"></div>
        <h3 style="margin-top:20px">전국 상위</h3><div id="homeTop"></div>
@@ -266,6 +279,17 @@ const DOMS=['D1','D2','D3','D4','D5','D6','D7','D8','D9'];
 const METRICS={NLI:'종합 지수',D1:'의료·건강',D2:'교육·보육',D3:'생활편의·상업',D4:'문화·여가·체육',D5:'교통·이동',D6:'안전',D7:'환경·기후',D8:'복지·돌봄',D9:'반려·동물',grade:'등급'};
 const DOMFAC={D1:[['ph','약국',1],['cl','의료기관',1],['em','응급의료기관',1]],D2:[['sc','학교',1],['cd','어린이집',1],['lb','도서관',1]],D3:[['st','상가',0],['bg','대규모점포',1],['gs','주유소',1],['wi','무료와이파이',1]],D4:[['pk','공원',1],['sp','체육시설',1],['mu','박물관·미술관',1],['th','공연장',1],['cn','영화상영관',1]],D5:[['bs','버스정류장',1],['pg','주차장',1],['bk','자전거보관소',1]],D6:[['cc','CCTV',1],['cz','어린이보호구역',1],['sb','안전비상벨',1],['cs','민방위대피',1]],D7:[['ev','전기차충전소',1],['ht','무더위쉼터',1],['tr','보호수',1]],D8:[['wf','사회복지시설',1],['sr','경로당·마을회관',1]],D9:[['vh','동물병원',1]]};
 const GC={S:'#2f6b4e',A:'#6f9e86',B:'#d4a056',C:'#cf8a5c',D:'#b0603f'};
+// 홈 도메인 쇼케이스 (아이콘·지표 목록, DATASETS 기준 실제 30지표)
+const DOMINFO={
+ D1:['🏥','의료·건강',['약국','의료기관','응급의료'],'#c0392b'],
+ D2:['🎓','교육·보육',['초중등학교','학원','어린이집','도서관'],'#5b6bd0'],
+ D3:['🛒','생활편의·상업',['생활편의상가','대규모점포','주유소','무료와이파이'],'#d4a056'],
+ D4:['🎭','문화·여가·체육',['여가상가','도시공원','체육시설','박물관·미술관','공연장','영화상영관'],'#8e5db0'],
+ D5:['🚌','교통·이동',['버스정류소','주차장','자전거보관소'],'#3f8fa8'],
+ D6:['🛡️','안전',['CCTV','어린이보호구역','안전비상벨','민방위대피'],'#6f9e86'],
+ D7:['🌿','환경·기후',['전기차충전소','무더위쉼터','보호수'],'#2f6b4e'],
+ D8:['🤝','복지·돌봄',['사회복지시설','경로당·마을회관'],'#c47c52'],
+ D9:['🐾','반려·동물',['동물병원'],'#cf8a5c']};
 // 페르소나 프리셋 (D1의료 D2교육 D3생활편의 D4문화여가 D5교통 D6안전 D7환경 D8복지)
 // 객관 가중(정보량/CRITIC)은 weight_analysis.py 산출값(균등=1.0 기준). 데이터 분산 기반이라 '참고용' 프리셋.
 const PRESETS={
@@ -337,6 +361,11 @@ function renderHome(){
     <div class="kpi"><b>${avg}</b><span>평균 지수</span></div>
     <div class="kpi"><b>${gd.S||0}</b><span>S등급 · 상위 10%</span></div>
     <div class="kpi"><b style="color:var(--terra)">${bs}</b><span>종합 사각지대</span></div>`;
+  // 9개 도메인 쇼케이스
+  document.getElementById('domGrid').innerHTML=DOMS.map(d=>{const [ic,nm,inds,col]=DOMINFO[d];
+    return `<div class="domcell" onclick="showDom('${d}')" title="지도에서 ${nm} 보기">
+      <div class="domhd"><span class="domic" style="background:${col}22;color:${col}">${ic}</span><div><b>${nm}</b><span class="domn">${inds.length}개 지표</span></div></div>
+      <div class="domtags">${inds.map(i=>`<span>${i}</span>`).join('')}</div></div>`}).join('');
   const sd={};F.forEach(f=>{const s=f.properties.sido;(sd[s]=sd[s]||[]).push(nliW(f.properties)||0)});
   const sarr=Object.entries(sd).map(([k,v])=>[k,v.reduce((a,b)=>a+b,0)/v.length]).sort((a,b)=>b[1]-a[1]);
   document.getElementById('sidoBars').innerHTML=sarr.map(([k,v])=>`<div class="barrow"><span class="nm">${k}</span><span class="bar"><span data-w="${v.toFixed(1)}" style="width:0;background:${color(v)}"></span></span><span class="v">${v.toFixed(0)}</span></div>`).join('');
@@ -435,6 +464,7 @@ function detailHTML(p){
 function showDetail(p){const d=document.getElementById('detail');d.innerHTML=detailHTML(p);d.style.display='block';growBars();curDetail=p.adm_nm;writeHash();
   if(p._l&&map){map.invalidateSize();const b=p._l.getBounds();if(b&&b.isValid())map.fitBounds(b,{maxZoom:13,padding:[24,24]});}}
 function goDetail(adm){const f=F.find(x=>x.properties.adm_nm===adm);if(!f)return;document.querySelector('nav .tab[data-v=map]').click();showDetail(f.properties)}
+function showDom(d){mMode='basic';document.querySelectorAll('#modes button').forEach(x=>x.classList.toggle('on',x.dataset.m==='basic'));document.querySelector('nav .tab[data-v=map]').click();const s=document.getElementById('metric');if(s){s.value=d;s.dispatchEvent(new Event('change'));}}
 
 // 통근 보정 — 기준지 중심점(clat/clon)에서 직선거리(도로 라우팅은 향후) 이내로 좁혀 NLI 순 제시
 let commuteBase=null, commuteKm=10, cohortKey='cohort';
@@ -590,7 +620,7 @@ function customSelect(sel){
 document.addEventListener('click',()=>document.querySelectorAll('.csel.open').forEach(x=>x.classList.remove('open')));
 /* 막대 성장 애니메이션: data-w(%너비)/data-h(%높이) → 다음 프레임에 목표값 적용 */
 function growBars(){requestAnimationFrame(()=>{document.querySelectorAll('[data-w]').forEach(e=>{e.style.width=e.dataset.w+'%';e.removeAttribute('data-w');});document.querySelectorAll('[data-h]').forEach(e=>{e.style.height=e.dataset.h+'%';e.removeAttribute('data-h');});});}
-document.getElementById('foot1').textContent='데이터 · 공공데이터포털 표준데이터 / SGIS 경계·인구(2025 2Q) / 건강보험심사평가원 / 소상공인시장진흥공단   ·   방법 · 시설밀도(인구 1만명당)와 근접성의 백분위 혼합, 도농 코호트·인구가중 중심점 보정   ·   8개 도메인 읍면동 정밀(복지는 지오코딩 85% 커버) · 점수는 전국 상대평가로 참고용입니다';
+document.getElementById('foot1').textContent='데이터 · 공공데이터포털 표준데이터 / SGIS 경계·인구(2025 2Q) / 건강보험심사평가원 / 소상공인시장진흥공단   ·   방법 · 시설밀도(인구 1만명당)와 근접성의 백분위 혼합, 도농 코호트·인구가중 중심점 보정   ·   9개 도메인 30개 지표 읍면동 정밀(복지는 지오코딩 85% 커버) · 점수는 전국 상대평가로 참고용입니다';
 /* ---------- 공유 딥링크: 현재 상태 ↔ location.hash ---------- */
 function curTab(){const t=document.querySelector('nav .tab.on');return t?t.dataset.v:'map';}
 function writeHash(){if(applyingHash)return;
