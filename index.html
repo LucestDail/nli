@@ -501,6 +501,7 @@ function detailHTML(p){
    <h4>${fullN(p)} <span class="g" style="background:${GC[gradeOf(p)]}">${gradeOf(p)}</span> <span class="heart" onclick="toggleFav('${p.adm_nm}')">${isf?'♥':'♡'}</span></h4>
    <div class="muted">${p.cohort} · 인구 ${(p.pop_total||0).toLocaleString()}명 ${isBlind(p,'NLI')?'· <span class="warn">사각지대</span>':''}</div>
    ${p.price!=null?`<div class="muted" style="margin-top:3px">🏢 아파트 실거래 <b style="color:var(--terra)">평당 ${Math.round(p.price*3.3058).toLocaleString()}만원</b> <span style="font-size:10.5px">(㎡당 ${p.price.toLocaleString()}만)</span></div>`:''}
+   ${commuteBase?`<div id="transitInfo" class="muted" style="margin-top:4px">🚇 대중교통 계산 중…</div>`:''}
    ${(()=>{const rp=recPersona(p);return rp?`<div style="margin-top:5px;font-size:12px">👤 이 동네 추천: <b>${rp}</b> <span style="cursor:pointer;color:var(--sky);text-decoration:underline" onclick="setPreset('${rp}');document.querySelector('nav .tab[data-v=persona]').click()">적용</span></div>`:''})()}
    <div style="margin:10px 0"><b>종합 지수 ${nliW(p)}</b><div class="bar"><span data-w="${nliW(p)}" style="width:0;background:${color(nliW(p))}"></span></div></div>`;
   // 강점/약점 요약 (도메인 점수 정렬)
@@ -514,7 +515,19 @@ function detailHTML(p){
     h+=`</div>`}
   h+=`</div><div style="margin-top:14px"><button class="btn" onclick="addCmp('${p.adm_nm}')">⊕ 비교담기</button></div>`;
   return h;}
-function showDetail(p,focus){const d=document.getElementById('detail');d.innerHTML=detailHTML(p);d.style.display='block';growBars();curDetail=p.adm_nm;writeHash();
+// daero 대중교통 door-to-door 소요시간(통근 기준지 설정 시 상세패널에 표시)
+function fillTransit(p){
+  if(!commuteBase)return;const bf=F.find(f=>f.properties.adm_nm===commuteBase);
+  const el=document.getElementById('transitInfo');if(!el||!bf)return;
+  const b=bf.properties;if(b.clat==null||p.clat==null){el.textContent='';return;}
+  if(p.adm_nm===commuteBase){el.innerHTML='🚇 기준지 본인';return;}
+  const u=`https://daero.duckdns.org/api/plan/coords?fromLat=${b.clat}&fromLon=${b.clon}&toLat=${p.clat}&toLon=${p.clon}&time=09:00`;
+  fetch(u).then(r=>r.json()).then(j=>{const e=document.getElementById('transitInfo');if(!e)return;
+    if(j&&j.found&&j.durationMin!=null){e.innerHTML=`🚇 <b>${commuteBase}</b>→여기 대중교통 <b style="color:var(--ocean)">약 ${j.durationMin}분</b>`+(j.transfers?` · 환승 ${j.transfers}`:'')+(j.estimatedFareKrw?` · ₩${j.estimatedFareKrw.toLocaleString()}`:'')+` <span style="font-size:10px">(오전9시 기준)</span>`;}
+    else e.innerHTML='🚇 <span style="font-size:11px">대중교통 경로 없음(원거리·비운영)</span>';
+  }).catch(()=>{const e=document.getElementById('transitInfo');if(e)e.innerHTML='🚇 <span style="font-size:11px">조회 실패</span>';});
+}
+function showDetail(p,focus){const d=document.getElementById('detail');d.innerHTML=detailHTML(p);d.style.display='block';growBars();curDetail=p.adm_nm;writeHash();fillTransit(p);
   // focus=true(검색·순위·딥링크로 진입)일 때만 지도 리프레이밍. 지도 직접클릭은 현재 위치 유지(확대상태 축소 방지)
   if(focus&&p._l&&map){map.invalidateSize();const b=p._l.getBounds();if(b&&b.isValid())map.fitBounds(b,{maxZoom:13,padding:[24,24]});}}
 function goDetail(adm){const f=F.find(x=>x.properties.adm_nm===adm);if(!f)return;document.querySelector('nav .tab[data-v=map]').click();showDetail(f.properties,true)}
@@ -543,7 +556,7 @@ function renderRank(){
   document.querySelectorAll('#rankTable tbody tr').forEach(tr=>tr.onclick=()=>goDetail(tr.dataset.adm));
 }
 function setCommuteBase(adm){commuteBase=adm;
-  document.getElementById('commuteInfo').innerHTML=`<b style="color:var(--ocean)">${adm}</b> 기준 ·`;
+  document.getElementById('commuteInfo').innerHTML=`<b style="color:var(--ocean)">${adm}</b> 기준 · <span style="font-size:11px">동 클릭 시 🚇대중교통 시간</span> ·`;
   document.getElementById('commuteKmWrap').style.display='inline-flex';renderRank();writeHash();}
 
 function addCmp(adm){if(cmp.includes(adm))return;if(cmp.length>=4){alert('최대 4곳까지 비교할 수 있어요');return}cmp.push(adm);document.querySelector('nav .tab[data-v=compare]').click();}
