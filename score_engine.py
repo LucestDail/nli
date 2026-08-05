@@ -117,6 +117,13 @@ DATASETS = [
     dict(key="seniorcenter", name="경로당·마을회관", domain="D8",
          path=f"{RAW}/전국마을회관및경로당표준데이터.csv", reader="csv",
          lon="경도", lat="위도", filter="영업상태명 == '영업'"),   # 46K 표준데이터
+    # ── D5 교통 보강(2026-08-05): 지하철역·자전거대여소(대도시 집중) ──
+    dict(key="subway", name="지하철역", domain="D5",
+         path=f"{RAW}/도시철도역사_역별.csv", reader="csv",
+         lon="역경도", lat="역위도"),   # 도시철도역사 환승중복 제거 987역
+    dict(key="bikeshare", name="자전거대여소", domain="D5",
+         path=f"{RAW}/전국자전거대여소표준데이터.csv", reader="csv",
+         lon="경도", lat="위도"),
 ]
 
 
