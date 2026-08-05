@@ -11,6 +11,17 @@ TEMPLATE = r'''<!DOCTYPE html>
 <html lang="ko"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>동네살기지수 NLI · 어디가 살기 좋은 동네인가</title>
+<meta name="description" content="공공데이터로 전국 3,559개 읍면동을 9개 생활 도메인 30개 지표로 정량화 · 아파트 실거래가까지 결합한 '살기지수 × 가격' 대시보드">
+<meta property="og:type" content="website">
+<meta property="og:title" content="동네살기지수 NLI — 어디가 살기 좋은 동네인가">
+<meta property="og:description" content="전국 3,559개 읍면동 · 9도메인 30지표 + 아파트 실거래가. 가성비 좋은 동네를 찾아보세요.">
+<meta property="og:site_name" content="동네살기지수 NLI">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="동네살기지수 NLI">
+<meta name="twitter:description" content="전국 읍면동 살기지수 × 아파트값 · 가성비 동네 찾기">
+<meta name="theme-color" content="#173a4b">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ctext y='26' font-size='26'%3E%F0%9F%8F%98%3C/text%3E%3C/svg%3E">
+
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
