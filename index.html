@@ -78,6 +78,19 @@
  .valv{text-align:right;font-size:13px;white-space:nowrap}.valv b{color:var(--ocean)}.valv i{display:block;font-style:normal;font-size:11px;color:var(--terra);font-weight:700;margin-top:1px}
  @media(max-width:820px){.valgrid{grid-template-columns:repeat(2,1fr)}}
  @media(max-width:560px){.valgrid{grid-template-columns:1fr}}
+ /* 경로 모달 */
+ .rmodal{position:fixed;inset:0;z-index:3000;background:rgba(20,26,20,.42);display:flex;align-items:center;justify-content:center;padding:20px;animation:vin .18s}
+ .rmbox{background:#fff;border-radius:var(--r-lg);box-shadow:var(--sh2);width:420px;max-width:100%;max-height:82vh;overflow:auto;padding:20px}
+ .rmhd{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+ .rmhd b{font-size:16px;color:var(--ink)}.rmclose{cursor:pointer;color:var(--light);font-size:20px;line-height:1}
+ .rmsum{background:var(--line2);border-radius:11px;padding:11px 13px;font-size:13.5px;margin-bottom:14px}
+ .rmsum b{color:var(--ocean);font-size:16px}
+ .rmleg{display:flex;gap:11px;padding:9px 0;border-bottom:1px solid var(--line2)}
+ .rmleg:last-child{border-bottom:0}
+ .rmic{width:30px;height:30px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0}
+ .rmleg .rmt{font-size:13px;font-weight:600;color:var(--ink)}
+ .rmst{font-size:11.5px;color:var(--mid);margin-top:2px}.rmst span{color:var(--light)}
+ .rmfoot{font-size:10.5px;color:var(--light);margin-top:12px;text-align:center}
  .card h3{font-weight:700;margin:0 0 15px;font-size:16px;color:var(--ink);letter-spacing:-.02em}
  .barrow{display:flex;align-items:center;gap:10px;font-size:12.5px;margin:6px 0}
  .barrow .nm{width:120px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--mid)}
@@ -216,6 +229,12 @@
    <div class="gsearch"><input id="gsearch" placeholder="지역 검색 (예: 강남구 역삼)" autocomplete="off"><div class="ac" id="gac"></div></div>
    <button class="btn" id="shareBtn" title="현재 화면 링크 복사" style="margin-left:8px;flex-shrink:0">🔗 공유</button>
  </nav>
+ <div id="routeModal" class="rmodal" style="display:none" onclick="if(event.target===this)closeRoute()"><div class="rmbox">
+   <div class="rmhd"><b id="rmTitle"></b><span class="rmclose" onclick="closeRoute()">✕</span></div>
+   <div id="rmSummary" class="rmsum"></div>
+   <div id="rmLegs" class="rmlegs"></div>
+   <div class="rmfoot">대중교통 door-to-door · 오전 9시 출발 기준 · 지도에 경로 표시됨</div>
+ </div></div>
 
  <div class="view" id="v-home" style="display:none"><div class="wrap">
    <div class="hero-t">어디가 살기 좋은 동네일까</div>
@@ -523,10 +542,25 @@ function fillTransit(p){
   if(p.adm_nm===commuteBase){el.innerHTML='🚇 기준지 본인';return;}
   const u=`https://daero.duckdns.org/api/plan/coords?fromLat=${b.clat}&fromLon=${b.clon}&toLat=${p.clat}&toLon=${p.clon}&time=09:00`;
   fetch(u).then(r=>r.json()).then(j=>{const e=document.getElementById('transitInfo');if(!e)return;
-    if(j&&j.found&&j.durationMin!=null){e.innerHTML=`🚇 <b>${commuteBase}</b>→여기 대중교통 <b style="color:var(--ocean)">약 ${j.durationMin}분</b>`+(j.transfers?` · 환승 ${j.transfers}`:'')+(j.estimatedFareKrw?` · ₩${j.estimatedFareKrw.toLocaleString()}`:'')+` <span style="font-size:10px">(오전9시 기준)</span>`;}
+    if(j&&j.found&&j.durationMin!=null){window._route={j,from:commuteBase,to:p.adm_nm};
+      e.innerHTML=`🚇 <b>${commuteBase}</b>→여기 <b style="color:var(--ocean)">약 ${j.durationMin}분</b>`+(j.transfers?` · 환승 ${j.transfers}`:'')+` <a onclick="openRoute()" style="color:var(--sky);cursor:pointer;text-decoration:underline;font-weight:700">경로 보기 →</a>`;}
     else e.innerHTML='🚇 <span style="font-size:11px">대중교통 경로 없음(원거리·비운영)</span>';
   }).catch(()=>{const e=document.getElementById('transitInfo');if(e)e.innerHTML='🚇 <span style="font-size:11px">조회 실패</span>';});
 }
+let routeLayer=null;
+function openRoute(){const R=window._route;if(!R)return;const j=R.j;
+  document.getElementById('rmTitle').textContent=`${R.from} → ${R.to}`;
+  document.getElementById('rmSummary').innerHTML=`총 <b>${j.durationMin}분</b> · 환승 ${j.transfers||0}회 · ₩${(j.estimatedFareKrw||0).toLocaleString()} <span style="color:var(--mid)">(${j.departure||''}~${j.arrival||''})</span>`;
+  const ic={WALK:['🚶','#9aa7b2'],BUS:['🚌','#4a9d6f'],SUBWAY:['🚇','#c47c52'],METRO:['🚇','#c47c52'],RAIL:['🚆','#5b6bd0'],TRAIN:['🚆','#5b6bd0']};
+  document.getElementById('rmLegs').innerHTML=(j.legs||[]).map(l=>{const [ico,col]=ic[l.mode]||['🚏','#5b6b77'];
+    const label=l.mode==='WALK'?'도보':((l.route?l.route+' ':'')+(l.mode==='BUS'?'버스':(l.mode==='SUBWAY'||l.mode==='METRO')?'지하철':l.mode));
+    return `<div class="rmleg"><span class="rmic" style="background:${col}22;color:${col}">${ico}</span><div><div class="rmt">${label} · ${l.min}분</div><div class="rmst">${l.from||''} → ${l.to||''} <span>${l.depart||''}~${l.arrive||''}</span></div></div></div>`}).join('');
+  document.getElementById('routeModal').style.display='flex';
+  if(map){if(routeLayer)routeLayer.remove();routeLayer=L.layerGroup();
+    (j.legs||[]).forEach(l=>{if(l.path&&l.path.length>1){const w=l.mode==='WALK';L.polyline(l.path,{color:w?'#8a94a0':'#2f6b8f',weight:w?3:5,opacity:.9,dashArray:w?'3 6':null}).addTo(routeLayer);}});
+    routeLayer.addTo(map);try{map.fitBounds(routeLayer.getBounds(),{padding:[50,50]});}catch(e){}}
+}
+function closeRoute(){document.getElementById('routeModal').style.display='none';}
 function showDetail(p,focus){const d=document.getElementById('detail');d.innerHTML=detailHTML(p);d.style.display='block';growBars();curDetail=p.adm_nm;writeHash();fillTransit(p);
   // focus=true(검색·순위·딥링크로 진입)일 때만 지도 리프레이밍. 지도 직접클릭은 현재 위치 유지(확대상태 축소 방지)
   if(focus&&p._l&&map){map.invalidateSize();const b=p._l.getBounds();if(b&&b.isValid())map.fitBounds(b,{maxZoom:13,padding:[24,24]});}}
