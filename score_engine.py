@@ -1,7 +1,7 @@
 """
 NLI 스코어링 엔진 (Phase 1 스켈레톤) — config 기반
 파이프라인: 시설 포인트 로드 → 5179 재투영 → 읍면동 공간결합(point-in-polygon)
-           → 공급밀도(인구 1만명당) + 근접성(최근접 m) → 전국 백분위 정규화
+           → 공급밀도(인구 1만명당 + 면적 ㎢당 혼합) + 근접성(최근접 m) → 전국 백분위 정규화
            → 도메인 점수(가중평균) → NLI(도메인 가중합) → 등급(S~D)
 
 산출물: data/processed/nli.duckdb 테이블 nli_scores + data/processed/nli_scores_mvp.csv
@@ -232,6 +232,7 @@ def main():
 
     # 인구가중 중심점을 4326 위경도로(통근 근접보정·지도 마커용)
     results = con.execute("""SELECT adm_cd, adm_nm, pop_total, pop_density,
+        round(ST_Area(geom)/1e6, 4) AS area_km2,
         round(ST_X(ST_Transform(cen,'EPSG:5179','EPSG:4326',always_xy:=true)),5) AS cen_lon,
         round(ST_Y(ST_Transform(cen,'EPSG:5179','EPSG:4326',always_xy:=true)),5) AS cen_lat
         FROM frame ORDER BY adm_cd""").df()
@@ -256,10 +257,11 @@ def main():
         cnt.columns = ["adm_cd", f"{ds['key']}_cnt"]
         results = results.merge(cnt, on="adm_cd", how="left")
 
-        # 밀도(인구 1만명당) — 인구 MIN_POP 미만은 NaN 처리(도농/극소인구 왜곡 방지)
+        # 밀도 2종: ①인구 1만명당(지방 중심지 유리) ②면적 ㎢당(대도시 유리) — 신호에서 혼합
         c, dcol = f"{ds['key']}_cnt", f"{ds['key']}_dens"
         valid_pop = results["pop_total"].where(results["pop_total"] >= MIN_POP)
-        results[dcol] = results[c] / valid_pop * 10000
+        results[dcol] = results[c] / valid_pop * 10000                          # 인구밀도
+        results[f"{ds['key']}_densA"] = results[c] / results["area_km2"].where(results["area_km2"] > 0)  # 면적밀도(㎢당)
 
         # 근접성(최근접 m) — RTREE + 확장반경. prox=False면 생략(밀도만)
         if ds.get("prox", True):
@@ -297,7 +299,10 @@ def main():
     ind_sig = {}  # domain -> list of (signal_col, weight)
     for ds in DATASETS:
         k = ds["key"]
-        dens_pct = results[f"{k}_dens"].rank(pct=True) * 100
+        # 밀도신호 = 인구밀도 백분위 + 면적밀도 백분위 혼합(지방↔대도시 균형)
+        dpop = results[f"{k}_dens"].rank(pct=True) * 100
+        darea = results[f"{k}_densA"].rank(pct=True) * 100
+        dens_pct = pd.concat([dpop, darea], axis=1).mean(axis=1)
         parts = [dens_pct]
         near_col = f"{k}_nearest_m"
         if near_col in results:                      # 가까울수록 높은 점수 → -거리로 랭크
