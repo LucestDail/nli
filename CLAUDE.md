@@ -24,7 +24,8 @@ Bias: **신중함 > 속도.** 사소한 작업엔 판단으로.
 
 "done"은 **방금 나온 실측**으로만 주장한다. 추론으로 주장하지 않는다.
 
-- 파이프라인 표준 순서: `score_engine.py` → `analyze_nli.py` → `export_map_geojson.py`(mapshaper 위상 단순화) → `generate_points.py` → `build_web.py` → `cp nli_map.html index.html`. 재실행 후 수치를 확인한다.
+- 파이프라인 표준 순서(**루트에서 실행**, CWD-상대 경로): `pipeline/build_geoframe.py` → `pipeline/score_engine.py` → `pipeline/analyze_nli.py` → `pipeline/export_map_geojson.py`(mapshaper 위상 단순화) → `pipeline/generate_points.py` → `pipeline/build_web.py` → `cp nli_map.html index.html`. 재실행 후 수치를 확인한다.
+- 디렉토리: `pipeline/`(코어) · `prep/`(가공) · `collect/`(API수집) · `analysis/`(가중치·통계) · `tools/`(핸드오프) · `legacy/`(구 Selenium, 미사용) · `docs/`(기획·분석 문서). 산출물 index.html·nli_map.html은 루트.
 - **상식 검증**: 결과가 지리적으로 말이 되는가(노형동에 약국 47개, 강남 S등급, 매칭률 99.9%). 안 맞으면 데이터 품질 이슈를 의심하고 파고든다(예: 폴리곤 기하중심 → 인구가중 중심점).
 - **배포 검증**: 배포 후 `curl http://<홈랩서버>/nli/`로 신기능 마커 문자열이 실제 서비스되는지 확인(서버 주소는 로컬 메모리 참조).
 - 체커가 빨간불이면 그게 반복하라는 신호다 — **빨간불을 말로 무마하지 마라.**

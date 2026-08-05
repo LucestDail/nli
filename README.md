@@ -41,17 +41,17 @@
 ## 파이프라인 재현
 
 ```bash
-# 표준 순서 (각 단계가 파일 산출)
-./venv/bin/python build_geoframe.py       # SGIS 경계+인구+주택 → nli.duckdb(dong, stat_long)
-./venv/bin/python score_engine.py         # 시설점 공간결합 → 밀도·근접성·NLI·등급 → nli_scores
-./venv/bin/python analyze_nli.py          # 사각지대·결핍·프로필 → nli_report.md
-./venv/bin/python export_map_geojson.py   # mapshaper 위상단순화 + 점수 조인 → nli_map.geojson
-./venv/bin/python generate_points.py      # 시설 포인트 → nli_points.json
-./venv/bin/python build_web.py            # SPA 생성 → nli_map.html
+# 표준 순서 (루트에서 실행, 각 단계가 파일 산출)
+./venv/bin/python pipeline/build_geoframe.py       # SGIS 경계+인구+주택 → nli.duckdb(dong, stat_long)
+./venv/bin/python pipeline/score_engine.py         # 시설점 공간결합 → 밀도(인구+면적)·근접성·NLI·등급
+./venv/bin/python pipeline/analyze_nli.py          # 사각지대·결핍·프로필 → nli_report.md
+./venv/bin/python pipeline/export_map_geojson.py   # mapshaper 위상단순화 + 점수·실거래가 조인 → nli_map.geojson
+./venv/bin/python pipeline/generate_points.py      # 시설 포인트 → nli_points.json
+./venv/bin/python pipeline/build_web.py            # SPA 생성 → nli_map.html
 cp nli_map.html index.html
 
 # 검증 (총인구·조인·좌표·등급·세분·임베드 assert)
-./venv/bin/python verify_pipeline.py
+./venv/bin/python pipeline/verify_pipeline.py
 
 # 로컬 미리보기
 open index.html
