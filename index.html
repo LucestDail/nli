@@ -37,6 +37,7 @@
  nav .tab{padding:8px 15px;border-radius:999px;cursor:pointer;font-size:13.5px;font-weight:500;color:#a9c0c8;transition:.18s}
  nav .tab:hover{background:rgba(255,255,255,.08);color:#fff}
  nav .tab.on{background:#fff;color:var(--ocean);font-weight:600}
+ .tabs{display:flex;align-items:center;gap:2px}
  .gsearch{margin-left:auto;position:relative}
  .gsearch input{padding:9px 15px 9px 34px;border:0;border-radius:999px;font-size:13px;width:250px;background:rgba(255,255,255,.14);color:#fff;font-family:var(--sans);transition:.18s}
  .gsearch input::placeholder{color:#9fb6bf}.gsearch input:focus{background:#fff;color:var(--ink);width:290px;outline:none}
@@ -182,25 +183,36 @@
    .kpi{padding:15px}.kpi b{font-size:26px}
    .card{padding:16px}
    .wrap{padding:18px 13px 40px}.hero-t{font-size:26px}
-   nav{padding:0 10px;gap:1px;overflow-x:auto}
-   nav::-webkit-scrollbar{display:none}
-   nav .brand{font-size:15px;margin-right:6px}nav .brand small{display:none}
-   nav .tab{padding:7px 9px;font-size:12.5px;flex-shrink:0}
-   nav .gsearch{flex-shrink:0}nav .gsearch input{width:130px}nav .gsearch input:focus{width:150px}
-   .detail{width:auto;left:10px;right:10px;top:auto;bottom:10px;max-height:72%}
+   /* 모바일 네비: 2줄 — 1줄(로고·검색·공유) 항상 보임 / 2줄 탭 가로스크롤 */
+   nav{height:auto;min-height:0;padding:8px 10px 6px;gap:8px;flex-wrap:wrap;row-gap:7px}
+   nav .logo{width:27px;height:27px;font-size:14px;order:0}
+   nav .brand{font-size:15px;margin:0 0 0 8px;order:0}nav .brand small{display:none}
+   .gsearch{order:1;margin-left:auto;flex:1 1 120px;min-width:110px}
+   .gsearch input{width:100%}.gsearch input:focus{width:100%}
+   .gsearch .ac{top:40px;left:0;right:0;width:auto}
+   #shareBtn{order:1;flex-shrink:0;padding:7px 11px;font-size:12px}
+   .tabs{order:2;flex:0 0 100%;overflow-x:auto;gap:2px;scrollbar-width:none}
+   .tabs::-webkit-scrollbar{display:none}
+   nav .tab{padding:7px 13px;font-size:13px;flex-shrink:0}
+   .detail{width:auto;left:10px;right:10px;top:auto;bottom:10px;max-height:68%}
    .swrap{grid-template-columns:1fr}
    .hero-t{font-size:24px}.sub{font-size:13px}
+   #rankTable td,#rankTable th{white-space:nowrap;padding:9px 10px}   /* 지역명 세로쫙 방지→가로스크롤 */
+   .domgrid,.valgrid{grid-template-columns:1fr}
+   h2{font-size:20px}
  }
 </style></head><body>
 <div id="app">
  <nav>
    <div class="logo">🏘</div><div class="brand">동네살기지수<small>NLI</small></div>
-   <div class="tab on" data-v="map">지도</div>
-   <div class="tab" data-v="home">홈</div>
-   <div class="tab" data-v="rank">순위</div>
-   <div class="tab" data-v="compare">비교</div>
-   <div class="tab" data-v="persona">맞춤설정</div>
-   <div class="tab" data-v="stats">통계</div>
+   <div class="tabs">
+     <div class="tab on" data-v="map">지도</div>
+     <div class="tab" data-v="home">홈</div>
+     <div class="tab" data-v="rank">순위</div>
+     <div class="tab" data-v="compare">비교</div>
+     <div class="tab" data-v="persona">맞춤설정</div>
+     <div class="tab" data-v="stats">통계</div>
+   </div>
    <div class="gsearch"><input id="gsearch" placeholder="지역 검색 (예: 강남구 역삼)" autocomplete="off"><div class="ac" id="gac"></div></div>
    <button class="btn" id="shareBtn" title="현재 화면 링크 복사" style="margin-left:8px;flex-shrink:0">🔗 공유</button>
  </nav>
