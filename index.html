@@ -514,9 +514,10 @@ function detailHTML(p){
     h+=`</div>`}
   h+=`</div><div style="margin-top:14px"><button class="btn" onclick="addCmp('${p.adm_nm}')">⊕ 비교담기</button></div>`;
   return h;}
-function showDetail(p){const d=document.getElementById('detail');d.innerHTML=detailHTML(p);d.style.display='block';growBars();curDetail=p.adm_nm;writeHash();
-  if(p._l&&map){map.invalidateSize();const b=p._l.getBounds();if(b&&b.isValid())map.fitBounds(b,{maxZoom:13,padding:[24,24]});}}
-function goDetail(adm){const f=F.find(x=>x.properties.adm_nm===adm);if(!f)return;document.querySelector('nav .tab[data-v=map]').click();showDetail(f.properties)}
+function showDetail(p,focus){const d=document.getElementById('detail');d.innerHTML=detailHTML(p);d.style.display='block';growBars();curDetail=p.adm_nm;writeHash();
+  // focus=true(검색·순위·딥링크로 진입)일 때만 지도 리프레이밍. 지도 직접클릭은 현재 위치 유지(확대상태 축소 방지)
+  if(focus&&p._l&&map){map.invalidateSize();const b=p._l.getBounds();if(b&&b.isValid())map.fitBounds(b,{maxZoom:13,padding:[24,24]});}}
+function goDetail(adm){const f=F.find(x=>x.properties.adm_nm===adm);if(!f)return;document.querySelector('nav .tab[data-v=map]').click();showDetail(f.properties,true)}
 function showDom(d){mMode='basic';document.querySelectorAll('#modes button').forEach(x=>x.classList.toggle('on',x.dataset.m==='basic'));document.querySelector('nav .tab[data-v=map]').click();const s=document.getElementById('metric');if(s){s.value=d;s.dispatchEvent(new Event('change'));}}
 
 // 통근 보정 — 기준지 중심점(clat/clon)에서 직선거리(도로 라우팅은 향후) 이내로 좁혀 NLI 순 제시
@@ -730,7 +731,7 @@ function applyHash(){
     const ms=document.getElementById('metric');if(ms){ms.value=mMetric;ms.dispatchEvent(new Event('change'));}
     if(P.cb){const ci=document.getElementById('commuteInfo');if(ci){ci.innerHTML='<b style="color:var(--ocean)">'+P.cb+'</b> 기준 ·';document.getElementById('commuteKmWrap').style.display='inline-flex';document.getElementById('commuteKm').value=commuteKm;document.getElementById('commuteKmV').textContent=commuteKm+'km';}if(v==='rank')renderRank();}
     if(P.sx){const sx=document.getElementById('sx'),sy=document.getElementById('sy');if(sx&&sx.onchange){sx.value=P.sx;if(P.sy&&sy)sy.value=P.sy;sx.dispatchEvent(new Event('change'));}}
-    if(P.d){const f=F.find(x=>x.properties.adm_nm===P.d);if(f)showDetail(f.properties);}
+    if(P.d){const f=F.find(x=>x.properties.adm_nm===P.d);if(f)showDetail(f.properties,true);}
   }catch(e){}
   applyingHash=false;
   if(typeof mRedraw==='function')mRedraw();
