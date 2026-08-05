@@ -28,11 +28,11 @@ git branch -M main && git push -u origin main
 ## 갱신(재빌드) 방법
 데이터가 추가되면:
 ```bash
-./venv/bin/python score_engine.py        # 스코어 재계산
-./venv/bin/python analyze_nli.py          # 사각지대·결핍 재판정
-./venv/bin/python export_map_geojson.py   # 지도 경계(mapshaper 위상 단순화)
-./venv/bin/python generate_points.py      # 시설 포인트
-./venv/bin/python build_web.py            # nli_map.html 생성
+./venv/bin/python pipeline/score_engine.py        # 스코어 재계산
+./venv/bin/python pipeline/analyze_nli.py          # 사각지대·결핍 재판정
+./venv/bin/python pipeline/export_map_geojson.py   # 지도 경계(mapshaper 위상 단순화)
+./venv/bin/python pipeline/generate_points.py      # 시설 포인트
+./venv/bin/python pipeline/build_web.py            # nli_map.html 생성
 cp nli_map.html index.html                # 배포 진입점 갱신
 ```
 
