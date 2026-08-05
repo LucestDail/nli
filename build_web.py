@@ -275,7 +275,7 @@ TEMPLATE = r'''<!DOCTYPE html>
      <span class="muted" id="rankCount"></span></div>
    <div class="flex" style="margin-bottom:16px;position:relative;background:#faf8f4;border:1px solid var(--line);border-radius:12px;padding:9px 12px">
      <span style="font-size:12px;color:var(--terra);font-weight:700">🚇 통근 보정</span>
-     <input type="text" id="rankBase" placeholder="기준지(출발지) 입력 (예: 역삼동)" style="width:230px" autocomplete="off"><div class="ac" id="rankbac" style="left:130px;top:46px;right:auto"></div>
+     <span style="position:relative;display:inline-block"><input type="text" id="rankBase" placeholder="기준지(출발지) 입력 (예: 역삼동)" style="width:230px" autocomplete="off"><div class="ac" id="rankbac" style="left:0;top:42px;right:auto;width:280px"></div></span>
      <span id="commuteInfo" class="muted"></span>
      <span id="commuteKmWrap" style="display:none;align-items:center;gap:7px;font-size:12px;color:var(--mid)">이내 <input type="range" id="commuteKm" min="2" max="40" step="1" value="10" style="width:120px"><b id="commuteKmV" style="color:var(--ocean);font-weight:700">10km</b>
      <button class="btn" id="commuteClear" style="padding:4px 12px">해제</button></span></div>
