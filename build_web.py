@@ -68,6 +68,13 @@ TEMPLATE = r'''<!DOCTYPE html>
  .domtags span{font-size:11px;color:var(--mid);background:var(--line2);border-radius:6px;padding:3px 8px;white-space:nowrap}
  @media(max-width:820px){.domgrid{grid-template-columns:repeat(2,1fr)}}
  @media(max-width:560px){.domgrid{grid-template-columns:1fr}}
+ .valgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:9px}
+ .valcell{display:flex;justify-content:space-between;align-items:center;border:1px solid var(--line);border-radius:11px;padding:10px 12px;cursor:pointer;transition:.14s;background:linear-gradient(180deg,#fff,#fbfcfb)}
+ .valcell:hover{border-color:var(--sage);box-shadow:var(--sh2);transform:translateY(-2px)}
+ .valnm{font-size:13px;color:var(--ink)}.valnm span{display:block;font-size:10.5px;color:var(--light);margin-top:1px}
+ .valv{text-align:right;font-size:13px;white-space:nowrap}.valv b{color:var(--ocean)}.valv i{display:block;font-style:normal;font-size:11px;color:var(--terra);font-weight:700;margin-top:1px}
+ @media(max-width:820px){.valgrid{grid-template-columns:repeat(2,1fr)}}
+ @media(max-width:560px){.valgrid{grid-template-columns:1fr}}
  .card h3{font-weight:700;margin:0 0 15px;font-size:16px;color:var(--ink);letter-spacing:-.02em}
  .barrow{display:flex;align-items:center;gap:10px;font-size:12.5px;margin:6px 0}
  .barrow .nm{width:120px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--mid)}
@@ -260,8 +267,11 @@ TEMPLATE = r'''<!DOCTYPE html>
  </div></div>
 
  <div class="view" id="v-stats" style="display:none"><div class="wrap">
-   <h2>지역 통계·추론</h2><div class="sub">지역 특성(인구·밀도·연령)과 살기지수의 관계, 지역 유형별 격차 분석 (실시간 계산)</div>
+   <h2>지역 통계·추론</h2><div class="sub">지역 특성(인구·밀도·연령·아파트값)과 살기지수의 관계, 지역 유형별 격차 분석 (실시간 계산)</div>
    <div class="kpis" id="statKpi"></div>
+   <div class="card" style="margin-bottom:18px"><h3>💎 가성비 동네 <span class="muted" style="font-weight:400">— 살기지수는 높고 아파트값은 낮은</span></h3>
+     <div class="muted" style="margin-bottom:12px">종합지수 백분위 − 아파트 평당가 백분위 순 · 인구 3천+ · 아파트 실거래 있는 동 · <b>클릭 → 상세</b></div>
+     <div id="valueRank" class="valgrid"></div></div>
    <div class="card"><h3>지역 특성 × 도메인 상관</h3>
      <div class="muted" style="margin-bottom:12px">인구·밀도·연령구조가 각 도메인 점수와 어떻게 연관되는지 · <b style="color:#2f6b4e">초록=정비례(+)</b> / <b style="color:#b0603f">주황=반비례(−)</b> · |r|≥0.3부터 뚜렷</div>
      <div id="regHeat"></div></div>
@@ -476,6 +486,7 @@ function detailHTML(p){
   let h=`<span class="close" onclick="document.getElementById('detail').style.display='none';curDetail=null;writeHash()">✕</span>
    <h4>${fullN(p)} <span class="g" style="background:${GC[gradeOf(p)]}">${gradeOf(p)}</span> <span class="heart" onclick="toggleFav('${p.adm_nm}')">${isf?'♥':'♡'}</span></h4>
    <div class="muted">${p.cohort} · 인구 ${(p.pop_total||0).toLocaleString()}명 ${isBlind(p,'NLI')?'· <span class="warn">사각지대</span>':''}</div>
+   ${p.price!=null?`<div class="muted" style="margin-top:3px">🏢 아파트 실거래 <b style="color:var(--terra)">평당 ${Math.round(p.price*3.3058).toLocaleString()}만원</b> <span style="font-size:10.5px">(㎡당 ${p.price.toLocaleString()}만)</span></div>`:''}
    ${(()=>{const rp=recPersona(p);return rp?`<div style="margin-top:5px;font-size:12px">👤 이 동네 추천: <b>${rp}</b> <span style="cursor:pointer;color:var(--sky);text-decoration:underline" onclick="setPreset('${rp}');document.querySelector('nav .tab[data-v=persona]').click()">적용</span></div>`:''})()}
    <div style="margin:10px 0"><b>종합 지수 ${nliW(p)}</b><div class="bar"><span data-w="${nliW(p)}" style="width:0;background:${color(nliW(p))}"></span></div></div>`;
   // 강점/약점 요약 (도메인 점수 정렬)
@@ -551,8 +562,8 @@ function personaLive(){recompRank();personaTop();if(layer)layer.setStyle(mStyle)
 
 /* ---------- 지역 통계 탭 (지역 특성 × 도메인 중심) ---------- */
 const DKEYS=['D1','D2','D3','D4','D5','D6','D7','D8','D9'];
-const REG=[['dens','인구밀도'],['pop','인구'],['eld','고령비중'],['yth','유소년비중'],['apt','아파트비율'],['old','노후주택비율']];
-const VARS={dens:'인구밀도(로그)',pop:'인구(로그)',eld:'고령비중%',yth:'유소년%',inf:'영유아%',apt:'아파트비율%',old:'노후주택비율%',NLI:'종합지수',D1:'의료',D2:'교육',D3:'생활편의',D4:'문화여가',D5:'교통',D6:'안전',D7:'환경',D8:'복지',D9:'반려'};
+const REG=[['dens','인구밀도'],['pop','인구'],['eld','고령비중'],['yth','유소년비중'],['apt','아파트비율'],['old','노후주택비율'],['price','아파트값']];
+const VARS={dens:'인구밀도(로그)',pop:'인구(로그)',eld:'고령비중%',yth:'유소년%',inf:'영유아%',apt:'아파트비율%',old:'노후주택비율%',price:'아파트 평당가(만원)',NLI:'종합지수',D1:'의료',D2:'교육',D3:'생활편의',D4:'문화여가',D5:'교통',D6:'안전',D7:'환경',D8:'복지',D9:'반려'};
 const SP=F.map(f=>f.properties);
 function sval(p,k){
   if(k==='NLI')return nliW(p);
@@ -563,6 +574,7 @@ function sval(p,k){
   if(k==='inf')return p.r_inf!=null?p.r_inf*100:null;
   if(k==='apt')return p.r_apt!=null?p.r_apt*100:null;
   if(k==='old')return p.r_old!=null?p.r_old*100:null;
+  if(k==='price')return p.price!=null?p.price*3.3058:null;   // ㎡당 만원 → 평당 만원
   return p['score_'+k];
 }
 function pearson(xs,ys){let n=0,sx=0,sy=0,sxx=0,syy=0,sxy=0;for(let i=0;i<xs.length;i++){const a=xs[i],b=ys[i];if(a==null||b==null||isNaN(a)||isNaN(b))continue;n++;sx+=a;sy+=b;sxx+=a*a;syy+=b*b;sxy+=a*b;}if(n<2)return NaN;const c=sxy-sx*sy/n;return c/Math.sqrt((sxx-sx*sx/n)*(syy-sy*sy/n));}
@@ -578,11 +590,20 @@ function renderStats(){
   const gap=cmean(p=>p.cohort==='도시','D1')/cmean(p=>p.cohort==='농촌','D1');
   // 최강 지역특성×도메인 상관
   let best=['',0];REG.forEach(([rk,rn],ri)=>dkAll.forEach((d,di)=>{const r=pearson(regV[ri],dvAll[di]);if(Math.abs(r)>Math.abs(best[1]))best=[rn+'↔'+VARS[d],r];}));
+  // 아파트값 ↔ 종합지수 상관
+  const prV=SP.map(p=>sval(p,'price')), priceNli=pearson(prV,SP.map(p=>nliW(p)));
   document.getElementById('statKpi').innerHTML=
     `<div class="kpi"><b>${avgNLI.toFixed(1)}</b><span>평균 종합지수</span></div>
-     <div class="kpi"><b style="color:#b0603f">${eldMed.toFixed(2)}</b><span>고령비중 ↔ 의료</span></div>
+     <div class="kpi"><b style="color:${priceNli>=0?'#2f6b4e':'#b0603f'}">${priceNli>=0?'+':''}${priceNli.toFixed(2)}</b><span>아파트값 ↔ 살기지수</span></div>
      <div class="kpi"><b>${gap.toFixed(1)}배</b><span>의료 도농격차(도시/농촌)</span></div>
      <div class="kpi"><b style="color:${best[1]>=0?'#2f6b4e':'#b0603f'}">${best[1]>=0?'+':''}${best[1].toFixed(2)}</b><span>최강 지역상관 · ${best[0]}</span></div>`;
+
+  // 가성비 동네: 종합지수 백분위 − 가격 백분위
+  const pr=SP.filter(p=>p.price!=null&&(p.pop_total||0)>=3000);
+  const nS=pr.map(p=>nliW(p)).sort((a,b)=>a-b), pS=pr.map(p=>p.price).sort((a,b)=>a-b);
+  const pctl=(arr,v)=>{let lo=0,hi=arr.length;while(lo<hi){let m=(lo+hi)>>1;if(arr[m]<v)lo=m+1;else hi=m}return lo/arr.length};
+  const val=pr.map(p=>({p,g:pctl(nS,nliW(p))-pctl(pS,p.price)})).sort((a,b)=>b.g-a.g);
+  document.getElementById('valueRank').innerHTML=val.slice(0,12).map((x,i)=>{const p=x.p;return `<div class="valcell" onclick="goDetail('${p.adm_nm}')"><div class="valnm"><b>${i+1}.</b> ${p.adm_nm}<span>${p.sido}</span></div><div class="valv"><span class="g" style="background:${GC[gradeOf(p)]}">${gradeOf(p)}</span> <b>${nliW(p)}</b><i>${Math.round(p.price*3.3058).toLocaleString()}만/평</i></div></div>`}).join('');
 
   // 지역 특성 × 도메인 상관 히트맵
   let ht='<table class="heat"><tr><th></th>'+dkAll.map(d=>`<th>${VARS[d]}</th>`).join('')+'</tr>';
@@ -618,7 +639,7 @@ function renderStats(){
   const sarr=Object.entries(sd).map(([k,v])=>[k,v.reduce((a,b)=>a+b,0)/v.length]).sort((a,b)=>b[1]-a[1]);
   document.getElementById('sidoRank').innerHTML=sarr.map(([k,v])=>`<div style="display:flex;align-items:center;gap:8px;font-size:12px;margin:3px 0"><span style="width:100px;text-align:right;color:var(--mid);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${k}</span><div style="flex:1;background:var(--line2);border-radius:4px;height:13px"><div class="gbar" data-w="${v.toFixed(0)}" style="width:0;height:100%;background:${color(v)};border-radius:4px"></div></div><span style="width:28px;font-weight:700">${v.toFixed(0)}</span></div>`).join('');
 
-  const opts=['dens','pop','eld','yth','inf','apt','old','NLI',...DKEYS];
+  const opts=['dens','pop','eld','yth','inf','apt','old','price','NLI',...DKEYS];
   const sx=document.getElementById('sx'),sy=document.getElementById('sy');
   if(!sx.options.length){opts.forEach(k=>{sx.add(new Option(VARS[k],k));sy.add(new Option(VARS[k],k));});sx.value='dens';sy.value='D1';sx.onchange=drawScatter;sy.onchange=drawScatter;}
   drawScatter();growBars();
