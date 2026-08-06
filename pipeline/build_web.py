@@ -234,6 +234,7 @@ TEMPLATE = r'''<!DOCTYPE html>
      <div class="tab" data-v="compare">비교</div>
      <div class="tab" data-v="persona">맞춤설정</div>
      <div class="tab" data-v="stats">통계</div>
+     <div class="tab" data-v="diag">🩺 진단</div>
    </div>
    <div class="gsearch"><input id="gsearch" placeholder="지역 검색 (예: 강남구 역삼)" autocomplete="off"><div class="ac" id="gac"></div></div>
    <button class="btn" id="shareBtn" title="현재 화면 링크 복사" style="margin-left:8px;flex-shrink:0">🔗 공유</button>
@@ -336,6 +337,17 @@ TEMPLATE = r'''<!DOCTYPE html>
      <div id="scatterNote" style="margin-top:12px;text-align:center;font-size:13.5px;color:var(--ink)"></div></div>
  </div></div>
 
+ <div class="view" id="v-diag" style="display:none"><div class="wrap">
+   <h2>지역 생활여건 진단 <span class="muted" style="font-size:14px;font-weight:400">— 지자체 229곳 · 연중</span></h2>
+   <div class="sub">시군구(지자체) 단위로 <b>취약 도메인</b>(전국 평균 대비 낮은 생활 인프라)과 <b>사각지대 동</b>(인구 1만+ 인데 특정 도메인 하위 20%)을 진단합니다. 시설 입지·예산 배분 근거로 활용하세요. 표의 행 또는 지자체를 고르면 아래 카드가 갱신됩니다.</div>
+   <div class="flex" style="margin-bottom:14px">
+     <select id="diagSido"></select>
+     <div class="seg" id="diagSortSeg" style="width:280px"><button data-s="nli" class="on">취약(평균지수 낮은) 순</button><button data-s="blind">사각지대 많은 순</button></div>
+     <span class="muted" id="diagCount"></span></div>
+   <div id="diagCard" class="card" style="margin-bottom:16px"></div>
+   <div class="card" style="padding:0;max-height:56vh;overflow:auto"><table id="diagTable"></table></div>
+ </div></div>
+
  <div class="view" id="v-persona" style="display:none"><div class="wrap">
    <h2>나에게 맞는 동네</h2><div class="sub">중요한 도메인의 비중을 조절하면 전국 순위·지도가 즉시 재계산됩니다.</div>
    <div class="grid2">
@@ -420,10 +432,10 @@ function attachAC(input,box,onPick){
 
 document.querySelectorAll('nav .tab').forEach(t=>t.onclick=()=>{
   document.querySelectorAll('nav .tab').forEach(x=>x.classList.remove('on'));t.classList.add('on');
-  const v=t.dataset.v;['home','map','rank','compare','persona','stats'].forEach(x=>document.getElementById('v-'+x).style.display=(x===v?(x==='map'?'flex':'block'):'none'));
+  const v=t.dataset.v;['home','map','rank','compare','persona','stats','diag'].forEach(x=>document.getElementById('v-'+x).style.display=(x===v?(x==='map'?'flex':'block'):'none'));
   if(v!=='map'){const el=document.getElementById('v-'+v);el.style.animation='none';void el.offsetWidth;el.style.animation='vin .3s cubic-bezier(.22,1,.36,1)';}
   if(v==='map'&&map){setTimeout(()=>map.invalidateSize(),60);renderMapSliders();}
-  if(v==='home')renderHome();if(v==='rank')renderRank();if(v==='compare')renderCompare();if(v==='persona')renderPersona();if(v==='stats')renderStats();
+  if(v==='home')renderHome();if(v==='rank')renderRank();if(v==='compare')renderCompare();if(v==='persona')renderPersona();if(v==='stats')renderStats();if(v==='diag')renderDiag();
   writeHash();
 });
 
@@ -793,6 +805,66 @@ function applyHash(){
   if(typeof mRedraw==='function')mRedraw();
   writeHash();
 }
+/* ── 지역 생활여건 진단 (B2G) ── 지자체=full_nm.split[1] (자치구 분리·일반구는 시로 병합) */
+let diagSel=null,diagSort='nli';
+function diagData(){
+  const G={};
+  SP.forEach(p=>{if((p.pop_total||0)<=0)return;const ps=(p.full_nm||'').split(' ');if(ps.length<2)return;
+    const key=ps[0]+' '+ps[1];(G[key]=G[key]||{key:key,sido:ps[0],sgg:ps[1],dongs:[]}).dongs.push(p);});
+  const nat={};DKEYS.forEach(d=>{const vs=SP.filter(p=>(p.pop_total||0)>0&&p['score_'+d]!=null).map(p=>p['score_'+d]);nat[d]=vs.reduce((a,b)=>a+b,0)/(vs.length||1);});
+  const rows=Object.values(G).map(g=>{
+    const nv=g.dongs.map(nliW).filter(v=>v!=null);g.nli=nv.reduce((a,b)=>a+b,0)/(nv.length||1);
+    g.dom={};DKEYS.forEach(d=>{const vs=g.dongs.map(p=>p['score_'+d]).filter(v=>v!=null);g.dom[d]=vs.reduce((a,b)=>a+b,0)/(vs.length||1);});
+    g.rankDom=DKEYS.map(d=>[d,g.dom[d]-nat[d]]).sort((a,b)=>a[1]-b[1]);
+    g.blind=[];g.dongs.forEach(p=>DKEYS.forEach(d=>{if(isBlind(p,d))g.blind.push({p:p,d:d,v:p['score_'+d]})}));
+    g.blind.sort((a,b)=>(b.p.pop_total||0)-(a.p.pop_total||0));g.blindN=g.blind.length;
+    g.pop=g.dongs.reduce((a,p)=>a+(p.pop_total||0),0);return g;});
+  return {rows:rows,nat:nat};
+}
+function diagCardHTML(g,rankOf,total){
+  const gc=g.dongs.reduce((m,p)=>{const gr=gradeOf(p);m[gr]=(m[gr]||0)+1;return m},{});
+  const gdist=['S','A','B','C','D'].filter(x=>gc[x]).map(x=>`<span style="color:${GC[x]};font-weight:700">${x}</span> ${gc[x]}`).join(' · ');
+  const weak=g.rankDom.slice(0,3),strong=g.rankDom.slice(-2).reverse();
+  const chip=(d,dv,neg)=>`<span class="dchip" style="border-color:${neg?'#b0603f':'#2f6b4e'}55" onclick="showDom('${d}')"><b>${DOMINFO[d][0]}</b>${SHORT[d]} <i style="color:${neg?'#b0603f':'#2f6b4e'}">${dv>=0?'+':''}${Math.round(dv)}</i></span>`;
+  const bl=g.blind.slice(0,10).map(b=>`<div class="valcell" style="cursor:pointer" onclick="goDetail('${b.p.adm_nm}')"><div class="valnm">${b.p.adm_nm}<span>${(b.p.pop_total||0).toLocaleString()}명</span></div><div class="valv"><span class="dchip" style="border-color:#b0603f55"><b>${DOMINFO[b.d][0]}</b>${SHORT[b.d]}</span> <b style="color:#b0603f">${Math.round(b.v)}</b></div></div>`).join('');
+  return `<div class="flex" style="justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:8px">
+    <h3 style="margin:0">${g.sido} ${g.sgg}</h3>
+    <span class="muted">전국 취약 순위 <b style="color:var(--terra)">${rankOf.get(g.key)}</b>/${total} · 인구 ${g.pop.toLocaleString()}명 · 동 ${g.dongs.length}개</span></div>
+   <div class="kpis" style="margin:12px 0">
+     <div class="kpi"><b style="color:${color(g.nli)}">${g.nli.toFixed(1)}</b><span>평균 종합지수</span></div>
+     <div class="kpi"><b style="color:var(--terra)">${g.blindN}</b><span>사각지대 (동×도메인)</span></div>
+     <div class="kpi" style="flex:2;min-width:180px"><b style="font-size:15px">${gdist||'—'}</b><span>동 등급 분포</span></div></div>
+   <div style="margin-top:6px"><div class="fld" style="color:#b0603f">🔴 취약 도메인 <span class="muted" style="font-weight:400">전국 평균 대비</span></div>
+     <div style="margin:6px 0 12px">${weak.map(w=>chip(w[0],w[1],true)).join('')}</div>
+     <div class="fld" style="color:#2f6b4e">🟢 강점 도메인</div>
+     <div style="margin:6px 0 12px">${strong.map(w=>chip(w[0],w[1],false)).join('')}</div>
+     <div class="fld">🎯 사각지대 동 <span class="muted" style="font-weight:400">인구 많은 순 · 클릭 → 지도 상세</span></div>
+     ${g.blindN?`<div class="valgrid" style="margin-top:6px">${bl}</div>`+(g.blindN>10?`<div class="muted" style="margin-top:8px">외 ${g.blindN-10}건</div>`:''):'<div class="muted" style="margin-top:6px">사각지대 없음 — 인구 1만+ 동에서 하위 20% 도메인 없음</div>'}</div>`;
+}
+function renderDiag(){
+  const dd=diagData(),rows=dd.rows;
+  const sf=document.getElementById('diagSido');
+  if(!sf.options.length){sf.innerHTML='<option value="">전국</option>'+[...new Set(rows.map(r=>r.sido))].sort().map(s=>`<option>${s}</option>`).join('');sf.onchange=()=>{diagSel=null;renderDiag();};customSelect(sf);}
+  document.querySelectorAll('#diagSortSeg button').forEach(b=>b.onclick=()=>{diagSort=b.dataset.s;document.querySelectorAll('#diagSortSeg button').forEach(x=>x.classList.toggle('on',x===b));renderDiag();});
+  const natRank=[...rows].sort((a,b)=>a.nli-b.nli),rankOf=new Map();natRank.forEach((r,i)=>rankOf.set(r.key,i+1));
+  const fsido=sf.value;let list=rows.filter(r=>!fsido||r.sido===fsido);
+  list.sort(diagSort==='blind'?(a,b)=>b.blindN-a.blindN||a.nli-b.nli:(a,b)=>a.nli-b.nli);
+  document.getElementById('diagCount').textContent=list.length+'개 지자체';
+  if(!diagSel||!rows.find(r=>r.key===diagSel))diagSel=list[0]?list[0].key:null;
+  const sel=rows.find(r=>r.key===diagSel);
+  document.getElementById('diagCard').innerHTML=sel?diagCardHTML(sel,rankOf,rows.length):'';
+  let h='<tr><th>취약<br>순위</th><th>지자체</th><th>평균<br>지수</th><th>최약 도메인</th><th>사각<br>지대</th><th>동</th></tr>';
+  list.forEach(r=>{const w=r.rankDom[0];
+    h+=`<tr onclick="selectDiag('${r.key}')" style="cursor:pointer${r.key===diagSel?';background:#eef4ef':''}">
+      <td style="text-align:center;color:var(--mid)">${rankOf.get(r.key)}</td>
+      <td style="text-align:left"><b>${r.sgg}</b> <span class="muted">${r.sido.replace('특별자치도','').replace('특별자치시','').replace('광역시','').replace('특별시','').replace('자치도','')}</span></td>
+      <td style="text-align:center"><b style="color:${color(r.nli)}">${r.nli.toFixed(1)}</b></td>
+      <td style="text-align:left"><span style="color:#b0603f">${DOMINFO[w[0]][0]} ${SHORT[w[0]]}</span> <span class="muted">${w[1]>=0?'+':''}${Math.round(w[1])}</span></td>
+      <td style="text-align:center;color:var(--terra);font-weight:700">${r.blindN||''}</td>
+      <td style="text-align:center;color:var(--mid)">${r.dongs.length}</td></tr>`;});
+  document.getElementById('diagTable').innerHTML=h;
+}
+function selectDiag(k){diagSel=k;renderDiag();}
 recompRank();initMap();renderHome();
 attachAC(document.getElementById('gsearch'),document.getElementById('gac'),goDetail);
 attachAC(document.getElementById('cmpSearch'),document.getElementById('cmpac'),adm=>{addCmp(adm)});
