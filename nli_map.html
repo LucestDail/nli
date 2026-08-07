@@ -546,7 +546,7 @@ function detailHTML(p){
     h+=`<div class="dom"><div class="hd"><span>${ic} ${METRICS[d]}</span><span style="color:${color(v)};font-weight:700">${v}</span></div><div class="bar"><span data-w="${v}" style="width:0;background:${color(v)}"></span></div>`;
     for(const fac of DOMFAC[d]){let c=fac[0],label=fac[1],hn=fac[2],n=p[c+'_c'],near=p[c+'_n'];let cnt=(n===0)?'<span class="warn">0개 ⚠</span>':((n||0).toLocaleString()+'개');h+=`<div class="ev">· ${label} ${cnt}${hn?(' · 최근접 '+(n===0?'—':dist(near)+walk(near))):''}</div>`}
     h+=`</div>`}
-  h+=`</div><div style="margin-top:14px"><button class="btn" onclick="addCmp('${p.adm_nm}')">⊕ 비교담기</button></div>`;
+  h+=`</div><div class="flex" style="margin-top:14px;gap:6px"><button class="btn" onclick="addCmp('${p.adm_nm}')">⊕ 비교담기</button><button class="btn" onclick="shareDong('${p.adm_nm}',this)">📤 이 동네 공유</button></div>`;
   return h;}
 // daero 대중교통 door-to-door 소요시간(통근 기준지 설정 시 상세패널에 표시)
 function fillTransit(p){
@@ -579,6 +579,19 @@ function showDetail(p,focus){const d=document.getElementById('detail');d.innerHT
   // focus=true(검색·순위·딥링크로 진입)일 때만 지도 리프레이밍. 지도 직접클릭은 현재 위치 유지(확대상태 축소 방지)
   if(focus&&p._l&&map){map.invalidateSize();const b=p._l.getBounds();if(b&&b.isValid())map.fitBounds(b,{maxZoom:13,padding:[24,24]});}}
 function goDetail(adm){const f=F.find(x=>x.properties.adm_nm===adm);if(!f)return;document.querySelector('nav .tab[data-v=map]').click();showDetail(f.properties,true)}
+// B2C 공유: 카톡 등에 바로 붙일 자동 문구 + 동네 딥링크 (모바일=네이티브 공유시트, 데스크톱=클립보드)
+function shareDong(adm,btn){
+  const f=F.find(x=>x.properties.adm_nm===adm);if(!f)return;const p=f.properties;
+  const r=nliRank.get(adm),pct=r==null?null:Math.max(1,Math.round((1-r)*100));
+  const ds=DOMS.map(d=>[d,p['score_'+d]]).filter(x=>x[1]!=null).sort((a,b)=>b[1]-a[1]);
+  const top=ds.slice(0,2).map(x=>SHORT[x[0]]).join('·');
+  const url=location.origin+location.pathname+'#d='+encodeURIComponent(adm);
+  const msg='🏘 '+fullN(p)+' · 동네살기지수 '+nliW(p)+(pct?' (전국 상위 '+pct+'%)':'')+' · 종합 '+gradeOf(p)+'등급\n💪 강점 '+top+(p.price!=null?' · 아파트 평당 '+Math.round(p.price*3.3058).toLocaleString()+'만':'')+'\n👉 '+url;
+  if(navigator.share){navigator.share({title:fullN(p)+' 동네살기지수',text:msg}).catch(()=>{});return;}
+  const ok=()=>{if(!btn)return;const o=btn.textContent;btn.textContent='✓ 복사됨';setTimeout(()=>btn.textContent=o,1400);};
+  if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(msg).then(ok,()=>prompt('공유 문구 복사',msg));
+  else prompt('공유 문구 복사',msg);
+}
 function showDom(d){mMode='basic';document.querySelectorAll('#modes button').forEach(x=>x.classList.toggle('on',x.dataset.m==='basic'));document.querySelector('nav .tab[data-v=map]').click();const s=document.getElementById('metric');if(s){s.value=d;s.dispatchEvent(new Event('change'));}}
 
 // 통근 보정 — 기준지 중심점(clat/clon)에서 직선거리(도로 라우팅은 향후) 이내로 좁혀 NLI 순 제시
