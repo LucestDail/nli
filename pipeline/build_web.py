@@ -852,7 +852,7 @@ function customSelect(sel){
 document.addEventListener('click',()=>document.querySelectorAll('.csel.open').forEach(x=>x.classList.remove('open')));
 /* 막대 성장 애니메이션: data-w(%너비)/data-h(%높이) → 다음 프레임에 목표값 적용 */
 function growBars(){requestAnimationFrame(()=>{document.querySelectorAll('[data-w]').forEach(e=>{e.style.width=e.dataset.w+'%';e.removeAttribute('data-w');});document.querySelectorAll('[data-h]').forEach(e=>{e.style.height=e.dataset.h+'%';e.removeAttribute('data-h');});});}
-document.getElementById('foot1').textContent='데이터 출처 · 공공데이터포털 표준데이터 · SGIS 경계·인구(2025 2분기) · 건강보험심사평가원(2026.6) · 소상공인시장진흥공단 · 국토교통부 아파트 실거래가 · safetydata.go.kr · VWorld 지오코딩   ·   방법 · 시설밀도(인구 1만명당·면적 ㎢당 혼합)와 근접성의 백분위 결합 → 도메인 가중평균, 도농 코호트·인구가중 중심점 보정   ·   9개 도메인 32개 지표 읍면동 정밀(복지는 지오코딩 약 85% 커버) · 점수는 전국 읍면동 상대평가(백분위)로 참고용입니다';
+document.getElementById('foot1').textContent='데이터 출처 · 공공데이터포털 표준데이터 · SGIS 경계·인구(2025 2분기) · 건강보험심사평가원(2026.6) · 소상공인시장진흥공단 · 국토교통부 아파트 실거래가 · safetydata.go.kr · VWorld 지오코딩   ·   방법 · 시설밀도(인구 1만명당·면적 ㎢당 혼합)와 근접성의 백분위 결합 → 도메인 가중평균, 도농 코호트·인구가중 중심점 보정   ·   9개 도메인 32개 지표 읍면동 정밀(복지는 지오코딩 약 87% 커버) · 점수는 전국 읍면동 상대평가(백분위)로 참고용입니다';
 /* ---------- 공유 딥링크: 현재 상태 ↔ location.hash ---------- */
 function curTab(){const t=document.querySelector('nav .tab.on');return t?t.dataset.v:'map';}
 function writeHash(){if(applyingHash)return;
@@ -1017,7 +1017,7 @@ function diagReportMD(g,rank,total){
   } else L.push(`사각지대 없음 — 인구 1만+ 동에서 하위 20% 도메인 없음.`);
   L.push('',`## 🟢 강점 도메인`);
   P.strong.forEach(w=>L.push(`- ${METRICS[w[0]]}: 전국 지자체 평균 대비 +${Math.round(w[1])}`));
-  L.push('','---',`방법론: 각 지표를 밀도(인구·면적)·근접성 백분위로 혼합 → 도메인 가중평균 → 종합지수. 점수는 전국 읍면동 상대평가(백분위)로 참고용. 복지·돌봄은 지오코딩 약 85% 커버.`);
+  L.push('','---',`방법론: 각 지표를 밀도(인구·면적)·근접성 백분위로 혼합 → 도메인 가중평균 → 종합지수. 점수는 전국 읍면동 상대평가(백분위)로 참고용. 복지·돌봄은 지오코딩 약 87% 커버.`);
   return L.join('\n');
 }
 function copyDiagReport(btn){
@@ -1071,7 +1071,7 @@ button{float:right;padding:8px 14px;cursor:pointer;border:1px solid #2f6b4e;back
 <h2>🔴 취약 도메인 (전국 지자체 평균 대비)</h2><table>${wr}</table><p class=hi>${one}</p>
 <h2>🎯 사각지대 동 <span class=mut style="font-weight:400">인구 1만+ 인데 특정 도메인 하위 20% · 총 ${g.blindN}건</span></h2>${bl}
 <h2>🟢 강점 도메인</h2><ul class=sum>${st||'<li>—</li>'}</ul>
-<div class=foot>방법론 · 각 지표를 시설밀도(인구 1만명당·면적 ㎢당 혼합)와 근접성의 백분위로 결합 → 도메인 가중평균 → 종합지수. 사각지대 = 인구 1만+ 인데 해당 도메인 전국 하위 20%. 점수는 전국 읍면동 상대평가(백분위)로 참고용이며 복지·돌봄은 지오코딩 약 85% 커버. · 데이터: 공공데이터포털·SGIS(2025 2Q)·심평원·소상공인·국토부 실거래가 · 데모 https://lucestdail.github.io/nli/</div>
+<div class=foot>방법론 · 각 지표를 시설밀도(인구 1만명당·면적 ㎢당 혼합)와 근접성의 백분위로 결합 → 도메인 가중평균 → 종합지수. 사각지대 = 인구 1만+ 인데 해당 도메인 전국 하위 20%. 점수는 전국 읍면동 상대평가(백분위)로 참고용이며 복지·돌봄은 지오코딩 약 87% 커버. · 데이터: 공공데이터포털·SGIS(2025 2Q)·심평원·소상공인·국토부 실거래가 · 데모 https://lucestdail.github.io/nli/</div>
 </body></html>`;
   const w=window.open('','_blank');if(w){w.document.write(html);w.document.close();}else prompt('팝업이 차단되었습니다. 리포트 복사 버튼을 사용하세요.');
 }

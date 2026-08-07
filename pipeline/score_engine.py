@@ -69,7 +69,7 @@ DATASETS = [
          lon="경도", lat="위도"),
     dict(key="welfare", name="사회복지시설", domain="D8",
          path=f"{RAW}/전국사회복지시설_좌표.csv", reader="csv",
-         lon="경도", lat="위도"),   # VWorld 지오코딩(85% 커버) → 읍면동 정밀
+         lon="경도", lat="위도"),   # VWorld 지오코딩(87% 커버) → 읍면동 정밀
     # ── P0 편입(2026-07-30): 도메인당 2+지표로 보강(M1) ──
     dict(key="childcare", name="어린이집", domain="D2",
          path=f"{RAW}/전국어린이집_운영중_좌표.csv", reader="csv",
