@@ -806,7 +806,7 @@ function applyHash(){
   writeHash();
 }
 /* ── 지역 생활여건 진단 (B2G) ── 지자체=full_nm.split[1] (자치구 분리·일반구는 시로 병합) */
-let diagSel=null,diagSort='nli';
+let diagSel=null,diagSort='nli',diagCur=null;
 function diagData(){
   const G={};
   SP.forEach(p=>{if((p.pop_total||0)<=0)return;const ps=(p.full_nm||'').split(' ');if(ps.length<2)return;
@@ -827,9 +827,10 @@ function diagCardHTML(g,rankOf,total){
   const weak=g.rankDom.slice(0,3),strong=g.rankDom.slice(-2).reverse();
   const chip=(d,dv,neg)=>`<span class="dchip" style="border-color:${neg?'#b0603f':'#2f6b4e'}55" onclick="showDom('${d}')"><b>${DOMINFO[d][0]}</b>${SHORT[d]} <i style="color:${neg?'#b0603f':'#2f6b4e'}">${dv>=0?'+':''}${Math.round(dv)}</i></span>`;
   const bl=g.blind.slice(0,10).map(b=>`<div class="valcell" style="cursor:pointer" onclick="goDetail('${b.p.adm_nm}')"><div class="valnm">${b.p.adm_nm}<span>${(b.p.pop_total||0).toLocaleString()}명</span></div><div class="valv"><span class="dchip" style="border-color:#b0603f55"><b>${DOMINFO[b.d][0]}</b>${SHORT[b.d]}</span> <b style="color:#b0603f">${Math.round(b.v)}</b></div></div>`).join('');
-  return `<div class="flex" style="justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:8px">
-    <h3 style="margin:0">${g.sido} ${g.sgg}</h3>
-    <span class="muted">전국 취약 순위 <b style="color:var(--terra)">${rankOf.get(g.key)}</b>/${total} · 인구 ${g.pop.toLocaleString()}명 · 동 ${g.dongs.length}개</span></div>
+  return `<div class="flex" style="justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
+    <div><h3 style="margin:0">${g.sido} ${g.sgg}</h3>
+      <div class="muted" style="margin-top:3px">전국 취약 순위 <b style="color:var(--terra)">${rankOf.get(g.key)}</b>/${total} · 인구 ${g.pop.toLocaleString()}명 · 동 ${g.dongs.length}개</div></div>
+    <div class="flex" style="gap:6px;flex-shrink:0"><button class="btn" onclick="copyDiagReport(this)">📋 리포트 복사</button><button class="btn ghost" onclick="printDiagReport()">🖨 인쇄·PDF</button></div></div>
    <div class="kpis" style="margin:12px 0">
      <div class="kpi"><b style="color:${color(g.nli)}">${g.nli.toFixed(1)}</b><span>평균 종합지수</span></div>
      <div class="kpi"><b style="color:var(--terra)">${g.blindN}</b><span>사각지대 (동×도메인)</span></div>
@@ -852,6 +853,7 @@ function renderDiag(){
   document.getElementById('diagCount').textContent=list.length+'개 지자체';
   if(!diagSel||!rows.find(r=>r.key===diagSel))diagSel=list[0]?list[0].key:null;
   const sel=rows.find(r=>r.key===diagSel);
+  diagCur=sel?{g:sel,rank:rankOf.get(sel.key),total:rows.length}:null;
   document.getElementById('diagCard').innerHTML=sel?diagCardHTML(sel,rankOf,rows.length):'';
   let h='<tr><th>취약<br>순위</th><th>지자체</th><th>평균<br>지수</th><th>최약 도메인</th><th>사각<br>지대</th><th>동</th></tr>';
   list.forEach(r=>{const w=r.rankDom[0];
@@ -865,6 +867,69 @@ function renderDiag(){
   document.getElementById('diagTable').innerHTML=h;
 }
 function selectDiag(k){diagSel=k;renderDiag();}
+function diagReportParts(g){
+  const gc=g.dongs.reduce((m,p)=>{const gr=gradeOf(p);m[gr]=(m[gr]||0)+1;return m},{});
+  const gdist=['S','A','B','C','D'].filter(x=>gc[x]).map(x=>`${x} ${gc[x]}`).join(' · ');
+  const weak=g.rankDom.slice(0,3),strong=g.rankDom.slice(-2).reverse();
+  const byd={};g.blind.forEach(b=>{(byd[b.d]=byd[b.d]||[]).push(b.p.adm_nm)});
+  const prio=Object.entries(byd).map(([d,ds])=>`${METRICS[d]} ${ds.length}곳(${ds.slice(0,3).join('·')}${ds.length>3?' 외':''})`).join(', ');
+  return {gdist,weak,strong,prio};
+}
+function diagReportMD(g,rank,total){
+  const nf=n=>(n||0).toLocaleString(),P=diagReportParts(g);
+  const L=[`# ‹${g.sido} ${g.sgg}› 생활여건 진단 리포트`,'',
+    `> 동네살기지수(NLI) 자동생성 · 전국 읍면동 9개 도메인 상대평가(백분위) 기준`,'',
+    `## 요약`,
+    `- 평균 종합지수: **${g.nli.toFixed(1)}** · 전국 지자체 취약순위 **${rank}/${total}위** (낮을수록 취약)`,
+    `- 관할 ${g.dongs.length}개 동 · 인구 ${nf(g.pop)}명`,
+    `- 동 등급 분포: ${P.gdist||'—'}`,'',
+    `## 🔴 취약 도메인 (전국 지자체 평균 대비)`,`| 도메인 | 편차 |`,`|---|---|`];
+  P.weak.forEach(w=>L.push(`| ${METRICS[w[0]]} | ${w[1]>=0?'+':''}${Math.round(w[1])} |`));
+  L.push('');
+  L.push(P.weak[0][1]<0?`**1순위 보강 대상: ${METRICS[P.weak[0][0]]}** — 전국 지자체 평균보다 ${Math.abs(Math.round(P.weak[0][1]))}p 낮음.`
+    :`모든 도메인이 전국 지자체 평균 이상. 상대적 최저는 ${METRICS[P.weak[0][0]]}.`);
+  L.push('',`## 🎯 사각지대 동 — 인구 1만+ 인데 특정 도메인 하위 20% (총 ${g.blindN}건)`);
+  if(g.blindN){
+    L.push(`| 동 | 인구 | 취약 도메인 | 점수 |`,`|---|---|---|---|`);
+    g.blind.forEach(b=>L.push(`| ${b.p.adm_nm} | ${nf(b.p.pop_total)} | ${METRICS[b.d]} | ${Math.round(b.v)} |`));
+    L.push('',`→ 우선 보강: ${P.prio}.`);
+  } else L.push(`사각지대 없음 — 인구 1만+ 동에서 하위 20% 도메인 없음.`);
+  L.push('',`## 🟢 강점 도메인`);
+  P.strong.forEach(w=>L.push(`- ${METRICS[w[0]]}: 전국 지자체 평균 대비 +${Math.round(w[1])}`));
+  L.push('','---',`방법론: 각 지표를 밀도(인구·면적)·근접성 백분위로 혼합 → 도메인 가중평균 → 종합지수. 점수는 전국 읍면동 상대평가(백분위)로 참고용. 복지·돌봄은 지오코딩 약 85% 커버.`);
+  return L.join('\n');
+}
+function copyDiagReport(btn){
+  if(!diagCur)return;const md=diagReportMD(diagCur.g,diagCur.rank,diagCur.total);
+  const ok=()=>{const o=btn.textContent;btn.textContent='✓ 복사됨';setTimeout(()=>btn.textContent=o,1400);};
+  if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(md).then(ok,()=>prompt('리포트 복사',md));
+  else prompt('리포트 복사',md);
+}
+function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function printDiagReport(){
+  if(!diagCur)return;const g=diagCur.g,P=diagReportParts(g),nf=n=>(n||0).toLocaleString();
+  const wr=`<tr><th>도메인</th><th>편차</th></tr>`+P.weak.map(w=>`<tr><td>${METRICS[w[0]]}</td><td style="color:#b0603f">${w[1]>=0?'+':''}${Math.round(w[1])}</td></tr>`).join('');
+  const bl=g.blindN?`<table><tr><th>동</th><th>인구</th><th>취약 도메인</th><th>점수</th></tr>`+g.blind.map(b=>`<tr><td>${esc(b.p.adm_nm)}</td><td>${nf(b.p.pop_total)}</td><td>${METRICS[b.d]}</td><td style="color:#b0603f">${Math.round(b.v)}</td></tr>`).join('')+`</table><p>→ 우선 보강: ${esc(P.prio)}.</p>`:'<p>사각지대 없음.</p>';
+  const st=P.strong.map(w=>`<li>${METRICS[w[0]]}: 전국 평균 대비 +${Math.round(w[1])}</li>`).join('');
+  const html=`<!doctype html><html lang=ko><head><meta charset=utf-8><title>${esc(g.sido+' '+g.sgg)} 생활여건 진단</title>
+<style>body{font:14px/1.7 -apple-system,'Malgun Gothic',sans-serif;color:#1a2530;max-width:800px;margin:32px auto;padding:0 24px}
+h1{font-size:22px;border-bottom:3px solid #2f6b4e;padding-bottom:10px}h2{font-size:15px;margin-top:26px;color:#2f6b4e}
+table{border-collapse:collapse;width:100%;margin:10px 0;font-size:13px}th,td{border:1px solid #d8d2c4;padding:7px 10px;text-align:left}th{background:#f7f5f1}
+.sum li{margin:3px 0}.mut{color:#7a7367;font-size:12px}.foot{margin-top:28px;border-top:1px solid #d8d2c4;padding-top:12px;color:#7a7367;font-size:11.5px}
+@media print{button{display:none}}</style></head><body>
+<button onclick="print()" style="float:right;padding:8px 14px;cursor:pointer">🖨 인쇄 / PDF 저장</button>
+<h1>‹${esc(g.sido+' '+g.sgg)}› 생활여건 진단 리포트</h1>
+<p class=mut>동네살기지수(NLI) 자동생성 · 전국 읍면동 9개 도메인 상대평가(백분위) 기준</p>
+<h2>요약</h2><ul class=sum><li>평균 종합지수: <b>${g.nli.toFixed(1)}</b> · 전국 지자체 취약순위 <b>${diagCur.rank}/${diagCur.total}위</b></li>
+<li>관할 ${g.dongs.length}개 동 · 인구 ${nf(g.pop)}명</li><li>동 등급 분포: ${P.gdist||'—'}</li></ul>
+<h2>🔴 취약 도메인 (전국 지자체 평균 대비)</h2><table>${wr}</table>
+<p><b>${P.weak[0][1]<0?'1순위 보강 대상: '+METRICS[P.weak[0][0]]+' — 전국 평균보다 '+Math.abs(Math.round(P.weak[0][1]))+'p 낮음.':'모든 도메인이 전국 평균 이상.'}</b></p>
+<h2>🎯 사각지대 동 <span class=mut>인구 1만+ 인데 특정 도메인 하위 20% · 총 ${g.blindN}건</span></h2>${bl}
+<h2>🟢 강점 도메인</h2><ul class=sum>${st}</ul>
+<div class=foot>방법론: 각 지표를 밀도(인구·면적)·근접성 백분위로 혼합 → 도메인 가중평균 → 종합지수. 점수는 전국 읍면동 상대평가(백분위)로 참고용. 복지·돌봄은 지오코딩 약 85% 커버.</div>
+</body></html>`;
+  const w=window.open('','_blank');if(w){w.document.write(html);w.document.close();}else prompt('팝업이 차단되었습니다. 리포트 복사 버튼을 사용하세요.');
+}
 recompRank();initMap();renderHome();
 attachAC(document.getElementById('gsearch'),document.getElementById('gac'),goDetail);
 attachAC(document.getElementById('cmpSearch'),document.getElementById('cmpac'),adm=>{addCmp(adm)});
