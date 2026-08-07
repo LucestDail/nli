@@ -11,7 +11,7 @@ TEMPLATE = r'''<!DOCTYPE html>
 <html lang="ko"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>동네살기지수 NLI · 어디가 살기 좋은 동네인가</title>
-<meta name="description" content="공공데이터로 전국 3,559개 읍면동을 9개 생활 도메인 30개 지표로 정량화 · 아파트 실거래가까지 결합한 '살기지수 × 가격' 대시보드">
+<meta name="description" content="공공데이터로 전국 3,559개 읍면동을 9개 생활 도메인 32개 지표로 정량화 · 아파트 실거래가까지 결합한 '살기지수 × 가격' 대시보드">
 <meta property="og:type" content="website">
 <meta property="og:title" content="동네살기지수 NLI — 어디가 살기 좋은 동네인가">
 <meta property="og:description" content="전국 3,559개 읍면동 · 9도메인 30지표 + 아파트 실거래가. 가성비 좋은 동네를 찾아보세요.">
@@ -88,7 +88,9 @@ TEMPLATE = r'''<!DOCTYPE html>
  .valnm{font-size:13px;color:var(--ink)}.valnm span{display:block;font-size:10.5px;color:var(--light);margin-top:1px}
  .valv{text-align:right;font-size:13px;white-space:nowrap}.valv b{color:var(--ocean)}.valv i{display:block;font-style:normal;font-size:11px;color:var(--terra);font-weight:700;margin-top:1px}
  @media(max-width:820px){.valgrid{grid-template-columns:repeat(2,1fr)}}
- @media(max-width:560px){.valgrid,.recgrid{grid-template-columns:1fr}}
+ @media(max-width:560px){.valgrid,.recgrid{grid-template-columns:1fr}
+ #recHouseSeg{flex-wrap:wrap}#recHouseSeg button{flex:1 1 28%;padding:8px 3px}
+ .valcell{flex-wrap:wrap;gap:4px}.valcell .valv{margin-left:auto}}
  /* 경로 모달 */
  .rmodal{position:fixed;inset:0;z-index:3000;background:rgba(20,26,20,.42);display:flex;align-items:center;justify-content:center;padding:20px;animation:vin .18s}
  .rmbox{background:#fff;border-radius:var(--r-lg);box-shadow:var(--sh2);width:420px;max-width:100%;max-height:82vh;overflow:auto;padding:20px}
@@ -215,7 +217,7 @@ TEMPLATE = r'''<!DOCTYPE html>
    .gsearch input{width:100%}.gsearch input:focus{width:100%}
    .gsearch .ac{top:40px;left:0;right:0;width:auto}
    #shareBtn{order:1;flex-shrink:0;padding:7px 11px;font-size:12px}
-   .tabs{order:2;flex:0 0 100%;overflow-x:auto;gap:2px;scrollbar-width:none}
+   .tabs{order:2;flex:0 0 100%;min-width:0;overflow-x:auto;gap:2px;scrollbar-width:none}
    .tabs::-webkit-scrollbar{display:none}
    nav .tab{padding:7px 13px;font-size:13px;flex-shrink:0}
    .detail{width:auto;left:10px;right:10px;top:auto;bottom:10px;max-height:68%}
@@ -235,7 +237,6 @@ TEMPLATE = r'''<!DOCTYPE html>
      <div class="tab" data-v="rank">순위</div>
      <div class="tab" data-v="rec">🎯 추천</div>
      <div class="tab" data-v="compare">비교</div>
-     <div class="tab" data-v="persona">맞춤설정</div>
      <div class="tab" data-v="stats">통계</div>
      <div class="tab" data-v="diag">🩺 진단</div>
    </div>
@@ -251,7 +252,7 @@ TEMPLATE = r'''<!DOCTYPE html>
 
  <div class="view" id="v-home" style="display:none"><div class="wrap">
    <div class="hero-t">어디가 살기 좋은 동네일까</div>
-   <div class="sub">공공데이터를 읍면동 단위로 융합한 살기좋은동네 지수 · 전국 <b>3,559개</b> 읍면동 · <b>9개 도메인 · 30개 지표</b></div>
+   <div class="sub">공공데이터를 읍면동 단위로 융합한 살기좋은동네 지수 · 전국 <b>3,559개</b> 읍면동 · <b>9개 도메인 · 32개 지표</b></div>
    <div class="kpis" id="kpis"></div>
    <div class="grid2" style="margin:6px 0 4px;gap:16px">
      <div class="card" style="cursor:pointer;display:flex;gap:14px;align-items:center" onclick="document.querySelector('nav .tab[data-v=rec]').click()">
@@ -263,7 +264,7 @@ TEMPLATE = r'''<!DOCTYPE html>
        <div style="min-width:0"><h3 style="margin:0 0 3px">우리 지자체 생활여건 진단</h3><div class="muted" style="font-size:13px">지자체 229곳 취약 도메인·사각지대 동 진단 · 리포트</div></div>
        <div style="margin-left:auto;color:var(--terra);font-weight:800;font-size:20px;flex-shrink:0">→</div></div>
    </div>
-   <div class="card domcard" style="margin-top:18px"><div class="flex" style="justify-content:space-between;align-items:baseline;margin-bottom:14px"><h3 style="margin:0">9개 생활 도메인</h3><span class="muted">각 도메인을 여러 공공데이터 지표로 정량화 · 총 30개 지표</span></div><div class="domgrid" id="domGrid"></div></div>
+   <div class="card domcard" style="margin-top:18px"><div class="flex" style="justify-content:space-between;align-items:baseline;margin-bottom:14px"><h3 style="margin:0">9개 생활 도메인</h3><span class="muted">각 도메인을 여러 공공데이터 지표로 정량화 · 총 32개 지표</span></div><div class="domgrid" id="domGrid"></div></div>
    <div class="grid2" style="margin-top:18px">
      <div class="card"><h3>시도별 평균 지수</h3><div id="sidoBars"></div></div>
      <div class="card"><h3>등급 분포</h3><div id="gradeBars"></div>
@@ -325,9 +326,6 @@ TEMPLATE = r'''<!DOCTYPE html>
  <div class="view" id="v-stats" style="display:none"><div class="wrap">
    <h2>지역 통계·추론</h2><div class="sub">지역 특성(인구·밀도·연령·아파트값)과 살기지수의 관계, 지역 유형별 격차 분석 (실시간 계산)</div>
    <div class="kpis" id="statKpi"></div>
-   <div class="card" style="margin-bottom:18px"><h3>💎 가성비 동네 <span class="muted" style="font-weight:400">— 살기지수는 높고 아파트값은 낮은</span></h3>
-     <div class="muted" style="margin-bottom:12px">종합지수 백분위 − 아파트 평당가 백분위 순 · 인구 3천+ · 아파트 실거래 있는 동 · <b>클릭 → 상세</b></div>
-     <div id="valueRank" class="valgrid"></div></div>
    <div class="card"><h3>지역 특성 × 도메인 상관</h3>
      <div class="muted" style="margin-bottom:12px">인구·밀도·연령구조가 각 도메인 점수와 어떻게 연관되는지 · <b style="color:#2f6b4e">초록=정비례(+)</b> / <b style="color:#b0603f">주황=반비례(−)</b> · |r|≥0.3부터 뚜렷</div>
      <div id="regHeat"></div></div>
@@ -367,6 +365,9 @@ TEMPLATE = r'''<!DOCTYPE html>
      <button class="btn on" style="margin-top:16px;padding:10px 22px" onclick="recRun()">🎯 추천받기</button>
    </div>
    <div id="recResults"><div class="card muted">가구유형을 고르고 <b>추천받기</b>를 누르면 맞춤 동네 Top10이 나옵니다.</div></div>
+   <div class="card" style="margin-top:18px"><h3>💎 가성비 동네 <span class="muted" style="font-weight:400">— 살기지수는 높고 아파트값은 낮은</span></h3>
+     <div class="muted" style="margin-bottom:12px">종합지수 백분위 − 아파트 평당가 백분위 순 · 인구 3천+ · 실거래 있는 동 · <b>클릭 → 상세</b></div>
+     <div id="valueRank" class="valgrid"></div></div>
  </div></div>
 
  <div class="view" id="v-diag" style="display:none"><div class="wrap">
@@ -381,15 +382,6 @@ TEMPLATE = r'''<!DOCTYPE html>
    <div class="card" style="padding:0;max-height:56vh;overflow:auto"><table id="diagTable"></table></div>
  </div></div>
 
- <div class="view" id="v-persona" style="display:none"><div class="wrap">
-   <h2>나에게 맞는 동네</h2><div class="sub">중요한 도메인의 비중을 조절하면 전국 순위·지도가 즉시 재계산됩니다.</div>
-   <div class="grid2">
-     <div class="card"><h3>페르소나 프리셋</h3><div class="flex" id="presets"></div>
-       <div id="sliders" style="margin-top:18px"></div>
-       <button class="btn" id="resetW" style="margin-top:14px">균등으로 초기화</button></div>
-     <div class="card"><h3>이 가중치 기준 전국 상위 15</h3><div id="personaTop"></div></div>
-   </div>
- </div></div>
 </div>
 <script>
 const DATA=__GEOJSON__;
@@ -465,10 +457,10 @@ function attachAC(input,box,onPick){
 
 document.querySelectorAll('nav .tab').forEach(t=>t.onclick=()=>{
   document.querySelectorAll('nav .tab').forEach(x=>x.classList.remove('on'));t.classList.add('on');
-  const v=t.dataset.v;['home','map','rank','compare','persona','stats','diag','rec'].forEach(x=>document.getElementById('v-'+x).style.display=(x===v?(x==='map'?'flex':'block'):'none'));
+  const v=t.dataset.v;['home','map','rank','compare','stats','diag','rec'].forEach(x=>document.getElementById('v-'+x).style.display=(x===v?(x==='map'?'flex':'block'):'none'));
   if(v!=='map'){const el=document.getElementById('v-'+v);el.style.animation='none';void el.offsetWidth;el.style.animation='vin .3s cubic-bezier(.22,1,.36,1)';}
   if(v==='map'&&map){setTimeout(()=>map.invalidateSize(),60);renderMapSliders();}
-  if(v==='home')renderHome();if(v==='rank')renderRank();if(v==='compare')renderCompare();if(v==='persona')renderPersona();if(v==='stats')renderStats();if(v==='diag')renderDiag();
+  if(v==='home')renderHome();if(v==='rank')renderRank();if(v==='compare')renderCompare();if(v==='stats')renderStats();if(v==='diag')renderDiag();if(v==='rec')renderRec();
   writeHash();
 });
 
@@ -575,7 +567,7 @@ function detailHTML(p){
    <div class="muted">${p.cohort} · 인구 ${(p.pop_total||0).toLocaleString()}명 ${isBlind(p,'NLI')?'· <span class="warn">사각지대</span>':''}</div>
    ${p.price!=null?`<div class="muted" style="margin-top:3px">🏢 아파트 실거래 <b style="color:var(--terra)">평당 ${Math.round(p.price*3.3058).toLocaleString()}만원</b> <span style="font-size:10.5px">(㎡당 ${p.price.toLocaleString()}만)</span></div>`:''}
    ${commuteBase?`<div id="transitInfo" class="muted" style="margin-top:4px">🚇 대중교통 계산 중…</div>`:''}
-   ${(()=>{const rp=recPersona(p);return rp?`<div style="margin-top:5px;font-size:12px">👤 이 동네 추천: <b>${rp}</b> <span style="cursor:pointer;color:var(--sky);text-decoration:underline" onclick="setPreset('${rp}');document.querySelector('nav .tab[data-v=persona]').click()">적용</span></div>`:''})()}
+   ${(()=>{const rp=recPersona(p);return rp?`<div style="margin-top:5px;font-size:12px">👤 이 동네 추천: <b>${rp}</b> <span style="cursor:pointer;color:var(--sky);text-decoration:underline" onclick="setPreset('${rp}');document.querySelector('nav .tab[data-v=map]').click()">가중치 적용</span></div>`:''})()}
    <div style="margin:10px 0"><b>종합 지수 ${nliW(p)}</b><div class="bar"><span data-w="${nliW(p)}" style="width:0;background:${color(nliW(p))}"></span></div></div>`;
   // 강점/약점 요약 (도메인 점수 정렬)
   const ds=DOMS.map(d=>[d,p['score_'+d]]).filter(x=>x[1]!=null).sort((a,b)=>b[1]-a[1]);
@@ -648,6 +640,16 @@ function recCard(p,rank,score){
     +'<div style="margin-bottom:10px">'+chips+'</div>'
     +'<div class="flex" style="gap:6px"><button class="btn" onclick="goDetail(\''+p.adm_nm+'\')">상세</button><button class="btn" onclick="shareDong(\''+p.adm_nm+'\',this)">📤 공유</button></div></div>';
 }
+// 가성비 동네(종합지수 백분위 − 가격 백분위) — 통계 탭에서 추천 탭으로 이동
+function renderValueRank(){
+  const el=document.getElementById('valueRank');if(!el)return;
+  const pr=SP.filter(p=>p.price!=null&&(p.pop_total||0)>=3000);
+  const nS=pr.map(p=>nliW(p)).sort((a,b)=>a-b),pS=pr.map(p=>p.price).sort((a,b)=>a-b);
+  const pctl=(arr,v)=>{let lo=0,hi=arr.length;while(lo<hi){let m=(lo+hi)>>1;if(arr[m]<v)lo=m+1;else hi=m}return lo/arr.length};
+  const val=pr.map(p=>({p:p,g:pctl(nS,nliW(p))-pctl(pS,p.price)})).sort((a,b)=>b.g-a.g);
+  el.innerHTML=val.slice(0,12).map((x,i)=>{const p=x.p;return '<div class="valcell" onclick="goDetail(\''+p.adm_nm+'\')"><div class="valnm"><b>'+(i+1)+'.</b> '+p.adm_nm+'<span>'+p.sido+'</span></div><div class="valv"><span class="g" style="background:'+GC[gradeOf(p)]+'">'+gradeOf(p)+'</span> <b>'+nliW(p)+'</b><i>'+Math.round(p.price*3.3058).toLocaleString()+'만/평</i></div></div>'}).join('');
+}
+function renderRec(){renderValueRank();}
 function recRun(){
   const ww=PRESETS[REC_MAP[recHouse]]||PRESETS['균등'];
   let arr=SP.filter(p=>(p.pop_total||0)>0);
@@ -707,17 +709,8 @@ function renderCompare(){
   writeHash();
 }
 
-function renderPersona(){
-  document.getElementById('presets').innerHTML=Object.keys(PRESETS).map(k=>`<button class="btn" onclick="setPreset('${k}')">${k}</button>`).join('');
-  document.getElementById('sliders').innerHTML=DOMS.map((d,i)=>`<div class="rng"><label>${METRICS[d]}</label><input type="range" min="0" max="3" step="0.1" value="${W[i]}" oninput="W[${i}]=+this.value;this.nextElementSibling.textContent=(+this.value).toFixed(1);personaLive()"><b>${W[i].toFixed(1)}</b></div>`).join('');
-  document.getElementById('resetW').onclick=()=>{W=[1,1,1,1,1,1,1,1,1];renderPersona();personaLive()};
-  personaTop();
-}
-function setPreset(k){W=PRESETS[k].slice();const mp=document.getElementById('mpersona');if(mp&&PRESETS[k])mp.value=k;renderPersona();renderMapSliders();personaLive()}
-function personaTop(){recompRank();
-  const sorted=F.slice().sort((a,b)=>nliW(b.properties)-nliW(a.properties)).slice(0,15);
-  document.getElementById('personaTop').innerHTML=sorted.map((f,i)=>{const p=f.properties;return `<div class="place" onclick="goDetail('${p.adm_nm}')"><span>${i+1}. ${fullN(p)}</span><span><b>${nliW(p)}</b> <span class="g" style="background:${GC[gradeOf(p)]}">${gradeOf(p)}</span></span></div>`}).join('')}
-function personaLive(){recompRank();personaTop();if(layer)layer.setStyle(mStyle);writeHash()}
+// 페르소나 프리셋 적용(가중치 W 설정 → 지도 사이드바 슬라이더·지도·순위 즉시 반영). 맞춤설정 탭은 지도 사이드바로 통합됨.
+function setPreset(k){W=PRESETS[k].slice();const mp=document.getElementById('mpersona');if(mp&&PRESETS[k])mp.value=k;renderMapSliders();recompRank();if(layer)layer.setStyle(mStyle);writeHash()}
 
 /* ---------- 지역 통계 탭 (지역 특성 × 도메인 중심) ---------- */
 const DKEYS=['D1','D2','D3','D4','D5','D6','D7','D8','D9'];
@@ -757,12 +750,6 @@ function renderStats(){
      <div class="kpi"><b>${gap.toFixed(1)}배</b><span>의료 도농격차(도시/농촌)</span></div>
      <div class="kpi"><b style="color:${best[1]>=0?'#2f6b4e':'#b0603f'}">${best[1]>=0?'+':''}${best[1].toFixed(2)}</b><span>최강 지역상관 · ${best[0]}</span></div>`;
 
-  // 가성비 동네: 종합지수 백분위 − 가격 백분위
-  const pr=SP.filter(p=>p.price!=null&&(p.pop_total||0)>=3000);
-  const nS=pr.map(p=>nliW(p)).sort((a,b)=>a-b), pS=pr.map(p=>p.price).sort((a,b)=>a-b);
-  const pctl=(arr,v)=>{let lo=0,hi=arr.length;while(lo<hi){let m=(lo+hi)>>1;if(arr[m]<v)lo=m+1;else hi=m}return lo/arr.length};
-  const val=pr.map(p=>({p,g:pctl(nS,nliW(p))-pctl(pS,p.price)})).sort((a,b)=>b.g-a.g);
-  document.getElementById('valueRank').innerHTML=val.slice(0,12).map((x,i)=>{const p=x.p;return `<div class="valcell" onclick="goDetail('${p.adm_nm}')"><div class="valnm"><b>${i+1}.</b> ${p.adm_nm}<span>${p.sido}</span></div><div class="valv"><span class="g" style="background:${GC[gradeOf(p)]}">${gradeOf(p)}</span> <b>${nliW(p)}</b><i>${Math.round(p.price*3.3058).toLocaleString()}만/평</i></div></div>`}).join('');
 
   // 지역 특성 × 도메인 상관 히트맵
   let ht='<table class="heat"><tr><th></th>'+dkAll.map(d=>`<th>${VARS[d]}</th>`).join('')+'</tr>';
@@ -843,7 +830,7 @@ function customSelect(sel){
 document.addEventListener('click',()=>document.querySelectorAll('.csel.open').forEach(x=>x.classList.remove('open')));
 /* 막대 성장 애니메이션: data-w(%너비)/data-h(%높이) → 다음 프레임에 목표값 적용 */
 function growBars(){requestAnimationFrame(()=>{document.querySelectorAll('[data-w]').forEach(e=>{e.style.width=e.dataset.w+'%';e.removeAttribute('data-w');});document.querySelectorAll('[data-h]').forEach(e=>{e.style.height=e.dataset.h+'%';e.removeAttribute('data-h');});});}
-document.getElementById('foot1').textContent='데이터 · 공공데이터포털 표준데이터 / SGIS 경계·인구(2025 2Q) / 건강보험심사평가원 / 소상공인시장진흥공단   ·   방법 · 시설밀도(인구 1만명당)와 근접성의 백분위 혼합, 도농 코호트·인구가중 중심점 보정   ·   9개 도메인 30개 지표 읍면동 정밀(복지는 지오코딩 85% 커버) · 점수는 전국 상대평가로 참고용입니다';
+document.getElementById('foot1').textContent='데이터 · 공공데이터포털 표준데이터 / SGIS 경계·인구(2025 2Q) / 건강보험심사평가원 / 소상공인시장진흥공단   ·   방법 · 시설밀도(인구 1만명당)와 근접성의 백분위 혼합, 도농 코호트·인구가중 중심점 보정   ·   9개 도메인 32개 지표 읍면동 정밀(복지는 지오코딩 85% 커버) · 점수는 전국 상대평가로 참고용입니다';
 /* ---------- 공유 딥링크: 현재 상태 ↔ location.hash ---------- */
 function curTab(){const t=document.querySelector('nav .tab.on');return t?t.dataset.v:'map';}
 function writeHash(){if(applyingHash)return;
