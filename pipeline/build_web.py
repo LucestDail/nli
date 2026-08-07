@@ -271,6 +271,11 @@ TEMPLATE = r'''<!DOCTYPE html>
        <h3 style="margin-top:20px">전국 상위</h3><div id="homeTop"></div>
        <h3 style="margin-top:16px">전국 하위</h3><div id="homeBot"></div></div>
    </div>
+   <div class="card" style="margin-top:18px;display:flex;gap:16px;align-items:center;flex-wrap:wrap;background:linear-gradient(180deg,#f7f5f1,#fff)">
+     <div style="font-size:30px;flex-shrink:0">🏛</div>
+     <div style="min-width:0;flex:1 1 240px"><h3 style="margin:0 0 3px">지자체·기관이신가요?</h3><div class="muted" style="font-size:13px">생활여건 진단 리포트(취약 도메인·사각지대 동)·데이터 도입 및 제휴 문의를 받습니다.</div></div>
+     <a class="btn on" style="flex-shrink:0;text-decoration:none;padding:10px 20px" href="mailto:seunghyun.oh@bespinglobal.com?subject=%5B%EB%8F%99%EB%84%A4%EC%82%B4%EA%B8%B0%EC%A7%80%EC%88%98%5D%20%EB%8F%84%EC%9E%85%C2%B7%EC%A0%9C%ED%9C%B4%20%EB%AC%B8%EC%9D%98&body=%EA%B8%B0%EA%B4%80/%EB%8B%B4%EB%8B%B9%EC%9E%90%3A%0A%EA%B4%80%EC%8B%AC%20%EC%A7%80%EC%97%AD/%EB%82%B4%EC%9A%A9%3A%0A%EC%97%B0%EB%9D%BD%EC%B2%98%3A%0A">📬 도입·제휴 문의</a>
+   </div>
  </div><div class="foot" id="foot1"></div></div>
 
  <div class="view map" id="v-map" style="display:flex">
