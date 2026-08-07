@@ -244,7 +244,17 @@
    <div class="hero-t">어디가 살기 좋은 동네일까</div>
    <div class="sub">공공데이터를 읍면동 단위로 융합한 살기좋은동네 지수 · 전국 <b>3,559개</b> 읍면동 · <b>9개 도메인 · 30개 지표</b></div>
    <div class="kpis" id="kpis"></div>
-   <div class="card domcard"><div class="flex" style="justify-content:space-between;align-items:baseline;margin-bottom:14px"><h3 style="margin:0">9개 생활 도메인</h3><span class="muted">각 도메인을 여러 공공데이터 지표로 정량화 · 총 30개 지표</span></div><div class="domgrid" id="domGrid"></div></div>
+   <div class="grid2" style="margin:6px 0 4px;gap:16px">
+     <div class="card" style="cursor:pointer;display:flex;gap:14px;align-items:center" onclick="document.querySelector('nav .tab[data-v=rec]').click()">
+       <div style="font-size:30px;flex-shrink:0">🎯</div>
+       <div style="min-width:0"><h3 style="margin:0 0 3px">나에게 맞는 동네 찾기</h3><div class="muted" style="font-size:13px">가구유형·예산·통근 입력 → 맞춤 살기지수 Top10 추천</div></div>
+       <div style="margin-left:auto;color:var(--ocean);font-weight:800;font-size:20px;flex-shrink:0">→</div></div>
+     <div class="card" style="cursor:pointer;display:flex;gap:14px;align-items:center" onclick="document.querySelector('nav .tab[data-v=diag]').click()">
+       <div style="font-size:30px;flex-shrink:0">🩺</div>
+       <div style="min-width:0"><h3 style="margin:0 0 3px">우리 지자체 생활여건 진단</h3><div class="muted" style="font-size:13px">지자체 229곳 취약 도메인·사각지대 동 진단 · 리포트</div></div>
+       <div style="margin-left:auto;color:var(--terra);font-weight:800;font-size:20px;flex-shrink:0">→</div></div>
+   </div>
+   <div class="card domcard" style="margin-top:18px"><div class="flex" style="justify-content:space-between;align-items:baseline;margin-bottom:14px"><h3 style="margin:0">9개 생활 도메인</h3><span class="muted">각 도메인을 여러 공공데이터 지표로 정량화 · 총 30개 지표</span></div><div class="domgrid" id="domGrid"></div></div>
    <div class="grid2" style="margin-top:18px">
      <div class="card"><h3>시도별 평균 지수</h3><div id="sidoBars"></div></div>
      <div class="card"><h3>등급 분포</h3><div id="gradeBars"></div>
