@@ -139,6 +139,7 @@ TEMPLATE = r'''<!DOCTYPE html>
  .seg button.on{background:#fff;color:var(--ocean);font-weight:700;box-shadow:var(--sh)}
  #map{flex:1}
  .legend{display:grid;grid-template-columns:1fr 1fr;gap:1px 8px}
+ .maptitle{position:absolute;top:12px;left:50%;transform:translateX(-50%);z-index:500;background:rgba(255,255,255,.95);border:1px solid var(--line);border-radius:999px;padding:6px 15px;font-size:12.5px;font-weight:700;color:var(--ink);box-shadow:0 2px 8px rgba(20,30,40,.1);pointer-events:none;white-space:nowrap}
  .legend i{width:10px;height:10px;display:inline-block;margin-right:6px;vertical-align:-1px;border-radius:3px}.legend div{font-size:10.5px;color:var(--mid);white-space:nowrap}
  .detail{position:absolute;top:18px;right:18px;z-index:900;width:320px;max-height:calc(100% - 36px);overflow:auto;background:#fff;border-radius:var(--r-lg);box-shadow:var(--sh2);padding:20px;font-size:13px;border:1px solid var(--line)}
  .detail h4{margin:0 0 4px;font-size:20px;color:var(--ink);font-weight:700;letter-spacing:-.02em;line-height:1.2}
@@ -303,6 +304,7 @@ TEMPLATE = r'''<!DOCTYPE html>
    </aside>
    <div id="asideBackdrop"></div>
    <div id="map"></div>
+   <div id="mapTitle" class="maptitle"></div>
    <div class="detail" id="detail" style="display:none"></div>
  </div>
 
@@ -562,7 +564,9 @@ function onWeightChange(){   // 슬라이더 드래그 → 지도 실시간 재�
 }
 function mRedraw(){if(!layer)return;layer.setStyle(mStyle);mLegend();
   const t={basic:'선택 지표를 백분위 색으로 표시',blind:'인구 '+BS_POP.toLocaleString()+'명↑ 인데 「'+METRICS[mMetric]+'」 하위 '+BS_SCORE+'% → 빨강',pop:'인구 많을수록 진하게, 빈 지역은 흐리게'};
-  document.getElementById('modeDesc').textContent=t[mMode];writeHash();}
+  document.getElementById('modeDesc').textContent=t[mMode];
+  const mt=document.getElementById('mapTitle');if(mt){const md={basic:'',blind:' · 사각지대',pop:' · 인구대비'};mt.textContent='📊 '+METRICS[mMetric]+(md[mMode]||'');}
+  writeHash();}
 function mLegend(){const el=document.getElementById('legend');
   if(mMode==='blind'){el.innerHTML='<div><i style="background:#bb3a24"></i>사각지대</div><div><i style="background:#e8e0d0"></i>해당 없음</div>';return}
   el.innerHTML=[[80,'상위 80–100'],[65,'65–80'],[50,'50–65'],[35,'35–50'],[20,'20–35'],[0,'하위 0–20']].map(b=>`<div><i style="background:${color(b[0])}"></i>${b[1]}</div>`).join('');}
