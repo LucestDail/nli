@@ -361,8 +361,9 @@
      <button class="btn on" style="margin-top:16px;padding:10px 22px" onclick="recRun()">🎯 추천받기</button>
    </div>
    <div id="recResults"><div class="card muted">가구유형을 고르고 <b>추천받기</b>를 누르면 맞춤 동네 Top10이 나옵니다.</div></div>
-   <div class="card" style="margin-top:18px"><h3>💎 가성비 동네 <span class="muted" style="font-weight:400">— 살기지수는 높고 아파트값은 낮은</span></h3>
-     <div class="muted" style="margin-bottom:12px">종합지수 백분위 − 아파트 평당가 백분위 순 · 인구 3천+ · 실거래 있는 동 · <b>클릭 → 상세</b></div>
+   <div class="card" style="margin-top:18px"><div class="flex" style="justify-content:space-between;align-items:center;gap:8px"><h3 style="margin:0">💎 가성비 동네 <span class="muted" style="font-weight:400">— 살기지수는 높고 아파트값은 낮은</span></h3>
+     <div class="flex" style="gap:6px;flex-shrink:0"><select id="valSido"></select><button class="btn" onclick="shareValue(this)">📤 공유</button></div></div>
+     <div class="muted" style="margin:10px 0 12px">종합지수 백분위 − 아파트 평당가 백분위 순 · 인구 3천+ · 실거래 있는 동 · <b>클릭 → 상세</b></div>
      <div id="valueRank" class="valgrid"></div></div>
  </div></div>
 
@@ -639,11 +640,27 @@ function recCard(p,rank,score){
 // 가성비 동네(종합지수 백분위 − 가격 백분위) — 통계 탭에서 추천 탭으로 이동
 function renderValueRank(){
   const el=document.getElementById('valueRank');if(!el)return;
-  const pr=SP.filter(p=>p.price!=null&&(p.pop_total||0)>=3000);
+  const sf=document.getElementById('valSido');
+  if(sf&&!sf.options.length){sf.innerHTML='<option value="">전국</option>'+[...new Set(SP.map(p=>p.sido).filter(Boolean))].sort().map(s=>'<option>'+s+'</option>').join('');sf.onchange=renderValueRank;customSelect(sf);}
+  const fs=sf?sf.value:'';
+  const pr=SP.filter(p=>p.price!=null&&(p.pop_total||0)>=3000);   // 백분위는 전국 기준(진짜 가성비)
   const nS=pr.map(p=>nliW(p)).sort((a,b)=>a-b),pS=pr.map(p=>p.price).sort((a,b)=>a-b);
   const pctl=(arr,v)=>{let lo=0,hi=arr.length;while(lo<hi){let m=(lo+hi)>>1;if(arr[m]<v)lo=m+1;else hi=m}return lo/arr.length};
-  const val=pr.map(p=>({p:p,g:pctl(nS,nliW(p))-pctl(pS,p.price)})).sort((a,b)=>b.g-a.g);
-  el.innerHTML=val.slice(0,12).map((x,i)=>{const p=x.p;return '<div class="valcell" onclick="goDetail(\''+p.adm_nm+'\')"><div class="valnm"><b>'+(i+1)+'.</b> '+p.adm_nm+'<span>'+p.sido+'</span></div><div class="valv"><span class="g" style="background:'+GC[gradeOf(p)]+'">'+gradeOf(p)+'</span> <b>'+nliW(p)+'</b><i>'+Math.round(p.price*3.3058).toLocaleString()+'만/평</i></div></div>'}).join('');
+  let val=pr.map(p=>({p:p,g:pctl(nS,nliW(p))-pctl(pS,p.price)})).sort((a,b)=>b.g-a.g);
+  if(fs)val=val.filter(x=>x.p.sido===fs);
+  window._valTop=val.slice(0,12);
+  el.innerHTML=val.length?val.slice(0,12).map((x,i)=>{const p=x.p;return '<div class="valcell" onclick="goDetail(\''+p.adm_nm+'\')"><div class="valnm"><b>'+(i+1)+'.</b> '+p.adm_nm+'<span>'+p.sido+'</span></div><div class="valv"><span class="g" style="background:'+GC[gradeOf(p)]+'">'+gradeOf(p)+'</span> <b>'+nliW(p)+'</b><i>'+Math.round(p.price*3.3058).toLocaleString()+'만/평</i></div></div>'}).join(''):'<div class="muted">해당 지역에 실거래 데이터가 있는 동이 없습니다.</div>';
+}
+function shareValue(btn){
+  const top=(window._valTop||[]).slice(0,5);if(!top.length)return;
+  const sf=document.getElementById('valSido'),region=(sf&&sf.value)?sf.value:'전국';
+  const lines=top.map((x,i)=>(i+1)+'. '+x.p.adm_nm+' ('+nliW(x.p)+'점·평당 '+Math.round(x.p.price*3.3058).toLocaleString()+'만)');
+  const url=location.origin+location.pathname+'#v=rec';
+  const msg='💎 '+region+' 가성비 동네 TOP5 — 살기지수 높고 아파트값 낮은\n'+lines.join('\n')+'\n👉 '+url;
+  if(navigator.share){navigator.share({title:region+' 가성비 동네',text:msg}).catch(()=>{});return;}
+  const ok=()=>{const o=btn.textContent;btn.textContent='✓ 복사됨';setTimeout(()=>btn.textContent=o,1400);};
+  if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(msg).then(ok,()=>prompt('공유 문구',msg));
+  else prompt('공유 문구',msg);
 }
 function renderRec(){renderValueRank();}
 function recRun(){
@@ -826,7 +843,7 @@ function customSelect(sel){
 document.addEventListener('click',()=>document.querySelectorAll('.csel.open').forEach(x=>x.classList.remove('open')));
 /* 막대 성장 애니메이션: data-w(%너비)/data-h(%높이) → 다음 프레임에 목표값 적용 */
 function growBars(){requestAnimationFrame(()=>{document.querySelectorAll('[data-w]').forEach(e=>{e.style.width=e.dataset.w+'%';e.removeAttribute('data-w');});document.querySelectorAll('[data-h]').forEach(e=>{e.style.height=e.dataset.h+'%';e.removeAttribute('data-h');});});}
-document.getElementById('foot1').textContent='데이터 · 공공데이터포털 표준데이터 / SGIS 경계·인구(2025 2Q) / 건강보험심사평가원 / 소상공인시장진흥공단   ·   방법 · 시설밀도(인구 1만명당)와 근접성의 백분위 혼합, 도농 코호트·인구가중 중심점 보정   ·   9개 도메인 32개 지표 읍면동 정밀(복지는 지오코딩 85% 커버) · 점수는 전국 상대평가로 참고용입니다';
+document.getElementById('foot1').textContent='데이터 출처 · 공공데이터포털 표준데이터 · SGIS 경계·인구(2025 2분기) · 건강보험심사평가원(2026.6) · 소상공인시장진흥공단 · 국토교통부 아파트 실거래가 · safetydata.go.kr · VWorld 지오코딩   ·   방법 · 시설밀도(인구 1만명당·면적 ㎢당 혼합)와 근접성의 백분위 결합 → 도메인 가중평균, 도농 코호트·인구가중 중심점 보정   ·   9개 도메인 32개 지표 읍면동 정밀(복지는 지오코딩 약 85% 커버) · 점수는 전국 읍면동 상대평가(백분위)로 참고용입니다';
 /* ---------- 공유 딥링크: 현재 상태 ↔ location.hash ---------- */
 function curTab(){const t=document.querySelector('nav .tab.on');return t?t.dataset.v:'map';}
 function writeHash(){if(applyingHash)return;
