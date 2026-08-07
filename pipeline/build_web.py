@@ -66,6 +66,7 @@ TEMPLATE = r'''<!DOCTYPE html>
  .kpi::before{content:"";position:absolute;left:0;top:0;width:100%;height:3px;background:var(--grad);opacity:.85}
  .kpi b{display:block;font-size:36px;font-weight:800;color:var(--ocean);line-height:1.05;letter-spacing:-.02em}
  .kpi span{color:var(--mid);font-size:12.5px;font-weight:500}
+ .dkpi{display:grid;grid-template-columns:repeat(2,1fr);gap:14px;margin-top:16px}
  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:20px}
  .card{background:var(--card);border:1px solid var(--line);border-radius:var(--r-lg);padding:24px;box-shadow:var(--sh);transition:.2s}
  .domcard{margin-bottom:0}
@@ -826,21 +827,21 @@ function diagCardHTML(g,rankOf,total){
   const gdist=['S','A','B','C','D'].filter(x=>gc[x]).map(x=>`<span style="color:${GC[x]};font-weight:700">${x}</span> ${gc[x]}`).join(' · ');
   const weak=g.rankDom.slice(0,3),strong=g.rankDom.slice(-2).reverse();
   const chip=(d,dv,neg)=>`<span class="dchip" style="border-color:${neg?'#b0603f':'#2f6b4e'}55" onclick="showDom('${d}')"><b>${DOMINFO[d][0]}</b>${SHORT[d]} <i style="color:${neg?'#b0603f':'#2f6b4e'}">${dv>=0?'+':''}${Math.round(dv)}</i></span>`;
-  const bl=g.blind.slice(0,10).map(b=>`<div class="valcell" style="cursor:pointer" onclick="goDetail('${b.p.adm_nm}')"><div class="valnm">${b.p.adm_nm}<span>${(b.p.pop_total||0).toLocaleString()}명</span></div><div class="valv"><span class="dchip" style="border-color:#b0603f55"><b>${DOMINFO[b.d][0]}</b>${SHORT[b.d]}</span> <b style="color:#b0603f">${Math.round(b.v)}</b></div></div>`).join('');
-  return `<div class="flex" style="justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
-    <div><h3 style="margin:0">${g.sido} ${g.sgg}</h3>
-      <div class="muted" style="margin-top:3px">전국 취약 순위 <b style="color:var(--terra)">${rankOf.get(g.key)}</b>/${total} · 인구 ${g.pop.toLocaleString()}명 · 동 ${g.dongs.length}개</div></div>
-    <div class="flex" style="gap:6px;flex-shrink:0"><button class="btn" onclick="diagToMap()">🗺 지도에서 보기</button><button class="btn" onclick="copyDiagReport(this)">📋 리포트 복사</button><button class="btn ghost" onclick="printDiagReport()">🖨 인쇄·PDF</button></div></div>
-   <div class="kpis" style="margin:12px 0">
-     <div class="kpi"><b style="color:${color(g.nli)}">${g.nli.toFixed(1)}</b><span>평균 종합지수</span></div>
-     <div class="kpi"><b style="color:var(--terra)">${g.blindN}</b><span>사각지대 (동×도메인)</span></div>
-     <div class="kpi" style="flex:2;min-width:180px"><b style="font-size:15px">${gdist||'—'}</b><span>동 등급 분포</span></div></div>
-   <div style="margin-top:6px"><div class="fld" style="color:#b0603f">🔴 취약 도메인 <span class="muted" style="font-weight:400">전국 평균 대비</span></div>
-     <div style="margin:6px 0 12px">${weak.map(w=>chip(w[0],w[1],true)).join('')}</div>
-     <div class="fld" style="color:#2f6b4e">🟢 강점 도메인</div>
-     <div style="margin:6px 0 12px">${strong.map(w=>chip(w[0],w[1],false)).join('')}</div>
-     <div class="fld">🎯 사각지대 동 <span class="muted" style="font-weight:400">인구 많은 순 · 클릭 → 지도 상세</span></div>
-     ${g.blindN?`<div class="valgrid" style="margin-top:6px">${bl}</div>`+(g.blindN>10?`<div class="muted" style="margin-top:8px">외 ${g.blindN-10}건</div>`:''):'<div class="muted" style="margin-top:6px">사각지대 없음 — 인구 1만+ 동에서 하위 20% 도메인 없음</div>'}</div>`;
+  const bl=g.blind.slice(0,9).map(b=>`<div class="valcell" onclick="goDetail('${b.p.adm_nm}')"><div class="valnm">${b.p.adm_nm}<span>${(b.p.pop_total||0).toLocaleString()}명</span></div><div class="valv"><span class="dchip" style="border-color:#b0603f55;margin:0"><b>${DOMINFO[b.d][0]}</b>${SHORT[b.d]}</span> <b style="color:#b0603f">${Math.round(b.v)}</b></div></div>`).join('');
+  return `<div class="flex" style="justify-content:space-between;align-items:flex-start;gap:12px">
+    <div style="min-width:0"><h3 style="margin:0 0 4px">${g.sido} ${g.sgg}</h3>
+      <div class="muted">전국 취약순위 <b style="color:var(--terra)">${rankOf.get(g.key)}</b>/${total} · 인구 ${g.pop.toLocaleString()}명 · ${g.dongs.length}개 동 · 등급 ${gdist||'—'}</div></div>
+    <div class="flex" style="gap:6px;flex-shrink:0;justify-content:flex-end"><button class="btn" onclick="diagToMap()">🗺 지도</button><button class="btn" onclick="copyDiagReport(this)">📋 복사</button><button class="btn" onclick="printDiagReport()">🖨 인쇄</button></div></div>
+   <div class="dkpi">
+     <div class="kpi"><b style="color:${color(g.nli)}">${g.nli.toFixed(1)}</b><span>평균 종합지수 · 전국 백분위</span></div>
+     <div class="kpi"><b style="color:var(--terra)">${g.blindN}</b><span>사각지대 · 동 × 도메인</span></div></div>
+   <div class="grid2" style="margin-top:16px;gap:16px">
+     <div><div class="fld" style="color:#b0603f;font-size:11.5px">🔴 취약 도메인 <span class="muted" style="font-weight:400;text-transform:none;letter-spacing:0">전국 평균 대비</span></div>
+       <div style="margin-top:8px">${weak.map(w=>chip(w[0],w[1],true)).join('')}</div></div>
+     <div><div class="fld" style="color:#2f6b4e;font-size:11.5px">🟢 강점 도메인</div>
+       <div style="margin-top:8px">${strong.map(w=>chip(w[0],w[1],false)).join('')}</div></div></div>
+   <div style="margin-top:18px"><div class="fld" style="font-size:11.5px">🎯 사각지대 동 <span class="muted" style="font-weight:400;text-transform:none;letter-spacing:0">인구 많은 순 · 클릭 → 지도 상세</span></div>
+     ${g.blindN?`<div class="valgrid" style="margin-top:8px">${bl}</div>`+(g.blindN>9?`<div class="muted" style="margin-top:8px">외 ${g.blindN-9}건</div>`:''):'<div class="muted" style="margin-top:8px">사각지대 없음 — 인구 1만+ 동에서 하위 20% 도메인 없음</div>'}</div>`;
 }
 function renderDiag(){
   const dd=diagData(),rows=dd.rows;
