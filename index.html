@@ -58,6 +58,7 @@
  .kpi b{display:block;font-size:36px;font-weight:800;color:var(--ocean);line-height:1.05;letter-spacing:-.02em}
  .kpi span{color:var(--mid);font-size:12.5px;font-weight:500}
  .dkpi{display:grid;grid-template-columns:repeat(2,1fr);gap:14px;margin-top:16px}
+ .recgrid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:20px}
  .card{background:var(--card);border:1px solid var(--line);border-radius:var(--r-lg);padding:24px;box-shadow:var(--sh);transition:.2s}
  .domcard{margin-bottom:0}
@@ -78,7 +79,7 @@
  .valnm{font-size:13px;color:var(--ink)}.valnm span{display:block;font-size:10.5px;color:var(--light);margin-top:1px}
  .valv{text-align:right;font-size:13px;white-space:nowrap}.valv b{color:var(--ocean)}.valv i{display:block;font-style:normal;font-size:11px;color:var(--terra);font-weight:700;margin-top:1px}
  @media(max-width:820px){.valgrid{grid-template-columns:repeat(2,1fr)}}
- @media(max-width:560px){.valgrid{grid-template-columns:1fr}}
+ @media(max-width:560px){.valgrid,.recgrid{grid-template-columns:1fr}}
  /* 경로 모달 */
  .rmodal{position:fixed;inset:0;z-index:3000;background:rgba(20,26,20,.42);display:flex;align-items:center;justify-content:center;padding:20px;animation:vin .18s}
  .rmbox{background:#fff;border-radius:var(--r-lg);box-shadow:var(--sh2);width:420px;max-width:100%;max-height:82vh;overflow:auto;padding:20px}
@@ -223,6 +224,7 @@
      <div class="tab on" data-v="map">지도</div>
      <div class="tab" data-v="home">홈</div>
      <div class="tab" data-v="rank">순위</div>
+     <div class="tab" data-v="rec">🎯 추천</div>
      <div class="tab" data-v="compare">비교</div>
      <div class="tab" data-v="persona">맞춤설정</div>
      <div class="tab" data-v="stats">통계</div>
@@ -329,6 +331,25 @@
      <div id="scatterNote" style="margin-top:12px;text-align:center;font-size:13.5px;color:var(--ink)"></div></div>
  </div></div>
 
+ <div class="view" id="v-rec" style="display:none"><div class="wrap">
+   <h2>내 동네 추천 <span class="muted" style="font-size:14px;font-weight:400">— 가구유형·예산·통근으로 맞춤</span></h2>
+   <div class="sub">가구유형에 맞는 가중치로 살기지수를 다시 계산하고, 예산·통근 조건으로 걸러 <b>맞춤 동네 Top10</b>을 추천합니다.</div>
+   <div class="card" style="margin-bottom:18px">
+     <div class="fld">가구유형 <span class="muted" style="font-weight:400;text-transform:none;letter-spacing:0">— 도메인 가중치 자동 설정</span></div>
+     <div class="seg" id="recHouseSeg" style="max-width:540px;margin:7px 0 16px"><button data-h="일반" class="on">일반</button><button data-h="육아">육아</button><button data-h="1인">1인가구</button><button data-h="고령">고령</button><button data-h="반려">반려동물</button></div>
+     <div class="grid2" style="gap:16px">
+       <div><div class="fld">예산 — 아파트 평당가 상한 <span class="muted" style="font-weight:400;text-transform:none;letter-spacing:0">(만원, 비우면 전체)</span></div>
+         <input type="number" id="recBudget" placeholder="예: 3000" style="width:180px;margin-top:6px" oninput="recBudget=+this.value||null"></div>
+       <div><div class="fld">통근 기준지 <span class="muted" style="font-weight:400;text-transform:none;letter-spacing:0">(선택 · 직선 반경 필터)</span></div>
+         <span style="position:relative;display:inline-block;margin-top:6px"><input type="text" id="recBase" placeholder="예: 역삼동" autocomplete="off" style="width:200px"><div class="ac" id="recbac" style="left:0;top:42px;right:auto;width:260px"></div></span>
+         <span id="recBaseLabel" class="muted" style="margin-left:8px;font-size:12px"></span>
+         <div id="recKmWrap" style="display:none;align-items:center;gap:7px;margin-top:8px;font-size:12px;color:var(--mid)">반경 <input type="range" id="recKm" min="2" max="40" step="1" value="10" style="width:130px" oninput="recKm=+this.value;document.getElementById('recKmV').textContent=recKm+'km'"><b id="recKmV" style="color:var(--ocean);font-weight:700">10km</b></div></div>
+     </div>
+     <button class="btn on" style="margin-top:16px;padding:10px 22px" onclick="recRun()">🎯 추천받기</button>
+   </div>
+   <div id="recResults"><div class="card muted">가구유형을 고르고 <b>추천받기</b>를 누르면 맞춤 동네 Top10이 나옵니다.</div></div>
+ </div></div>
+
  <div class="view" id="v-diag" style="display:none"><div class="wrap">
    <h2>지역 생활여건 진단 <span class="muted" style="font-size:14px;font-weight:400">— 지자체 229곳 · 연중</span></h2>
    <div class="sub">시군구(지자체) 단위로 <b>취약 도메인</b>(전국 평균 대비 낮은 생활 인프라)과 <b>사각지대 동</b>(인구 1만+ 인데 특정 도메인 하위 20%)을 진단합니다. 시설 입지·예산 배분 근거로 활용하세요. 표의 행 또는 지자체를 고르면 아래 카드가 갱신됩니다.</div>
@@ -425,7 +446,7 @@ function attachAC(input,box,onPick){
 
 document.querySelectorAll('nav .tab').forEach(t=>t.onclick=()=>{
   document.querySelectorAll('nav .tab').forEach(x=>x.classList.remove('on'));t.classList.add('on');
-  const v=t.dataset.v;['home','map','rank','compare','persona','stats','diag'].forEach(x=>document.getElementById('v-'+x).style.display=(x===v?(x==='map'?'flex':'block'):'none'));
+  const v=t.dataset.v;['home','map','rank','compare','persona','stats','diag','rec'].forEach(x=>document.getElementById('v-'+x).style.display=(x===v?(x==='map'?'flex':'block'):'none'));
   if(v!=='map'){const el=document.getElementById('v-'+v);el.style.animation='none';void el.offsetWidth;el.style.animation='vin .3s cubic-bezier(.22,1,.36,1)';}
   if(v==='map'&&map){setTimeout(()=>map.invalidateSize(),60);renderMapSliders();}
   if(v==='home')renderHome();if(v==='rank')renderRank();if(v==='compare')renderCompare();if(v==='persona')renderPersona();if(v==='stats')renderStats();if(v==='diag')renderDiag();
@@ -591,6 +612,36 @@ function shareDong(adm,btn){
   const ok=()=>{if(!btn)return;const o=btn.textContent;btn.textContent='✓ 복사됨';setTimeout(()=>btn.textContent=o,1400);};
   if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(msg).then(ok,()=>prompt('공유 문구 복사',msg));
   else prompt('공유 문구 복사',msg);
+}
+// B2C 내 동네 추천 마법사 — 가구유형(페르소나 가중치)·예산·통근으로 맞춤 Top10 (기존 PRESETS·hav·nliWith 재사용)
+const REC_MAP={'일반':'균등','육아':'영유아 양육','1인':'1인 청년','고령':'고령','반려':'반려동물'};
+let recHouse='일반',recBudget=null,recBase=null,recKm=10;
+function nliWith(p,ww){let s=0,w=0;DOMS.forEach((d,i)=>{const v=p['score_'+d];if(v!=null&&!isNaN(v)){s+=ww[i]*v;w+=ww[i]}});return w?s/w:null}
+function recSetHouse(h,btn){recHouse=h;document.querySelectorAll('#recHouseSeg button').forEach(x=>x.classList.toggle('on',x===btn));}
+function recPickBase(adm){recBase=adm;const f=F.find(x=>x.properties.adm_nm===adm),el=document.getElementById('recBaseLabel');if(el)el.innerHTML=f?'✓ <b>'+f.properties.full_nm+'</b> <span onclick="recClearBase()" style="cursor:pointer;color:var(--terra);font-weight:700">✕</span>':'';document.getElementById('recKmWrap').style.display='flex';}
+function recClearBase(){recBase=null;const el=document.getElementById('recBaseLabel');if(el)el.textContent='';document.getElementById('recKmWrap').style.display='none';}
+function recCard(p,rank,score){
+  const ds=DOMS.map(d=>[d,p['score_'+d]]).filter(x=>x[1]!=null).sort((a,b)=>b[1]-a[1]);
+  const chips=ds.slice(0,2).map(x=>'<span class="dchip" style="border-color:'+color(x[1])+'55" onclick="showDom(\''+x[0]+'\')"><b>'+DOMINFO[x[0]][0]+'</b>'+SHORT[x[0]]+' <i style="color:'+color(x[1])+'">'+Math.round(x[1])+'</i></span>').join('');
+  return '<div class="card" style="padding:15px">'
+    +'<div class="flex" style="justify-content:space-between;align-items:baseline;gap:8px"><b style="font-size:13.5px">'+rank+'. '+fullN(p)+'</b><span style="color:'+color(score)+';font-weight:800;font-size:18px">'+score.toFixed(1)+'</span></div>'
+    +'<div class="muted" style="margin:5px 0 9px;font-size:11.5px">'+(p.price!=null?'🏢 평당 '+Math.round(p.price*3.3058).toLocaleString()+'만':'가격정보 없음')+(p._km!=null?' · 🚇 '+p._km.toFixed(1)+'km(직선)':'')+'</div>'
+    +'<div style="margin-bottom:10px">'+chips+'</div>'
+    +'<div class="flex" style="gap:6px"><button class="btn" onclick="goDetail(\''+p.adm_nm+'\')">상세</button><button class="btn" onclick="shareDong(\''+p.adm_nm+'\',this)">📤 공유</button></div></div>';
+}
+function recRun(){
+  const ww=PRESETS[REC_MAP[recHouse]]||PRESETS['균등'];
+  let arr=SP.filter(p=>(p.pop_total||0)>0);
+  if(recBudget)arr=arr.filter(p=>p.price!=null&&p.price*3.3058<=recBudget);
+  if(recBase){const bf=F.find(f=>f.properties.adm_nm===recBase),bp=bf&&bf.properties;
+    if(bp&&bp.clat!=null)arr=arr.filter(p=>{if(p.clat==null)return false;p._km=hav(bp.clat,bp.clon,p.clat,p.clon);return p._km<=recKm;});}
+  const top=arr.map(p=>({p:p,s:nliWith(p,ww)})).filter(x=>x.s!=null).sort((a,b)=>b.s-a.s).slice(0,10);
+  const el=document.getElementById('recResults');
+  if(!top.length){el.innerHTML='<div class="card muted">조건에 맞는 동네가 없습니다. 예산을 높이거나 통근 반경을 넓혀보세요.</div>';return;}
+  const cond=[REC_MAP[recHouse]!=='균등'?recHouse+' 가중치':'균등 가중치'];
+  if(recBudget)cond.push('평당 ≤'+recBudget.toLocaleString()+'만');
+  if(recBase){const bf=F.find(f=>f.properties.adm_nm===recBase);cond.push((bf?bf.properties.adm_nm:recBase)+' '+recKm+'km 이내');}
+  el.innerHTML='<div class="muted" style="margin-bottom:10px">조건: '+cond.join(' · ')+' → 맞춤 살기지수 Top '+top.length+'</div><div class="recgrid">'+top.map((x,i)=>recCard(x.p,i+1,x.s)).join('')+'</div>';
 }
 function showDom(d){mMode='basic';document.querySelectorAll('#modes button').forEach(x=>x.classList.toggle('on',x.dataset.m==='basic'));document.querySelector('nav .tab[data-v=map]').click();const s=document.getElementById('metric');if(s){s.value=d;s.dispatchEvent(new Event('change'));}}
 
@@ -976,6 +1027,8 @@ recompRank();initMap();renderHome();
 attachAC(document.getElementById('gsearch'),document.getElementById('gac'),goDetail);
 attachAC(document.getElementById('cmpSearch'),document.getElementById('cmpac'),adm=>{addCmp(adm)});
 attachAC(document.getElementById('rankBase'),document.getElementById('rankbac'),setCommuteBase);
+document.querySelectorAll('#recHouseSeg button').forEach(b=>b.onclick=()=>recSetHouse(b.dataset.h,b));
+attachAC(document.getElementById('recBase'),document.getElementById('recbac'),recPickBase);
 document.getElementById('commuteKm').oninput=function(){commuteKm=+this.value;document.getElementById('commuteKmV').textContent=commuteKm+'km';renderRank();writeHash();};
 document.getElementById('commuteClear').onclick=()=>{commuteBase=null;document.getElementById('commuteInfo').innerHTML='';document.getElementById('commuteKmWrap').style.display='none';document.getElementById('rankBase').value='';renderRank();writeHash();};
 document.querySelectorAll('select').forEach(customSelect);
