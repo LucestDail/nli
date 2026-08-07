@@ -803,7 +803,7 @@ function applyHash(){
   const P={};raw.split('&').forEach(kv=>{const i=kv.indexOf('=');if(i>0){try{P[kv.slice(0,i)]=decodeURIComponent(kv.slice(i+1));}catch(e){}}});
   applyingHash=true;
   try{
-    if(P.w){const a=P.w.split(',').map(Number);if(a.length===8&&a.every(x=>!isNaN(x))){for(let i=0;i<8;i++)W[i]=a[i];recompRank();}}
+    if(P.w){const a=P.w.split(',').map(Number);if(a.length===W.length&&a.every(x=>!isNaN(x))){for(let i=0;i<W.length;i++)W[i]=a[i];recompRank();}}
     if(P.m)mMetric=P.m;
     if(P.md)mMode=P.md;
     if(P.cb){commuteBase=P.cb;commuteKm=+P.ck||10;}
