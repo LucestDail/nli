@@ -1029,25 +1029,49 @@ function copyDiagReport(btn){
 function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
 function printDiagReport(){
   if(!diagCur)return;const g=diagCur.g,P=diagReportParts(g),nf=n=>(n||0).toLocaleString();
-  const wr=`<tr><th>도메인</th><th>편차</th></tr>`+P.weak.map(w=>`<tr><td>${METRICS[w[0]]}</td><td style="color:#b0603f">${w[1]>=0?'+':''}${Math.round(w[1])}</td></tr>`).join('');
-  const bl=g.blindN?`<table><tr><th>동</th><th>인구</th><th>취약 도메인</th><th>점수</th></tr>`+g.blind.map(b=>`<tr><td>${esc(b.p.adm_nm)}</td><td>${nf(b.p.pop_total)}</td><td>${METRICS[b.d]}</td><td style="color:#b0603f">${Math.round(b.v)}</td></tr>`).join('')+`</table><p>→ 우선 보강: ${esc(P.prio)}.</p>`:'<p>사각지대 없음.</p>';
-  const st=P.strong.map(w=>`<li>${METRICS[w[0]]}: 전국 평균 대비 +${Math.round(w[1])}</li>`).join('');
-  const html=`<!doctype html><html lang=ko><head><meta charset=utf-8><title>${esc(g.sido+' '+g.sgg)} 생활여건 진단</title>
-<style>body{font:14px/1.7 -apple-system,'Malgun Gothic',sans-serif;color:#1a2530;max-width:800px;margin:32px auto;padding:0 24px}
-h1{font-size:22px;border-bottom:3px solid #2f6b4e;padding-bottom:10px}h2{font-size:15px;margin-top:26px;color:#2f6b4e}
-table{border-collapse:collapse;width:100%;margin:10px 0;font-size:13px}th,td{border:1px solid #d8d2c4;padding:7px 10px;text-align:left}th{background:#f7f5f1}
-.sum li{margin:3px 0}.mut{color:#7a7367;font-size:12px}.foot{margin-top:28px;border-top:1px solid #d8d2c4;padding-top:12px;color:#7a7367;font-size:11.5px}
-@media print{button{display:none}}</style></head><body>
-<button onclick="print()" style="float:right;padding:8px 14px;cursor:pointer">🖨 인쇄 / PDF 저장</button>
-<h1>‹${esc(g.sido+' '+g.sgg)}› 생활여건 진단 리포트</h1>
-<p class=mut>동네살기지수(NLI) 자동생성 · 전국 읍면동 9개 도메인 상대평가(백분위) 기준</p>
-<h2>요약</h2><ul class=sum><li>평균 종합지수: <b>${g.nli.toFixed(1)}</b> · 전국 지자체 취약순위 <b>${diagCur.rank}/${diagCur.total}위</b></li>
-<li>관할 ${g.dongs.length}개 동 · 인구 ${nf(g.pop)}명</li><li>동 등급 분포: ${P.gdist||'—'}</li></ul>
-<h2>🔴 취약 도메인 (전국 지자체 평균 대비)</h2><table>${wr}</table>
-<p><b>${P.weak[0][1]<0?'1순위 보강 대상: '+METRICS[P.weak[0][0]]+' — 전국 평균보다 '+Math.abs(Math.round(P.weak[0][1]))+'p 낮음.':'모든 도메인이 전국 평균 이상.'}</b></p>
-<h2>🎯 사각지대 동 <span class=mut>인구 1만+ 인데 특정 도메인 하위 20% · 총 ${g.blindN}건</span></h2>${bl}
-<h2>🟢 강점 도메인</h2><ul class=sum>${st}</ul>
-<div class=foot>방법론: 각 지표를 밀도(인구·면적)·근접성 백분위로 혼합 → 도메인 가중평균 → 종합지수. 점수는 전국 읍면동 상대평가(백분위)로 참고용. 복지·돌봄은 지오코딩 약 85% 커버.</div>
+  let date='';try{date=new Date().toLocaleDateString('ko-KR');}catch(e){}
+  // 9도메인 다이버징 프로파일(전국 평균=중앙, 좌 빨강/우 초록)
+  const dev={};g.rankDom.forEach(x=>dev[x[0]]=x[1]);
+  const maxAbs=Math.max(1,...g.rankDom.map(x=>Math.abs(x[1])));
+  const prof=DKEYS.map(d=>{const v=dev[d]||0,w=(Math.abs(v)/maxAbs*50).toFixed(1);
+    const seg=v<0?`<span class=pseg style="right:50%;width:${w}%;background:#b0603f"></span>`:`<span class=pseg style="left:50%;width:${w}%;background:#2f6b4e"></span>`;
+    return `<div class=prow><span class=plabel>${DOMINFO[d][0]} ${SHORT[d]}</span><span class=pbar>${seg}</span><span class=pval style="color:${v<0?'#b0603f':'#2f6b4e'}">${v>=0?'+':''}${Math.round(v)}</span></div>`;}).join('');
+  const gc=g.dongs.reduce((m,p)=>{const gr=gradeOf(p);m[gr]=(m[gr]||0)+1;return m},{});
+  const gbar=['S','A','B','C','D'].filter(x=>gc[x]).map(x=>`<span class=gchip style="background:${GC[x]}22;color:${GC[x]}">${x}등급 ${gc[x]}</span>`).join('');
+  const wr=`<tr><th>도메인</th><th>전국 대비 편차</th></tr>`+P.weak.map(w=>`<tr><td>${METRICS[w[0]]}</td><td style="color:#b0603f;font-weight:700">${w[1]>=0?'+':''}${Math.round(w[1])}</td></tr>`).join('');
+  const bl=g.blindN?`<table><tr><th>동</th><th>인구</th><th>취약 도메인</th><th>점수(백분위)</th></tr>`+g.blind.map(b=>`<tr><td>${esc(b.p.adm_nm)}</td><td>${nf(b.p.pop_total)}명</td><td>${METRICS[b.d]}</td><td style="color:#b0603f;font-weight:700">${Math.round(b.v)}</td></tr>`).join('')+`</table><p class=hi>→ 우선 보강: ${esc(P.prio)}.</p>`:'<p>인구 1만+ 동에서 하위 20% 도메인 없음 — 사각지대 없음.</p>';
+  const st=P.strong.map(w=>`<li>${METRICS[w[0]]} <b style="color:#2f6b4e">+${Math.round(w[1])}</b></li>`).join('');
+  const one=P.weak[0][1]<0?`<b>1순위 보강 대상: ${METRICS[P.weak[0][0]]}</b> — 전국 지자체 평균보다 <b>${Math.abs(Math.round(P.weak[0][1]))}p</b> 낮습니다.`:'모든 도메인이 전국 지자체 평균 이상입니다.';
+  const html=`<!doctype html><html lang=ko><head><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1"><title>${esc(g.sido+' '+g.sgg)} 생활여건 진단 리포트</title>
+<style>*{box-sizing:border-box}body{font:14px/1.7 -apple-system,'Malgun Gothic',sans-serif;color:#1a2530;max-width:820px;margin:0 auto;padding:28px 26px 60px;background:#fff}
+.hd{display:flex;justify-content:space-between;align-items:center;border-bottom:3px solid #2f6b4e;padding-bottom:10px}
+.brand{font-weight:800;color:#2f6b4e;font-size:15px;letter-spacing:-.02em}.brand b{color:#3f8fa8}.date{color:#7a7367;font-size:12px}
+h1{font-size:24px;margin:16px 0 4px}h2{font-size:15px;margin:26px 0 8px;color:#2f6b4e}.mut{color:#7a7367;font-size:12.5px;margin:0}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:18px 0 6px}
+.stat{border:1px solid #e2ddd0;border-radius:10px;padding:13px 14px;background:#faf8f4}.stat b{display:block;font-size:22px;font-weight:800;color:#132a36;line-height:1.1}.stat span{font-size:11.5px;color:#7a7367}
+.prof{border:1px solid #e2ddd0;border-radius:10px;padding:14px 16px}
+.prow{display:flex;align-items:center;gap:10px;margin:5px 0}.plabel{width:104px;font-size:12.5px;flex-shrink:0}
+.pbar{position:relative;flex:1;height:15px;background:#f0ede7;border-radius:4px}.pbar::before{content:"";position:absolute;left:50%;top:-2px;bottom:-2px;width:1px;background:#c2b8a5}
+.pseg{position:absolute;top:2px;bottom:2px;border-radius:3px}.pval{width:34px;text-align:right;font-weight:800;font-size:12.5px;flex-shrink:0}
+.gchip{display:inline-block;padding:3px 10px;border-radius:5px;font-weight:700;font-size:12px;margin:0 6px 4px 0}
+table{border-collapse:collapse;width:100%;margin:8px 0;font-size:13px}th,td{border:1px solid #d8d2c4;padding:7px 10px;text-align:left}th{background:#f7f5f1;font-size:12px}
+tr{page-break-inside:avoid}.sum{margin:6px 0;padding-left:18px}.sum li{margin:3px 0}
+.hi{background:#fbf3ee;border-left:3px solid #b0603f;padding:8px 12px;border-radius:4px;font-size:13px}
+.foot{margin-top:30px;border-top:1px solid #d8d2c4;padding-top:12px;color:#7a7367;font-size:11px;line-height:1.6}
+button{float:right;padding:8px 14px;cursor:pointer;border:1px solid #2f6b4e;background:#2f6b4e;color:#fff;border-radius:8px;font-size:13px}
+@media print{button{display:none}body{padding:0}h2{page-break-after:avoid}}</style></head><body>
+<button onclick="print()">🖨 인쇄 / PDF 저장</button>
+<div class=hd><div class=brand>🏘 동네살기지수 <b>NLI</b></div><div class=date>생성일 ${date}</div></div>
+<h1>${esc(g.sido+' '+g.sgg)} 생활여건 진단 리포트</h1>
+<p class=mut>취약 도메인·사각지대 진단 · 전국 읍면동 9개 도메인 32개 지표 상대평가(백분위) 기준</p>
+<div class=stats><div class=stat><b>${g.nli.toFixed(1)}</b><span>평균 종합지수</span></div><div class=stat><b>${diagCur.rank}/${diagCur.total}</b><span>전국 취약순위</span></div><div class=stat><b>${g.dongs.length}개</b><span>관할 동</span></div><div class=stat><b>${nf(g.pop)}</b><span>인구(명)</span></div></div>
+<h2>도메인 프로파일 <span class=mut style="font-weight:400">— 전국 지자체 평균(중앙선) 대비 · 좌 취약 / 우 강점</span></h2>
+<div class=prof>${prof}</div>
+<h2>동 등급 분포</h2><div>${gbar||'—'} <span class=mut>· 총 ${g.dongs.length}개 동</span></div>
+<h2>🔴 취약 도메인 (전국 지자체 평균 대비)</h2><table>${wr}</table><p class=hi>${one}</p>
+<h2>🎯 사각지대 동 <span class=mut style="font-weight:400">인구 1만+ 인데 특정 도메인 하위 20% · 총 ${g.blindN}건</span></h2>${bl}
+<h2>🟢 강점 도메인</h2><ul class=sum>${st||'<li>—</li>'}</ul>
+<div class=foot>방법론 · 각 지표를 시설밀도(인구 1만명당·면적 ㎢당 혼합)와 근접성의 백분위로 결합 → 도메인 가중평균 → 종합지수. 사각지대 = 인구 1만+ 인데 해당 도메인 전국 하위 20%. 점수는 전국 읍면동 상대평가(백분위)로 참고용이며 복지·돌봄은 지오코딩 약 85% 커버. · 데이터: 공공데이터포털·SGIS(2025 2Q)·심평원·소상공인·국토부 실거래가 · 데모 https://lucestdail.github.io/nli/</div>
 </body></html>`;
   const w=window.open('','_blank');if(w){w.document.write(html);w.document.close();}else prompt('팝업이 차단되었습니다. 리포트 복사 버튼을 사용하세요.');
 }
