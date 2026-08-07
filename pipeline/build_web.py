@@ -830,7 +830,7 @@ function diagCardHTML(g,rankOf,total){
   return `<div class="flex" style="justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
     <div><h3 style="margin:0">${g.sido} ${g.sgg}</h3>
       <div class="muted" style="margin-top:3px">전국 취약 순위 <b style="color:var(--terra)">${rankOf.get(g.key)}</b>/${total} · 인구 ${g.pop.toLocaleString()}명 · 동 ${g.dongs.length}개</div></div>
-    <div class="flex" style="gap:6px;flex-shrink:0"><button class="btn" onclick="copyDiagReport(this)">📋 리포트 복사</button><button class="btn ghost" onclick="printDiagReport()">🖨 인쇄·PDF</button></div></div>
+    <div class="flex" style="gap:6px;flex-shrink:0"><button class="btn" onclick="diagToMap()">🗺 지도에서 보기</button><button class="btn" onclick="copyDiagReport(this)">📋 리포트 복사</button><button class="btn ghost" onclick="printDiagReport()">🖨 인쇄·PDF</button></div></div>
    <div class="kpis" style="margin:12px 0">
      <div class="kpi"><b style="color:${color(g.nli)}">${g.nli.toFixed(1)}</b><span>평균 종합지수</span></div>
      <div class="kpi"><b style="color:var(--terra)">${g.blindN}</b><span>사각지대 (동×도메인)</span></div>
@@ -867,6 +867,16 @@ function renderDiag(){
   document.getElementById('diagTable').innerHTML=h;
 }
 function selectDiag(k){diagSel=k;renderDiag();}
+function diagToMap(){
+  if(!diagCur||!map)return;const g=diagCur.g,dom=g.rankDom[0][0];
+  mMode=g.blindN?'blind':'basic';
+  document.querySelectorAll('#modes button').forEach(x=>x.classList.toggle('on',x.dataset.m===mMode));
+  document.querySelector('nav .tab[data-v=map]').click();
+  const s=document.getElementById('metric');if(s){s.value=dom;s.dispatchEvent(new Event('change'));}
+  map.invalidateSize();
+  const b=L.latLngBounds([]);g.dongs.forEach(p=>{if(p._l){const lb=p._l.getBounds();if(lb&&lb.isValid())b.extend(lb);}});
+  if(b.isValid())map.fitBounds(b,{padding:[30,30]});
+}
 function diagReportParts(g){
   const gc=g.dongs.reduce((m,p)=>{const gr=gradeOf(p);m[gr]=(m[gr]||0)+1;return m},{});
   const gdist=['S','A','B','C','D'].filter(x=>gc[x]).map(x=>`${x} ${gc[x]}`).join(' · ');
