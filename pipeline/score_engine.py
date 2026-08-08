@@ -11,11 +11,9 @@ NLI 스코어링 엔진 (Phase 1 스켈레톤) — config 기반
   {key, name, domain, path, reader, lon, lat, [prox], [w], [filter], [catcol/catkeep], [neg]}
   neg=True → 부정지표(많을수록 나쁨): 백분위 반전. catcol/catkeep → 컬럼값으로 업종/유형 세분.
 """
-import duckdb, pandas as pd, os
+import duckdb, pandas as pd, os, yaml
 
 DB = "data/processed/nli.duckdb"
-HIRA = "data/processed/hira"
-RAW = "data/raw"
 PROX_RADII = (1000, 4000, 16000, 64000, 256000)  # 근접성 확장반경(m): 가까운 반경부터 넓혀감
 MIN_POP = 100       # 이 미만 인구 동은 밀도 정규화에서 제외(0/극소인구 왜곡 방지, 기획서 §4.2/§6-3)
 
@@ -30,101 +28,8 @@ DOMAIN_WEIGHTS = {d: 1.0 for d in DOMAINS}
 
 # ── 확보 데이터. 재수집분은 여기에 dict 추가만 하면 됨 ──
 #    prox=False → 근접성 산출 생략(대용량·근접성 무의미한 밀집시설). 기본 True.
-DATASETS = [
-    dict(key="pharmacy", name="약국", domain="D1",
-         path=f"{HIRA}/2.약국정보서비스(2026.6.).xlsx", reader="xlsx",
-         lon="좌표(X)", lat="좌표(Y)"),
-    dict(key="clinic", name="의료기관", domain="D1",
-         path=f"{HIRA}/1.병원정보서비스(2026.6.).xlsx", reader="xlsx",
-         lon="좌표(X)", lat="좌표(Y)"),
-    dict(key="emergency", name="응급의료기관", domain="D1",
-         path=f"{RAW}/전국응급의료기관_API.csv", reader="csv",
-         lon="경도", lat="위도"),
-    dict(key="school", name="초중등학교", domain="D2",
-         path=f"{RAW}/한국교육시설안전원_초중등학교위치_20260320.csv", reader="csv",
-         lon="경도", lat="위도"),
-    # 상가(상권) 1개 파일을 상권업종대분류로 세분 → 도메인 정합↑(M5) & 단일지표 도메인 보강(M1)
-    #   생활편의(음식·소매·수리·숙박)=D3 / 학원·교육=D2 / 예술·스포츠 여가=D4. B2B(부동산·과학기술·시설관리)·보건의료(HIRA중복) 제외.
-    dict(key="store", name="생활편의상가", domain="D3",
-         path=f"{RAW}/소상공인시장진흥공단_상가(상권)정보_20260331.zip", reader="zip_csv",
-         lon="경도", lat="위도", catcol="상권업종대분류명",
-         catkeep=["음식", "소매", "수리·개인", "숙박"], prox=False),  # 대량, 근접성 무의미 → 밀도만
-    dict(key="academy", name="학원·교육상가", domain="D2",
-         path=f"{RAW}/소상공인시장진흥공단_상가(상권)정보_20260331.zip", reader="zip_csv",
-         lon="경도", lat="위도", catcol="상권업종대분류명", catkeep=["교육"]),
-    dict(key="leisure", name="여가·스포츠상가", domain="D4",
-         path=f"{RAW}/소상공인시장진흥공단_상가(상권)정보_20260331.zip", reader="zip_csv",
-         lon="경도", lat="위도", catcol="상권업종대분류명", catkeep=["예술·스포츠"]),
-    dict(key="park", name="도시공원", domain="D4",
-         path=f"{RAW}/전국도시공원정보표준데이터.csv", reader="csv",
-         lon="경도", lat="위도"),
-    dict(key="bus", name="버스정류소", domain="D5",
-         path=f"{RAW}/국토교통부_전국 버스정류장 위치정보_20251031.csv", reader="csv",
-         lon="경도", lat="위도"),
-    dict(key="cctv", name="CCTV", domain="D6",
-         path=f"{RAW}/전국CCTV표준데이터.csv", reader="csv",
-         lon="WGS84경도", lat="WGS84위도"),
-    dict(key="ev", name="전기차충전소", domain="D7",
-         path=f"{RAW}/한국전력공사_전기차충전소위경도_20251231.csv", reader="csv",
-         lon="경도", lat="위도"),
-    dict(key="welfare", name="사회복지시설", domain="D8",
-         path=f"{RAW}/전국사회복지시설_좌표.csv", reader="csv",
-         lon="경도", lat="위도"),   # VWorld 지오코딩(88% 커버) → 읍면동 정밀
-    # ── P0 편입(2026-07-30): 도메인당 2+지표로 보강(M1) ──
-    dict(key="childcare", name="어린이집", domain="D2",
-         path=f"{RAW}/전국어린이집_운영중_좌표.csv", reader="csv",
-         lon="경도", lat="위도"),   # prep_childcare.py 가공(운영중 21K)
-    dict(key="library", name="도서관", domain="D2",
-         path=f"{RAW}/전국도서관표준데이터.csv", reader="csv",
-         lon="경도", lat="위도"),
-    dict(key="parking", name="주차장", domain="D5",
-         path=f"{RAW}/전국주차장정보표준데이터.csv", reader="csv",
-         lon="경도", lat="위도"),
-    dict(key="childzone", name="어린이보호구역", domain="D6",
-         path=f"{RAW}/전국어린이보호구역표준데이터.csv", reader="csv",
-         lon="경도", lat="위도"),
-    dict(key="sports", name="체육시설", domain="D4",
-         path=f"{RAW}/전국체육시설_공공_좌표.csv", reader="csv",
-         lon="시설좌표경도", lat="시설좌표위도"),   # prep_sports.py 가공(공공 40K, 여가상가와 비중복)
-    dict(key="shelter", name="무더위쉼터", domain="D7",
-         path=f"{RAW}/전국무더위쉼터_API.csv", reader="csv",
-         lon="LO", lat="LA"),   # collect_shelter.py 수집(safetydata API, 60.9K)
-    # ── LOCALDATA 인허가(2026-08-04): 영업중·5174→4326 변환(prep_localdata.py) ──
-    dict(key="bigstore", name="대규모점포", domain="D3",
-         path=f"{RAW}/localdata_bigstore.csv", reader="csv", lon="경도", lat="위도"),
-    dict(key="gas", name="주유소", domain="D3",
-         path=f"{RAW}/localdata_gas.csv", reader="csv", lon="경도", lat="위도"),
-    dict(key="museum", name="박물관·미술관", domain="D4",
-         path=f"{RAW}/localdata_museum.csv", reader="csv", lon="경도", lat="위도"),
-    dict(key="theater", name="공연장", domain="D4",
-         path=f"{RAW}/localdata_theater.csv", reader="csv", lon="경도", lat="위도"),
-    dict(key="cinema", name="영화상영관", domain="D4",
-         path=f"{RAW}/localdata_cinema.csv", reader="csv", lon="경도", lat="위도"),
-    # ── 표준데이터 단품(WGS84) ──
-    dict(key="bikepark", name="자전거보관소", domain="D5",
-         path=f"{RAW}/자전거보관소정보.csv", reader="csv", lon="WGS84경도", lat="WGS84위도"),
-    dict(key="safetybell", name="안전비상벨", domain="D6",
-         path=f"{RAW}/안전비상벨위치정보.csv", reader="csv", lon="WGS84경도", lat="WGS84위도"),
-    # ── 반려 신규도메인 D9 + 지표 폭 확장(2026-08-04) ──
-    dict(key="vethospital", name="동물병원", domain="D9",
-         path=f"{RAW}/localdata_vethospital.csv", reader="csv", lon="경도", lat="위도"),
-    dict(key="wifi", name="무료와이파이", domain="D3",
-         path=f"{RAW}/무료와이파이정보.csv", reader="csv", lon="WGS84경도", lat="WGS84위도"),
-    dict(key="tree", name="보호수", domain="D7",
-         path=f"{RAW}/보호수정보.csv", reader="csv", lon="WGS84경도", lat="WGS84위도"),
-    dict(key="civilshelter", name="민방위대피시설", domain="D6",
-         path=f"{RAW}/민방위대피시설.csv", reader="csv", lon="경도(EPSG4326)", lat="위도(EPSG4326)"),
-    dict(key="seniorcenter", name="경로당·마을회관", domain="D8",
-         path=f"{RAW}/전국마을회관및경로당표준데이터.csv", reader="csv",
-         lon="경도", lat="위도", filter="영업상태명 == '영업'"),   # 46K 표준데이터
-    # ── D5 교통 보강(2026-08-05): 지하철역·자전거대여소(대도시 집중) ──
-    dict(key="subway", name="지하철역", domain="D5",
-         path=f"{RAW}/도시철도역사_역별.csv", reader="csv",
-         lon="역경도", lat="역위도"),   # 도시철도역사 환승중복 제거 987역
-    dict(key="bikeshare", name="자전거대여소", domain="D5",
-         path=f"{RAW}/전국자전거대여소표준데이터.csv", reader="csv",
-         lon="경도", lat="위도"),
-]
+# 데이터셋 정의는 data/datasets.yml(코드 밖)에서 로드 — 새 지표=yml 한 항목 추가.
+DATASETS = yaml.safe_load(open("data/datasets.yml", encoding="utf-8"))["datasets"]
 
 
 def _read_csv_any(path, usecols=None):
