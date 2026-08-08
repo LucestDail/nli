@@ -51,3 +51,8 @@ sgis_*.html
 .claude/
 nli_share.html
 docs/
+# NLI 서버 아티팩트(데이터/빌드/비밀)
+server/static/*.html
+server/static/*.json
+server/snapshot/
+server/.env

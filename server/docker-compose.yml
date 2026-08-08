@@ -1,0 +1,23 @@
+# NLI API 온프렘 실행 — docker compose up -d --build
+# 스냅샷 3파일(nli_map.geojson·nli_points.json·datasets.yml)을 ./snapshot/ 에 두고 마운트.
+services:
+  nli:
+    build:
+      context: ..
+      dockerfile: server/Dockerfile
+    image: nli-api:latest
+    container_name: nli-api
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./snapshot:/app/data:ro        # nli_map.geojson · nli_points.json · datasets.yml
+    environment:
+      - API_KEY=${API_KEY:-}           # 설정 시 ?key=/x-api-key 요구(무설정=공개)
+      - RATELIMIT=${RATELIMIT:-1}
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://localhost:8080/api/health').read() else 1)\" || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
