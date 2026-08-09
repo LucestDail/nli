@@ -274,34 +274,6 @@ TEMPLATE = r'''<!DOCTYPE html>
    <div class="rmfoot">대중교통 door-to-door · 오전 9시 출발 기준 · 지도에 경로 표시됨</div>
  </div></div>
 
- <div class="view" id="v-home" style="display:none"><div class="wrap">
-   <div class="hero-t">어디가 살기 좋은 동네일까</div>
-   <div class="sub">공공데이터를 읍면동 단위로 융합한 살기좋은동네 지수 · 전국 <b>3,559개</b> 읍면동 · <b>9개 도메인 · 32개 지표</b></div>
-   <div class="kpis" id="kpis"></div>
-   <div class="grid2" style="margin:6px 0 4px;gap:16px">
-     <div class="card" style="cursor:pointer;display:flex;gap:14px;align-items:center" onclick="document.querySelector('nav .tab[data-v=rec]').click()">
-       <div style="font-size:30px;flex-shrink:0">🎯</div>
-       <div style="min-width:0"><h3 style="margin:0 0 3px">나에게 맞는 동네 찾기</h3><div class="muted" style="font-size:13px">가구유형·예산·통근 입력 → 맞춤 살기지수 Top10 추천</div></div>
-       <div style="margin-left:auto;color:var(--ocean);font-weight:800;font-size:20px;flex-shrink:0">→</div></div>
-     <div class="card" style="cursor:pointer;display:flex;gap:14px;align-items:center" onclick="document.querySelector('nav .tab[data-v=diag]').click()">
-       <div style="font-size:30px;flex-shrink:0">🩺</div>
-       <div style="min-width:0"><h3 style="margin:0 0 3px">우리 지자체 생활여건 진단</h3><div class="muted" style="font-size:13px">지자체 229곳 취약 도메인·사각지대 동 진단 · 리포트</div></div>
-       <div style="margin-left:auto;color:var(--terra);font-weight:800;font-size:20px;flex-shrink:0">→</div></div>
-   </div>
-   <div class="card domcard" style="margin-top:18px"><div class="flex" style="justify-content:space-between;align-items:baseline;margin-bottom:14px"><h3 style="margin:0">9개 생활 도메인</h3><span class="muted">각 도메인을 여러 공공데이터 지표로 정량화 · 총 32개 지표</span></div><div class="domgrid" id="domGrid"></div></div>
-   <div class="grid2" style="margin-top:18px">
-     <div class="card"><h3>시도별 평균 지수</h3><div id="sidoBars"></div></div>
-     <div class="card"><h3>등급 분포</h3><div id="gradeBars"></div>
-       <h3 style="margin-top:20px">전국 상위</h3><div id="homeTop"></div>
-       <h3 style="margin-top:16px">전국 하위</h3><div id="homeBot"></div></div>
-   </div>
-   <div class="card" style="margin-top:18px;display:flex;gap:16px;align-items:center;flex-wrap:wrap;background:linear-gradient(180deg,#f7f5f1,#fff)">
-     <div style="font-size:30px;flex-shrink:0">🏛</div>
-     <div style="min-width:0;flex:1 1 240px"><h3 style="margin:0 0 3px">지자체·기관이신가요?</h3><div class="muted" style="font-size:13px">생활여건 진단 리포트(취약 도메인·사각지대 동)·데이터 도입 및 제휴 문의를 받습니다.</div></div>
-     <a class="btn on" style="flex-shrink:0;text-decoration:none;padding:10px 20px" href="mailto:seunghyun.oh@bespinglobal.com?subject=%5B%EB%8F%99%EB%84%A4%EC%82%B4%EA%B8%B0%EC%A7%80%EC%88%98%5D%20%EB%8F%84%EC%9E%85%C2%B7%EC%A0%9C%ED%9C%B4%20%EB%AC%B8%EC%9D%98&body=%EA%B8%B0%EA%B4%80/%EB%8B%B4%EB%8B%B9%EC%9E%90%3A%0A%EA%B4%80%EC%8B%AC%20%EC%A7%80%EC%97%AD/%EB%82%B4%EC%9A%A9%3A%0A%EC%97%B0%EB%9D%BD%EC%B2%98%3A%0A">📬 도입·제휴 문의</a>
-   </div>
- </div><div class="foot" id="foot1"></div></div>
-
  <div class="view map" id="v-map" style="display:flex">
    <button class="asideToggle" id="asideToggle" aria-label="필터 열기">☰ 지표·필터</button>
    <aside>
@@ -413,6 +385,7 @@ TEMPLATE = r'''<!DOCTYPE html>
    <div class="card" style="padding:0;max-height:56vh;overflow:auto"><table id="diagTable"></table></div>
  </div></div>
 
+ <div class="foot" id="foot1"></div>
 </div>
 <script>
 const DATA=__GEOJSON__;
@@ -496,10 +469,11 @@ function showTab(v){
   document.getElementById('insightSeg').style.display=(v==='insight'?'flex':'none');
   const show = v==='map'?['map'] : v==='find'?['rec','rank'] : [insightSub];
   document.getElementById('app').style.overflowY=(v==='map'?'hidden':'auto');
-  ['map','rec','rank','compare','stats','diag','home'].forEach(x=>{const el=document.getElementById('v-'+x);if(!el)return;
+  ['map','rec','rank','compare','stats','diag'].forEach(x=>{const el=document.getElementById('v-'+x);if(!el)return;
     const on=show.includes(x);
     el.style.display=on?(x==='map'?'flex':'block'):'none';
     if(on&&x!=='map'){el.style.flex='0 0 auto';el.style.overflow='visible';el.style.animation='none';void el.offsetWidth;el.style.animation='vin .3s cubic-bezier(.22,1,.36,1)';}});
+  document.getElementById('foot1').style.display=(v==='map'?'none':'block');
   if(v==='find'){document.getElementById('v-rec').style.order='1';document.getElementById('v-rank').style.order='2';}
   if(v==='map'&&map){setTimeout(()=>map.invalidateSize(),60);renderMapSliders();}
   else if(v==='find'){renderRec();renderRank();}
@@ -508,30 +482,6 @@ function showTab(v){
 }
 document.querySelectorAll('nav .tab').forEach(t=>t.onclick=()=>showTab(t.dataset.v));
 
-function renderHome(){
-  const avg=(F.reduce((s,f)=>s+(nliW(f.properties)||0),0)/F.length).toFixed(1);
-  const gd={};F.forEach(f=>{const g=gradeOf(f.properties);gd[g]=(gd[g]||0)+1});
-  const bs=F.filter(f=>isBlind(f.properties,'NLI')).length;
-  document.getElementById('kpis').innerHTML=
-   `<div class="kpi"><b>${F.length.toLocaleString()}</b><span>분석 읍면동</span></div>
-    <div class="kpi"><b>${avg}</b><span>평균 지수</span></div>
-    <div class="kpi"><b>${gd.S||0}</b><span>S등급 · 상위 10%</span></div>
-    <div class="kpi"><b style="color:var(--terra)">${bs}</b><span>종합 사각지대</span></div>`;
-  // 9개 도메인 쇼케이스
-  document.getElementById('domGrid').innerHTML=DOMS.map(d=>{const [ic,nm,inds,col]=DOMINFO[d];
-    return `<div class="domcell" onclick="showDom('${d}')" title="지도에서 ${nm} 보기">
-      <div class="domhd"><span class="domic" style="background:${col}22;color:${col}">${ic}</span><div><b>${nm}</b><span class="domn">${inds.length}개 지표</span></div></div>
-      <div class="domtags">${inds.map(i=>`<span>${i}</span>`).join('')}</div></div>`}).join('');
-  const sd={};F.forEach(f=>{const s=f.properties.sido;(sd[s]=sd[s]||[]).push(nliW(f.properties)||0)});
-  const sarr=Object.entries(sd).map(([k,v])=>[k,v.reduce((a,b)=>a+b,0)/v.length]).sort((a,b)=>b[1]-a[1]);
-  document.getElementById('sidoBars').innerHTML=sarr.map(([k,v])=>`<div class="barrow"><span class="nm">${k}</span><span class="bar"><span data-w="${v.toFixed(1)}" style="width:0;background:${color(v)}"></span></span><span class="v">${v.toFixed(0)}</span></div>`).join('');
-  document.getElementById('gradeBars').innerHTML=['S','A','B','C','D'].map(g=>{const n=gd[g]||0,pc=100*n/F.length;return `<div class="barrow"><span class="nm">${g}등급</span><span class="bar"><span data-w="${pc.toFixed(1)}" style="width:0;background:${GC[g]}"></span></span><span class="v">${n}</span></div>`}).join('');
-  const sorted=F.slice().sort((a,b)=>nliW(b.properties)-nliW(a.properties));
-  const card=p=>`<div class="place" onclick="goDetail('${p.adm_nm}')"><span>${fullN(p)}</span><span><b>${nliW(p)}</b> <span class="g" style="background:${GC[gradeOf(p)]}">${gradeOf(p)}</span></span></div>`;
-  document.getElementById('homeTop').innerHTML=sorted.slice(0,5).map(f=>card(f.properties)).join('');
-  document.getElementById('homeBot').innerHTML=sorted.slice(-5).reverse().map(f=>card(f.properties)).join('');
-  growBars();
-}
 
 let map,layer,mMetric='NLI',mMode='basic',popmin=0;
 function initMap(){
@@ -892,7 +842,7 @@ function customSelect(sel){
 document.addEventListener('click',()=>document.querySelectorAll('.csel.open').forEach(x=>x.classList.remove('open')));
 /* 막대 성장 애니메이션: data-w(%너비)/data-h(%높이) → 다음 프레임에 목표값 적용 */
 function growBars(){requestAnimationFrame(()=>{document.querySelectorAll('[data-w]').forEach(e=>{e.style.width=e.dataset.w+'%';e.removeAttribute('data-w');});document.querySelectorAll('[data-h]').forEach(e=>{e.style.height=e.dataset.h+'%';e.removeAttribute('data-h');});});}
-document.getElementById('foot1').textContent='데이터 출처 · 공공데이터포털 표준데이터 · SGIS 경계·인구(2025 2분기) · 건강보험심사평가원(2026.6) · 소상공인시장진흥공단 · 국토교통부 아파트 실거래가 · safetydata.go.kr · VWorld 지오코딩   ·   방법 · 시설밀도(인구 1만명당·면적 ㎢당 혼합)와 근접성의 백분위 결합 → 도메인 가중평균, 도농 코호트·인구가중 중심점 보정   ·   9개 도메인 32개 지표 읍면동 정밀(복지는 지오코딩 약 88% 커버) · 점수는 전국 읍면동 상대평가(백분위)로 참고용입니다';
+document.getElementById('foot1').innerHTML='데이터 출처 · 공공데이터포털 표준데이터 · SGIS 경계·인구(2025 2분기) · 건강보험심사평가원(2026.6) · 소상공인시장진흥공단 · 국토교통부 아파트 실거래가 · safetydata.go.kr · VWorld 지오코딩   ·   방법 · 시설밀도(인구 1만명당·면적 ㎢당 혼합)와 근접성의 백분위 결합 → 도메인 가중평균, 도농 코호트·인구가중 중심점 보정   ·   9개 도메인 32개 지표 읍면동 정밀(복지는 지오코딩 약 88% 커버) · 점수는 전국 읍면동 상대평가(백분위)로 참고용입니다<br><a href="mailto:seunghyun.oh@bespinglobal.com?subject=%5B%EB%8F%99%EB%84%A4%EC%82%B4%EA%B8%B0%EC%A7%80%EC%88%98%5D%20%EB%8F%84%EC%9E%85%C2%B7%EC%A0%9C%ED%9C%B4%20%EB%AC%B8%EC%9D%98&body=%EA%B8%B0%EA%B4%80/%EB%8B%B4%EB%8B%B9%EC%9E%90%3A%0A%EA%B4%80%EC%8B%AC%20%EC%A7%80%EC%97%AD/%EB%82%B4%EC%9A%A9%3A%0A%EC%97%B0%EB%9D%BD%EC%B2%98%3A%0A" style="display:inline-block;margin-top:9px;color:var(--ocean);font-weight:700;text-decoration:none">📬 지자체·기관 도입·제휴 문의</a>';
 /* ---------- 공유 딥링크: 현재 상태 ↔ location.hash ---------- */
 function curTab(){const t=document.querySelector('nav .tab.on');return t?t.dataset.v:'map';}
 function writeHash(){if(applyingHash)return;
