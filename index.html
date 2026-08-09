@@ -194,6 +194,10 @@
  @media(max-width:1080px){.statdash{grid-template-columns:1fr}}
  .inswrap{max-width:1560px;padding-left:26px;padding-right:26px}
  .statwrap.inswrap{max-width:1560px}
+ /* 진단 무스크롤 대시보드: 좌 리포트 · 우 순위표(각자 내부 스크롤) */
+ .diagdash{display:grid;grid-template-columns:minmax(0,440px) 1fr;gap:16px;align-items:start}
+ .diagdash>.card{max-height:76vh;overflow:auto}
+ @media(max-width:900px){.diagdash{grid-template-columns:1fr}.diagdash>.card{max-height:none}.diagdash>.card:last-child{max-height:60vh}}
  .statdash,.statdash>.card{min-width:0}
  #regHeat,#domCorr,#sidoDom{max-width:100%}
  /* 데스크톱 전용 도구(복사·CSV·인쇄·공유) — 모바일 숨김(간단 조회/열람만) */
@@ -393,15 +397,17 @@
  </div></div>
 
  <div class="view" id="v-diag" style="display:none"><div class="wrap inswrap">
-   <h2>지역 생활여건 진단 <span class="muted" style="font-size:14px;font-weight:400">— 지자체 229곳 · 연중</span></h2>
-   <div class="sub">시군구(지자체) 단위로 <b>취약 도메인</b>(전국 평균 대비 낮은 생활 인프라)과 <b>사각지대 동</b>(인구 1만+ 인데 특정 도메인 하위 20%)을 진단합니다. 시설 입지·예산 배분 근거로 활용하세요. 표의 행 또는 지자체를 고르면 아래 카드가 갱신됩니다.</div>
-   <div class="flex" style="margin-bottom:14px">
+   <h2>지역 생활여건 진단 <span class="muted" style="font-size:14px;font-weight:400">— 지자체 229곳</span></h2>
+   <div class="sub" style="margin-bottom:12px">시군구 단위 <b>취약 도메인</b>·<b>사각지대 동</b>(인구 1만+ 하위 20%) 진단 · 우측 표에서 지자체를 고르면 좌측 리포트가 갱신됩니다.</div>
+   <div class="flex" style="margin-bottom:12px">
      <select id="diagSido"></select>
      <div class="seg" id="diagSortSeg" style="width:280px"><button data-s="nli" class="on">취약(평균지수 낮은) 순</button><button data-s="blind">사각지대 많은 순</button></div>
      <span class="muted" id="diagCount"></span></div>
-   <div id="diagCmp" style="display:none"></div>
-   <div id="diagCard" class="card" style="margin-bottom:16px"></div>
-   <div class="card" style="padding:0;max-height:56vh;overflow:auto"><table id="diagTable"></table></div>
+   <div id="diagCmp" style="display:none;margin-bottom:12px"></div>
+   <div class="diagdash">
+     <div id="diagCard" class="card"></div>
+     <div class="card" style="padding:0;overflow:auto"><table id="diagTable"></table></div>
+   </div>
  </div></div>
 
  <div class="foot" id="foot1" style="order:9"></div>
