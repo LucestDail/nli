@@ -101,8 +101,10 @@ h2{font-size:clamp(23px,4.4vw,38px);font-weight:800;letter-spacing:-.02em}
 .ex{display:flex;justify-content:space-between;align-items:center;gap:10px;background:rgba(255,255,255,.92);border:1px solid var(--line);border-radius:13px;padding:14px 18px;text-align:left;position:relative;overflow:hidden}
 .exn{font-weight:800;font-size:15px}.exn .reg{display:block;font-size:11.5px;color:var(--mid);font-weight:500}
 .exv{text-align:right;font-size:12.5px;color:var(--mid);white-space:nowrap}.exv b{color:var(--ink);font-size:15px}.exv i{font-style:normal;color:var(--terra);font-weight:700}
-.mask{filter:blur(5px);user-select:none;-webkit-user-select:none}
-.lock{position:absolute;top:8px;right:10px;font-size:12px;opacity:.5}
+.p{color:var(--terra);font-weight:800;letter-spacing:.5px}
+.f{display:none}
+.ex.has{cursor:pointer}.ex.has:hover{border-color:var(--sky);box-shadow:0 5px 16px rgba(20,30,40,.09)}
+.ex:hover .p,.ex.open .p{display:none}.ex:hover .f,.ex.open .f{display:inline}
 .hint{margin-top:12px;font-size:12.5px;color:var(--mid)}
 .bars{max-width:480px;margin:22px auto 0;background:rgba(255,255,255,.92);border:1px solid var(--line);border-radius:15px;padding:18px 20px}
 .bar{display:flex;align-items:center;gap:10px;margin:8px 0}
@@ -138,17 +140,25 @@ DOMG = "".join(
     f'<b>지표</b>: {" · ".join(IND_BY_DOM[d])}.<div class="m">산출: {COMPUTE}</div></div></div>'
     for d in DK)
 
+def part(n):
+    # 앞자리만 노출, 나머지 * (예: 78→7*, 2258→2***)
+    s = str(int(round(n)))
+    return s[0] + "*" * (len(s) - 1)
+
+def num(full, n):
+    # 기본=앞자리+* / 카드 호버 시 실제값
+    return f'<span class="p">{part(n)}</span><span class="f">{full}</span>'
+
 def card(name, reg, big_html, small_html):
-    # 지역명·단위는 노출, 숫자만 .mask(오해 소지 방지 + 제품가치 보호)
-    return (f'<div class="ex"><div class="exn">{name}<span class="reg">{reg}</span></div>'
-            f'<div class="exv">{big_html}<br>{small_html}</div><span class="lock">🔒</span></div>')
+    return (f'<div class="ex has" tabindex="0"><div class="exn">{name}<span class="reg">{reg}</span></div>'
+            f'<div class="exv">{big_html}<br>{small_html}</div></div>')
 
 REC = "".join(card(p["full_nm"].split(" ", 1)[1], p["full_nm"].split()[0][:2],
-                   f'<b><span class="mask">{round(wn(p),1)}</span>점</b>',
-                   f'평당 <span class="mask">{round(p["price"]*3.3058):,}</span>만') for p in rec)
+                   f'<b>{num(round(wn(p),1), wn(p))}점</b>',
+                   f'평당 {num(f"{round(p["price"]*3.3058):,}", p["price"]*3.3058)}만') for p in rec)
 VAL = "".join(card(p["full_nm"].split(" ", 1)[1], p["full_nm"].split()[0][:2],
-                   f'<b>살기 <span class="mask">{round(nli(p))}</span>점</b>',
-                   f'평당 <span class="mask">{round(p["price"]*3.3058):,}</span>만 · 강점 {top_domains(p)}') for p in value)
+                   f'<b>살기 {num(round(nli(p)), nli(p))}점</b>',
+                   f'평당 {num(f"{round(p["price"]*3.3058):,}", p["price"]*3.3058)}만 · 강점 {top_domains(p)}') for p in value)
 DBARS = "".join(
     f'<div class="bar"><span class="bl">{IC[d]} {SH[d]}</span>'
     f'<span class="bt"><span class="bf" style="width:{abs(v)/maxa*100:.0f}%"></span></span>'
@@ -183,14 +193,13 @@ BODY = f"""
 <section><div class="wrap rev"><div class="kick">당신에게 맞는</div>
   <h2>가구에 맞는 동네는 다릅니다</h2>
   <div class="sub">육아 가구라면 교육·안전·의료를 더 중요하게 — 가중치를 바꿔 다시 계산합니다.</div>
-  <div class="exs">{REC}</div>
-  <div class="hint">🔒 점수·가격 수치는 도구에서 조건 입력 후 확인 (오해 방지를 위해 데모에선 가림)</div></div></section>
+  <div class="exs">{REC}</div></div></section>
 
 <section><div class="wrap rev"><div class="kick">가격 대비</div>
   <h2>싸고 살기 좋은 곳이 있다</h2>
   <div class="sub"><span class="hg">살기지수는 높은데 아파트값은 낮은</span> 가성비 동네. 비싼 동네가 꼭 살기 좋은 건 아닙니다.</div>
   <div class="exs">{VAL}</div>
-  <div class="hint">🔒 점수·가격 수치는 도구에서 확인</div></div></section>
+  <div class="note">카드에 마우스를 올리면(모바일은 탭) 실제 점수가 보입니다</div></div></section>
 
 <section><div class="wrap rev"><div class="kick">지자체·기관용</div>
   <h2>우리 지역, 뭐가 부족할까?</h2>
