@@ -78,7 +78,17 @@ body{font-family:-apple-system,'Malgun Gothic',sans-serif;color:var(--ink);backg
 .nav b{font-weight:800}.nav .sp{margin-left:auto;display:flex;gap:6px}
 .nav a{color:#eaf1f2;text-decoration:none;font-size:12px;padding:6px 10px;border:1px solid rgba(255,255,255,.25);border-radius:999px;white-space:nowrap}
 .nav a.p{background:#fff;color:var(--ink);border-color:#fff;font-weight:700}
-section{min-height:100vh;scroll-snap-align:start;scroll-snap-stop:always;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;padding:70px 20px 46px;position:relative}
+section{min-height:100vh;scroll-snap-align:start;scroll-snap-stop:always;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;padding:70px 20px 46px;position:relative;z-index:0}
+/* 섹션별 배경 이미지 — 그레이톤·낮은 opacity, 섹션과 함께 스크롤(고정 아님). 콘텐츠 아래·전역 배경 위. */
+section::before{content:"";position:absolute;inset:0;z-index:-1;background-position:center;background-size:cover;background-repeat:no-repeat;filter:grayscale(1) contrast(.95);opacity:.16;pointer-events:none}
+section::after{content:"";position:absolute;inset:0;z-index:-1;background:radial-gradient(ellipse at center,rgba(247,245,239,.35),rgba(247,245,239,.72));pointer-events:none}
+.s1::before{background-image:url(assets/bg1.jpg)}
+.s2::before{background-image:url(assets/bg2.jpg)}
+.s3::before{background-image:url(assets/bg3.jpg)}
+.s4::before{background-image:url(assets/bg4.jpg)}
+.s5::before{background-image:url(assets/bg5.jpg)}
+.s6::before{background-image:url(assets/bg6.jpg)}
+.s7::before{background-image:url(assets/bg7.jpg)}
 .wrap{max-width:900px;width:100%;margin:0 auto}
 .rev{opacity:0;transform:translateY(22px);transition:.7s cubic-bezier(.22,1,.36,1)}.rev.on{opacity:1;transform:none}
 .kick{color:var(--sky);font-weight:800;font-size:12.5px;letter-spacing:.09em;margin-bottom:12px}
@@ -174,7 +184,7 @@ BODY = f"""
 <div class="bg"><div class="blob b1"></div><div class="blob b2"></div><div class="blob b3"></div></div><div class="dots"></div>
 <div class="nav"><span>🏘 <b>동네살기지수</b></span></div>
 
-<section><div class="wrap rev"><div class="kick">공공데이터로 답하다</div>
+<section class="s1"><div class="wrap rev"><div class="kick">공공데이터로 답하다</div>
   <h1>어디가<br>살기 좋은 동네일까?</h1>
   <div class="sub">아파트값만 보면 모릅니다. 의료·교육·교통·안전·복지까지, 전국 읍면동을 <b>9가지 생활 도메인</b>으로 채점하고 <b>아파트 실거래가·대중교통 소요시간</b>까지 결합했습니다.</div>
   <div class="kpis">
@@ -185,34 +195,34 @@ BODY = f"""
   <div class="badge">＋ 아파트 실거래가 · 대중교통 결합</div>
   <div class="note">↓ 스크롤해서 살펴보세요</div></div></section>
 
-<section><div class="wrap rev"><div class="kick">무엇으로 재나</div>
+<section class="s2"><div class="wrap rev"><div class="kick">무엇으로 재나</div>
   <h2>'살기 좋음'은 9가지입니다</h2>
   <div class="sub">집값·평수로는 안 보입니다. 병원이 가까운지, 아이 학교·안전은, 버스는 자주 오는지 — 매일의 삶을 만드는 건 이 <b>9가지</b>입니다.</div>
   <div class="domg">{DOMG}</div></div></section>
 
-<section><div class="wrap rev"><div class="kick">당신에게 맞는</div>
+<section class="s3"><div class="wrap rev"><div class="kick">당신에게 맞는</div>
   <h2>가구에 맞는 동네는 다릅니다</h2>
   <div class="sub">육아 가구라면 교육·안전·의료를 더 중요하게 — 가중치를 바꿔 다시 계산합니다.</div>
   <div class="exs">{REC}</div></div></section>
 
-<section><div class="wrap rev"><div class="kick">가격 대비</div>
+<section class="s4"><div class="wrap rev"><div class="kick">가격 대비</div>
   <h2>싸고 살기 좋은 곳이 있다</h2>
   <div class="sub"><span class="hg">살기지수는 높은데 아파트값은 낮은</span> 가성비 동네. 비싼 동네가 꼭 살기 좋은 건 아닙니다.</div>
   <div class="exs">{VAL}</div>
   <div class="note">카드에 마우스를 올리면(모바일은 탭) 실제 점수가 보입니다</div></div></section>
 
-<section><div class="wrap rev"><div class="kick">지자체·기관용</div>
+<section class="s5"><div class="wrap rev"><div class="kick">지자체·기관용</div>
   <h2>우리 지역, 뭐가 부족할까?</h2>
   <div class="sub">인구는 많은데 특정 생활 인프라가 하위 20%인 <span class="hi">사각지대</span>를 찾아냅니다. 시설 입지·예산 배분의 근거.</div>
   <div class="bars"><div style="text-align:left;font-weight:800;margin-bottom:10px">가장 부족한 3개 영역 <span style="color:var(--mid);font-weight:500;font-size:12px">(전국 평균 대비 부족폭)</span></div>{DBARS}</div></div></section>
 
-<section><div class="wrap rev"><div class="kick">믿을 수 있나</div>
+<section class="s6"><div class="wrap rev"><div class="kick">믿을 수 있나</div>
   <h2>100% 공공데이터 · 투명·재현</h2>
   <div class="sub">추측 없이, 전부 공개 데이터로. 이만큼 긁어다 융합했습니다 — 32개 지표.</div></div>
   <div class="marq"><div class="track">{row1}</div><div class="track r">{row2}</div></div>
   <div class="wrap rev"><div class="note">점수는 전국 읍면동 상대평가(백분위) 기반 참고용입니다.</div></div></section>
 
-<section style="min-height:88vh"><div class="wrap rev">
+<section class="s7" style="min-height:88vh"><div class="wrap rev">
   <h2>이제 직접 확인해보세요</h2>
   <div class="sub">데모는 여기까지. 실제 데이터·수치는 도구에서.</div>
   <div class="links">

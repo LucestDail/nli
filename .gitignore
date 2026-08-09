@@ -56,3 +56,6 @@ server/static/*.html
 server/static/*.json
 server/snapshot/
 server/.env
+
+# 데모 배경 원본(대용량 PNG)은 제외 — 최적화 assets/bg*.jpg만 배포
+assets/*.png
