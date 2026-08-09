@@ -1,0 +1,91 @@
+<!doctype html><html lang=ko><head><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1">
+<title>동네살기지수 — 어디가 살기 좋을까?</title>
+<meta name=description content="공공데이터로 전국 3,559개 읍면동을 9가지 생활 도메인으로 채점. 살기지수 × 아파트값 × 대중교통.">
+<meta property="og:title" content="동네살기지수 — 어디가 살기 좋을까?">
+<meta property="og:description" content="전국 읍면동을 9가지로 채점 · 살기지수 × 아파트값. 나에게 맞는 동네 찾기.">
+<style>
+*{box-sizing:border-box;margin:0}
+:root{--ink:#1a2530;--mid:#5b6b77;--terra:#b0603f;--ocean:#2f6b4e;--sky:#3f8fa8;--bg:#faf8f4;--line:#ece7dd}
+body{font-family:-apple-system,'Malgun Gothic',sans-serif;color:var(--ink);background:var(--bg);line-height:1.65;-webkit-font-smoothing:antialiased;letter-spacing:-.01em}
+.nav{position:fixed;top:0;left:0;right:0;height:52px;display:flex;align-items:center;gap:8px;padding:0 18px;background:rgba(19,42,54,.92);backdrop-filter:blur(10px);color:#eaf1f2;z-index:100}
+.nav b{font-weight:800}.nav .sp{margin-left:auto;display:flex;gap:6px}
+.nav a{color:#eaf1f2;text-decoration:none;font-size:12.5px;padding:6px 11px;border:1px solid rgba(255,255,255,.25);border-radius:999px}
+.nav a.p{background:#fff;color:var(--ink);border-color:#fff;font-weight:700}
+section{min-height:88vh;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;padding:80px 22px 60px;max-width:900px;margin:0 auto}
+.rev{opacity:0;transform:translateY(24px);transition:.7s cubic-bezier(.22,1,.36,1)}.rev.on{opacity:1;transform:none}
+.kick{color:var(--sky);font-weight:800;font-size:13px;letter-spacing:.08em;margin-bottom:12px}
+h1{font-size:clamp(30px,6vw,52px);line-height:1.15;font-weight:800;letter-spacing:-.03em}
+h2{font-size:clamp(24px,4.5vw,38px);font-weight:800;letter-spacing:-.02em}
+.sub{color:var(--mid);font-size:clamp(15px,2.2vw,18px);margin-top:16px;max-width:620px}
+.kpis{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin-top:26px}
+.kpi{background:#fff;border:1px solid var(--line);border-radius:14px;padding:14px 20px;box-shadow:0 1px 3px rgba(20,30,40,.05)}
+.kpi b{display:block;font-size:26px;font-weight:800;color:var(--ocean)}.kpi span{font-size:12px;color:var(--mid)}
+.domg{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:28px;width:100%;max-width:560px}
+.dg{background:#fff;border:1px solid var(--line);border-radius:13px;padding:16px 8px;font-size:13.5px;font-weight:600}.dg span{display:block;font-size:26px;margin-bottom:6px}
+.exs{display:grid;gap:10px;margin-top:26px;width:100%;max-width:560px}
+.ex{display:flex;justify-content:space-between;align-items:center;gap:10px;background:#fff;border:1px solid var(--line);border-radius:13px;padding:14px 18px;text-align:left}
+.exn{font-weight:800;font-size:15px}.exn span{display:block;font-size:11.5px;color:var(--mid);font-weight:500}
+.exv{text-align:right;font-size:12.5px;color:var(--mid)}.exv b{color:var(--ink);font-size:15px}.exv i{font-style:normal;color:var(--terra);font-weight:700}
+.bars{width:100%;max-width:480px;margin-top:24px;background:#fff;border:1px solid var(--line);border-radius:14px;padding:18px 20px}
+.bar{display:flex;align-items:center;gap:10px;margin:7px 0}.bl{width:96px;text-align:left;font-size:13px;font-weight:600}
+.bt{flex:1;height:16px;background:#f0ede7;border-radius:5px;position:relative}.bf{position:absolute;right:50%;height:100%;border-radius:4px}
+.bt::before{content:"";position:absolute;left:50%;top:-3px;bottom:-3px;width:1px;background:#c2b8a5}.bv{width:34px;text-align:right;font-weight:800;font-size:13px}
+.chips{display:flex;gap:7px;flex-wrap:wrap;justify-content:center;margin-top:22px}.chip{background:#fff;border:1px solid var(--line);border-radius:999px;padding:7px 14px;font-size:12.5px;color:var(--mid)}
+.cta{display:flex;gap:12px;flex-wrap:wrap;justify-content:center;margin-top:32px}
+.btn{text-decoration:none;padding:14px 26px;border-radius:999px;font-weight:700;font-size:15px;border:1.5px solid var(--ocean);color:var(--ocean);background:#fff;transition:.15s}
+.btn.p{background:var(--ocean);color:#fff}.btn:hover{transform:translateY(-2px)}
+.note{color:var(--mid);font-size:12.5px;margin-top:14px}.hi{color:var(--terra);font-weight:800}.hg{color:var(--ocean);font-weight:800}
+.foot{text-align:center;color:var(--mid);font-size:11.5px;padding:30px 20px 50px;border-top:1px solid var(--line)}
+@media(max-width:560px){.domg{grid-template-columns:repeat(3,1fr)}}
+</style></head><body>
+<div class="nav"><span>🏘 <b>동네살기지수</b></span><div class="sp">
+  <a href="index.html#v=rec">내 동네 찾기</a><a href="index.html#v=diag">지자체 진단</a><a class="p" href="index.html">전체 도구</a></div></div>
+
+<section><div class="rev"><div class="kick">공공데이터로 답하다</div>
+  <h1>어디가<br>살기 좋은 동네일까?</h1>
+  <div class="sub">아파트값만 보면 모릅니다. 의료·교육·교통·안전·복지까지 — 전국 <b>3,559개 읍면동</b>을 <b>9가지 생활 도메인·32개 지표</b>로 채점했습니다.</div>
+  <div class="kpis"><div class="kpi"><b>3,559</b><span>읍면동</span></div><div class="kpi"><b>9</b><span>생활 도메인</span></div><div class="kpi"><b>32</b><span>공공데이터 지표</span></div><div class="kpi"><b>×가격·교통</b><span>결합</span></div></div>
+  <div class="cta"><a class="btn p" href="index.html">🗺 전국 지도 열기</a></div></div></section>
+
+<section><div class="rev"><div class="kick">무엇으로 재나</div>
+  <h2>'살기 좋음'은 9가지입니다</h2>
+  <div class="sub">내 삶에 매일 닿는 것들. 각 도메인을 여러 공공데이터로 정량화했습니다.</div>
+  <div class="domg"><div class="dg"><span>🏥</span>의료·건강</div><div class="dg"><span>🎓</span>교육·보육</div><div class="dg"><span>🛒</span>생활편의·상업</div><div class="dg"><span>🎭</span>문화·여가·체육</div><div class="dg"><span>🚌</span>교통·이동</div><div class="dg"><span>🛡️</span>안전</div><div class="dg"><span>🌿</span>환경·기후</div><div class="dg"><span>🤝</span>복지·돌봄</div><div class="dg"><span>🐾</span>반려·동물</div></div></div></section>
+
+<section><div class="rev"><div class="kick">당신에게 맞는</div>
+  <h2>가구에 맞는 동네는 다릅니다</h2>
+  <div class="sub">육아 가구라면 교육·안전·의료를 더 중요하게 — 가중치를 바꿔 다시 계산합니다. <b>육아 가구 · 평당 3천만 이하</b> 추천:</div>
+  <div class="exs"><div class="ex"><div class="exn">중구 성내2동<span>대구</span></div><div class="exv"><b>78.4점</b><br><i>평당 2,258만</i></div></div><div class="ex"><div class="exn">제천시 중앙동<span>충청</span></div><div class="exv"><b>76.1점</b><br><i>평당 658만</i></div></div><div class="ex"><div class="exn">동래구 복산동<span>부산</span></div><div class="exv"><b>76.1점</b><br><i>평당 2,000만</i></div></div></div>
+  <div class="cta"><a class="btn" href="index.html#v=rec">🎯 내 조건으로 추천받기</a></div></div></section>
+
+<section><div class="rev"><div class="kick">가격 대비</div>
+  <h2>싸고 살기 좋은 곳이 있다</h2>
+  <div class="sub"><span class="hg">살기지수는 높은데 아파트값은 낮은</span> 가성비 동네. 비싼 동네가 꼭 살기 좋은 건 아닙니다.</div>
+  <div class="exs"><div class="ex"><div class="exn">군산시 월명동<span>전북</span></div><div class="exv"><b>살기 75점</b> · 상위 0%<br><i>평당 466만</i> · 강점 반려·복지</div></div><div class="ex"><div class="exn">강릉시 옥천동<span>강원</span></div><div class="exv"><b>살기 75점</b> · 상위 0%<br><i>평당 483만</i> · 강점 의료·반려</div></div><div class="ex"><div class="exn">중구 부사동<span>대전</span></div><div class="exv"><b>살기 69점</b> · 상위 4%<br><i>평당 387만</i> · 강점 반려·교통</div></div></div>
+  <div class="cta"><a class="btn" href="index.html#v=rec">💎 가성비 동네 더 보기</a></div></div></section>
+
+<section><div class="rev"><div class="kick">지자체·기관용</div>
+  <h2>우리 지역, 뭐가 부족할까?</h2>
+  <div class="sub"><b>인천광역시 중구</b> — 인구는 많은데 특정 생활 인프라가 하위 20%인 <span class="hi">사각지대 9곳</span>. 시설 입지·예산 배분의 근거가 됩니다.</div>
+  <div class="bars"><div class="bar"><span class="bl">🤝 복지</span><span class="bt"><span class="bf" style="width:100%;background:#b0603f"></span></span><span class="bv" style="color:#b0603f">-34</span></div><div class="bar"><span class="bl">🐾 반려</span><span class="bt"><span class="bf" style="width:82%;background:#b0603f"></span></span><span class="bv" style="color:#b0603f">-28</span></div><div class="bar"><span class="bl">🛒 생활편의</span><span class="bt"><span class="bf" style="width:59%;background:#b0603f"></span></span><span class="bv" style="color:#b0603f">-20</span></div><div class="note" style="text-align:left;margin-top:10px">전국 지자체 평균 대비 편차 · 우선 보강: 운서동, 운서동, 영종1동</div></div>
+  <div class="cta"><a class="btn" href="index.html#v=diag">🩺 우리 지자체 진단 보기</a></div></div></section>
+
+<section><div class="rev"><div class="kick">믿을 수 있나</div>
+  <h2>100% 공공데이터 · 투명·재현</h2>
+  <div class="sub">추측 없이, 전부 공개 데이터로. 점수 산출 방식도 공개합니다.</div>
+  <div class="chips"><span class="chip">통계청 SGIS</span><span class="chip">국토교통부 실거래가</span><span class="chip">건강보험심사평가원</span><span class="chip">소상공인시장진흥공단</span><span class="chip">공공데이터포털 표준데이터</span><span class="chip">safetydata</span></div>
+  <div class="note">점수는 전국 읍면동 상대평가(백분위) 기반 참고용입니다.</div></div></section>
+
+<section style="min-height:70vh"><div class="rev">
+  <h2>지금 확인해보세요</h2>
+  <div class="cta">
+    <a class="btn p" href="index.html#v=rec">🎯 내게 맞는 동네</a>
+    <a class="btn" href="index.html#v=diag">🩺 지자체 진단</a>
+    <a class="btn" href="mailto:seunghyun.oh@bespinglobal.com?subject=%5B%EB%8F%99%EB%84%A4%EC%82%B4%EA%B8%B0%EC%A7%80%EC%88%98%5D%20%EB%AC%B8%EC%9D%98">📬 도입 문의</a>
+  </div></div></section>
+
+<div class="foot">동네살기지수(NLI) · 공공데이터 기반 생활입지 인텔리전스 · 전국 상대평가 참고용</div>
+<script>
+const io=new IntersectionObserver((es)=>es.forEach(e=>{if(e.isIntersecting)e.target.classList.add('on')}),{threshold:.15});
+document.querySelectorAll('.rev').forEach(el=>io.observe(el));
+</script></body></html>
