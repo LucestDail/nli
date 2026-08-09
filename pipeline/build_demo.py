@@ -34,7 +34,7 @@ def top_domains(p, n=2):
 # ── 큐레이션(마스킹해서 보여줄 실데이터) ──
 pr = [p for p in F if p.get("price") and (p.get("pop_total") or 0) >= 3000]
 nS = sorted(nli(p) for p in pr); pS = sorted(p["price"] for p in pr)
-value = sorted(pr, key=lambda p: -(bisect.bisect_left(nS, nli(p)) / len(nS) - bisect.bisect_left(pS, p["price"]) / len(pS)))[:3]
+value = sorted(pr, key=lambda p: -(bisect.bisect_left(nS, nli(p)) / len(nS) - bisect.bisect_left(pS, p["price"]) / len(pS)))[:18]
 W = {"D1": 1.4, "D2": 2, "D3": 1, "D4": 1.3, "D5": 1, "D6": 1.6, "D7": 1, "D8": 1.2, "D9": 1}
 def wn(p):
     s = t = 0
@@ -43,7 +43,7 @@ def wn(p):
         if v is not None:
             s += W[d] * v; t += W[d]
     return s / t
-rec = sorted([p for p in F if p.get("price") and p["price"] * 3.3058 <= 3000], key=lambda p: -wn(p))[:3]
+rec = sorted([p for p in F if p.get("price") and p["price"] * 3.3058 <= 3000], key=lambda p: -wn(p))[:18]
 
 # ── 진단(사각지대 최다 지자체) ──
 Gs = collections.defaultdict(list)
@@ -78,6 +78,8 @@ body{font-family:-apple-system,'Malgun Gothic',sans-serif;color:var(--ink);backg
 .nav b{font-weight:800}.nav .sp{margin-left:auto;display:flex;gap:6px}
 .nav a{color:#eaf1f2;text-decoration:none;font-size:12px;padding:6px 10px;border:1px solid rgba(255,255,255,.25);border-radius:999px;white-space:nowrap}
 .nav a.p{background:#fff;color:var(--ink);border-color:#fff;font-weight:700}
+.nav a .lb{margin-left:5px}
+@media(max-width:760px){.nav{gap:5px;padding:0 10px}.nav a .lb{display:none}.nav a{padding:6px 9px;font-size:15px}.nav .sp{gap:4px}.nav .brand-lb{display:none}}
 section{min-height:100vh;scroll-snap-align:start;scroll-snap-stop:always;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;padding:70px 20px 46px;position:relative;z-index:0}
 /* 섹션별 배경 이미지 — 그레이톤·낮은 opacity, 섹션과 함께 스크롤(고정 아님). 콘텐츠 아래·전역 배경 위. */
 section::before{content:"";position:absolute;inset:0;z-index:-1;background-position:center;background-size:cover;background-repeat:no-repeat;filter:grayscale(1) contrast(.95);opacity:.16;pointer-events:none}
@@ -103,19 +105,32 @@ h2{font-size:clamp(23px,4.4vw,38px);font-weight:800;letter-spacing:-.02em}
 .dg{position:relative;background:rgba(255,255,255,.92);border:1px solid var(--line);border-radius:14px;padding:16px 8px;font-size:13.5px;font-weight:700;cursor:help;transition:.15s}
 .dg:hover{border-color:var(--sky);transform:translateY(-2px)}.dg .i{display:block;font-size:26px;margin-bottom:6px}
 /* 호버/탭 카드 */
-.tip{position:absolute;left:50%;bottom:calc(100% + 10px);transform:translateX(-50%) translateY(6px);width:250px;background:#132a36;color:#eef4f2;border-radius:12px;padding:12px 14px;font-size:12px;font-weight:400;line-height:1.55;text-align:left;box-shadow:0 8px 24px rgba(0,0,0,.22);opacity:0;pointer-events:none;transition:.16s;z-index:50}
+.tip{position:absolute;left:50%;bottom:calc(100% + 10px);margin-left:-125px;transform:translateY(6px);width:250px;background:#132a36;color:#eef4f2;border-radius:12px;padding:12px 14px;font-size:12px;font-weight:400;line-height:1.55;text-align:left;box-shadow:0 8px 24px rgba(0,0,0,.22);opacity:0;pointer-events:none;transition:.16s;z-index:50}
 .tip b{color:#fff}.tip .t{font-weight:800;font-size:12.5px;display:block;margin-bottom:4px}.tip .m{color:#9fc3b4;font-size:11px;margin-top:6px}
-.tip::after{content:"";position:absolute;left:50%;top:100%;transform:translateX(-50%);border:6px solid transparent;border-top-color:#132a36}
-.kpi:hover .tip,.dg:hover .tip,.has.open .tip{opacity:1;transform:translateX(-50%);pointer-events:auto}
-.exs{display:grid;gap:10px;margin-top:22px;max-width:560px;margin-left:auto;margin-right:auto}
-.ex{display:flex;justify-content:space-between;align-items:center;gap:10px;background:rgba(255,255,255,.92);border:1px solid var(--line);border-radius:13px;padding:14px 18px;text-align:left;position:relative;overflow:hidden}
-.exn{font-weight:800;font-size:15px}.exn .reg{display:block;font-size:11.5px;color:var(--mid);font-weight:500}
-.exv{text-align:right;font-size:12.5px;color:var(--mid);white-space:nowrap}.exv b{color:var(--ink);font-size:15px}.exv i{font-style:normal;color:var(--terra);font-weight:700}
+.tip::after{content:"";position:absolute;left:50%;margin-left:-6px;top:100%;border:6px solid transparent;border-top-color:#132a36}
+.kpi:hover .tip,.dg:hover .tip,.has.open .tip{opacity:1;transform:translateY(0);pointer-events:auto}
+/* 가장자리 카드 툴팁 화면밖 잘림 방지 — 좌열은 좌측·우열은 우측 정렬 */
+.domg .dg:nth-child(3n+1) .tip{left:0;right:auto;margin-left:0}
+.domg .dg:nth-child(3n+1) .tip::after{left:26px;margin-left:0}
+.domg .dg:nth-child(3n) .tip{left:auto;right:0;margin-left:0}
+.domg .dg:nth-child(3n) .tip::after{left:auto;right:26px;margin-left:0}
+.kpis .kpi:first-child .tip{left:0;right:auto;margin-left:0}
+.kpis .kpi:first-child .tip::after{left:26px;margin-left:0}
+.kpis .kpi:last-child .tip{left:auto;right:0;margin-left:0}
+.kpis .kpi:last-child .tip::after{left:auto;right:26px;margin-left:0}
 .p{color:var(--terra);font-weight:800;letter-spacing:.5px}
-.f{display:none}
-.ex.has{cursor:pointer}.ex.has:hover{border-color:var(--sky);box-shadow:0 5px 16px rgba(20,30,40,.09)}
-.ex:hover .p,.ex.open .p{display:none}.ex:hover .f,.ex.open .f{display:inline}
-.hint{margin-top:12px;font-size:12.5px;color:var(--mid)}
+/* 세로 마퀴 순위 리스트(가구맞춤·가성비) — 위→아래로 흐름, 값 마스킹 유지 */
+.vmarq{position:relative;max-width:580px;margin:22px auto 0;height:342px;overflow:hidden;-webkit-mask-image:linear-gradient(180deg,transparent,#000 13%,#000 87%,transparent);mask-image:linear-gradient(180deg,transparent,#000 13%,#000 87%,transparent)}
+.vtrack{display:flex;flex-direction:column;gap:9px;animation:vscroll 30s linear infinite}
+@keyframes vscroll{from{transform:translateY(-50%)}to{transform:translateY(0)}}
+.vmarq:hover .vtrack{animation-play-state:paused}
+.vr{display:flex;align-items:center;gap:12px;background:rgba(255,255,255,.93);border:1px solid var(--line);border-radius:13px;padding:12px 16px;text-align:left;box-shadow:0 2px 8px rgba(20,30,40,.04)}
+.vrk{flex-shrink:0;width:26px;height:26px;border-radius:8px;background:var(--ocean);color:#fff;font-weight:800;font-size:12px;display:flex;align-items:center;justify-content:center}
+.vnm{font-weight:800;font-size:14.5px;flex:1;min-width:0}
+.vreg{display:block;font-size:11px;color:var(--mid);font-weight:500}
+.vsc{text-align:right;font-size:11.5px;color:var(--mid);white-space:nowrap}
+.vsc b{color:var(--ink);font-size:14px}
+.vsub{display:block;font-size:11px;color:var(--mid)}
 .bars{max-width:480px;margin:22px auto 0;background:rgba(255,255,255,.92);border:1px solid var(--line);border-radius:15px;padding:18px 20px}
 .bar{display:flex;align-items:center;gap:10px;margin:8px 0}
 .bl{width:104px;flex-shrink:0;text-align:left;font-size:13px;font-weight:700}
@@ -141,7 +156,8 @@ h2{font-size:clamp(23px,4.4vw,38px);font-weight:800;letter-spacing:-.02em}
 .src span{color:var(--mid);font-weight:500;font-size:11px}
 .foot{text-align:center;color:var(--mid);font-size:11px;padding:24px 20px;scroll-snap-align:none}
 @media(max-width:640px){.domg{grid-template-columns:repeat(3,1fr);gap:8px}.dg{padding:12px 5px;font-size:11.5px}.dg .i{font-size:22px}
-  .tip{width:210px}.exv{font-size:11.5px}.kpi{padding:12px 15px}.kpi b{font-size:22px}}
+  .tip{width:210px;margin-left:-105px}.kpi{padding:12px 15px}.kpi b{font-size:22px}
+  .vmarq{height:300px}.vnm{font-size:13.5px}}
 """
 
 DOMG = "".join(
@@ -155,24 +171,30 @@ def part(n):
     s = str(int(round(n)))
     return s[0] + "*" * (len(s) - 1)
 
-def num(full, n):
-    # 기본=앞자리+* / 카드 호버 시 실제값
-    return f'<span class="p">{part(n)}</span><span class="f">{full}</span>'
+def masq(n):
+    # 마스킹: 앞자리+*(제품가치 보호). 호버 공개 없음.
+    return f'<span class="p">{part(n)}</span>'
 
-def card(name, reg, big_html, small_html):
-    return (f'<div class="ex has" tabindex="0"><div class="exn">{name}<span class="reg">{reg}</span></div>'
-            f'<div class="exv">{big_html}<br>{small_html}</div></div>')
+def vrow(rank, name, reg, big, sub):
+    return (f'<div class="vr"><span class="vrk">{rank}</span>'
+            f'<span class="vnm">{name}<span class="vreg">{reg}</span></span>'
+            f'<span class="vsc">{big}<span class="vsub">{sub}</span></span></div>')
 
-REC = "".join(card(p["full_nm"].split(" ", 1)[1], p["full_nm"].split()[0][:2],
-                   f'<b>{num(round(wn(p),1), wn(p))}점</b>',
-                   f'평당 {num(f"{round(p["price"]*3.3058):,}", p["price"]*3.3058)}만') for p in rec)
-VAL = "".join(card(p["full_nm"].split(" ", 1)[1], p["full_nm"].split()[0][:2],
-                   f'<b>살기 {num(round(nli(p)), nli(p))}점</b>',
-                   f'평당 {num(f"{round(p["price"]*3.3058):,}", p["price"]*3.3058)}만 · 강점 {top_domains(p)}') for p in value)
+def vlist(items):
+    # 세로 마퀴(위→아래 흐름) · 끊김 없이 루프하도록 2배 복제
+    b = "".join(items)
+    return f'<div class="vmarq"><div class="vtrack">{b}{b}</div></div>'
+
+VREC = vlist([vrow(i, p["full_nm"].split(" ", 1)[1], p["full_nm"].split()[0][:2],
+                   f'<b>{masq(wn(p))}점</b>',
+                   f'평당 {masq(p["price"] * 3.3058)}만') for i, p in enumerate(rec, 1)])
+VVAL = vlist([vrow(i, p["full_nm"].split(" ", 1)[1], p["full_nm"].split()[0][:2],
+                   f'<b>살기 {masq(nli(p))}점</b>',
+                   f'평당 {masq(p["price"] * 3.3058)}만 · 강점 {top_domains(p)}') for i, p in enumerate(value, 1)])
 DBARS = "".join(
     f'<div class="bar"><span class="bl">{IC[d]} {SH[d]}</span>'
-    f'<span class="bt"><span class="bf" style="width:{abs(v)/maxa*100:.0f}%"></span></span>'
-    f'<span class="bv">{v}</span></div>' for d, v in dweak)
+    f'<span class="bt"><span class="bf" data-w="{abs(v)/maxa*100:.0f}" style="width:0"></span></span>'
+    f'<span class="bv" data-count="{v}">0</span></div>' for d, v in dweak)
 
 # 데이터 출처 마퀴(32종, 2행)
 srcs = [f'<span class="src">{d["name"]} <span>· {d["source"]}</span></span>' for d in DS]
@@ -182,15 +204,21 @@ row2 = "".join(srcs[half:]) * 2
 
 BODY = f"""
 <div class="bg"><div class="blob b1"></div><div class="blob b2"></div><div class="blob b3"></div></div><div class="dots"></div>
-<div class="nav"><span>🏘 <b>동네살기지수</b></span></div>
+<div class="nav"><span>🏘 <b class="brand-lb">동네살기지수</b></span>
+  <div class="sp">
+    <a href="index.html#v=rec"><span class="ic">🎯</span><span class="lb">내 동네 찾기</span></a>
+    <a href="index.html#v=diag"><span class="ic">🩺</span><span class="lb">지자체 진단</span></a>
+    <a href="index.html"><span class="ic">🗺</span><span class="lb">전국 지도</span></a>
+    <a class="p" href="mailto:seunghyun.oh@bespinglobal.com?subject=%5B%EB%8F%99%EB%84%A4%EC%82%B4%EA%B8%B0%EC%A7%80%EC%88%98%5D%20%EB%8F%84%EC%9E%85%C2%B7%EC%A0%9C%ED%9C%B4%20%EB%AC%B8%EC%9D%98"><span class="ic">📬</span><span class="lb">도입·제휴 문의</span></a>
+  </div></div>
 
 <section class="s1"><div class="wrap rev"><div class="kick">공공데이터로 답하다</div>
   <h1>어디가<br>살기 좋은 동네일까?</h1>
   <div class="sub">아파트값만 보면 모릅니다. 의료·교육·교통·안전·복지까지, 전국 읍면동을 <b>9가지 생활 도메인</b>으로 채점하고 <b>아파트 실거래가·대중교통 소요시간</b>까지 결합했습니다.</div>
   <div class="kpis">
-    <div class="kpi has" tabindex="0"><b>{NDONG:,}</b><span>읍면동</span><div class="tip"><span class="t">전국 읍면동(행정동)</span>실제 생활권 단위. 시군구(약 250개)보다 <b>14배 정밀</b>한 해상도로 채점.</div></div>
-    <div class="kpi has" tabindex="0"><b>9</b><span>생활 도메인</span><div class="tip"><span class="t">9개 생활 도메인</span>의료·교육·생활편의·문화여가·교통·안전·환경·복지·반려. 삶에 매일 닿는 영역으로 종합.</div></div>
-    <div class="kpi has" tabindex="0"><b>32</b><span>공공데이터 지표</span><div class="tip"><span class="t">32개 공공데이터 지표</span>9개 도메인을 32종 공개 데이터로 정량화. 100% 재현 가능.</div></div>
+    <div class="kpi has" tabindex="0"><b data-count="{NDONG}" data-comma="1">0</b><span>읍면동</span><div class="tip"><span class="t">전국 읍면동(행정동)</span>실제 생활권 단위. 시군구(약 250개)보다 <b>14배 정밀</b>한 해상도로 채점.</div></div>
+    <div class="kpi has" tabindex="0"><b data-count="9">0</b><span>생활 도메인</span><div class="tip"><span class="t">9개 생활 도메인</span>의료·교육·생활편의·문화여가·교통·안전·환경·복지·반려. 삶에 매일 닿는 영역으로 종합.</div></div>
+    <div class="kpi has" tabindex="0"><b data-count="32">0</b><span>공공데이터 지표</span><div class="tip"><span class="t">32개 공공데이터 지표</span>9개 도메인을 32종 공개 데이터로 정량화. 100% 재현 가능.</div></div>
   </div>
   <div class="badge">＋ 아파트 실거래가 · 대중교통 결합</div>
   <div class="note">↓ 스크롤해서 살펴보세요</div></div></section>
@@ -203,13 +231,12 @@ BODY = f"""
 <section class="s3"><div class="wrap rev"><div class="kick">당신에게 맞는</div>
   <h2>가구에 맞는 동네는 다릅니다</h2>
   <div class="sub">육아 가구라면 교육·안전·의료를 더 중요하게 — 가중치를 바꿔 다시 계산합니다.</div>
-  <div class="exs">{REC}</div></div></section>
+  {VREC}</div></section>
 
 <section class="s4"><div class="wrap rev"><div class="kick">가격 대비</div>
   <h2>싸고 살기 좋은 곳이 있다</h2>
-  <div class="sub"><span class="hg">살기지수는 높은데 아파트값은 낮은</span> 가성비 동네. 비싼 동네가 꼭 살기 좋은 건 아닙니다.</div>
-  <div class="exs">{VAL}</div>
-  <div class="note">카드에 마우스를 올리면(모바일은 탭) 실제 점수가 보입니다</div></div></section>
+  <div class="sub"><span class="hg">살기지수는 높은데 아파트값은 낮은</span> 가성비 동네<br>비싼 동네가 꼭 살기 좋은 건 아닙니다.</div>
+  {VVAL}</div></section>
 
 <section class="s5"><div class="wrap rev"><div class="kick">지자체·기관용</div>
   <h2>우리 지역, 뭐가 부족할까?</h2>
@@ -236,7 +263,17 @@ BODY = f"""
 
 JS = """
 <script>
-const io=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting)e.target.classList.add('on')}),{threshold:.12});
+// 카운터 상승 애니메이션(읍면동·도메인·지표 / 진단 점수)
+function countUp(el){
+  const t=+el.dataset.count, comma=el.dataset.comma, dur=1100, t0=performance.now();
+  (function step(now){const p=Math.min(1,(now-t0)/dur),e=1-Math.pow(1-p,3),v=Math.round(t*e);
+    el.textContent=comma?v.toLocaleString():v; if(p<1)requestAnimationFrame(step);})(t0);
+}
+const io=new IntersectionObserver(es=>es.forEach(e=>{if(!e.isIntersecting)return;
+  e.target.classList.add('on');
+  e.target.querySelectorAll('[data-count]:not(.done)').forEach(c=>{c.classList.add('done');countUp(c);});
+  e.target.querySelectorAll('.bf[data-w]:not(.done)').forEach(b=>{b.classList.add('done');b.style.width=b.dataset.w+'%';});
+}),{threshold:.18});
 document.querySelectorAll('.rev').forEach(el=>io.observe(el));
 // 모바일 탭 카드: .has 클릭 시 open 토글(터치 기기)
 document.querySelectorAll('.has').forEach(el=>{
