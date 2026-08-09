@@ -1145,6 +1145,11 @@ document.querySelectorAll('select').forEach(customSelect);
   as.addEventListener('change',()=>{if(window.innerWidth<=820)close()});})();
 applyHash();   // 딥링크로 진입 시 상태 복원
 window.addEventListener('hashchange',applyHash);   // 해시 변경(딥링크 재진입) 대응
+window.addEventListener('load',applyHash);         // 최초 로드 시 재실행(모바일 등 location.hash 지연 대비)
+// 모바일/대용량 문서에서 최초 location.hash가 늦게 잡히는 경우 대비: 해시가 잡히면 1회 재적용
+(function(){let n=0;const t=setInterval(function(){n++;
+  if(location.hash&&location.hash.length>1){clearInterval(t);applyHash();return;}
+  if(n>15)clearInterval(t);},120);})();
 growBars();
 setTimeout(()=>{if(map)map.invalidateSize();},120);
 </script></body></html>'''
