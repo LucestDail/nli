@@ -423,6 +423,7 @@ TEMPLATE = r'''<!DOCTYPE html>
  <div class="foot" id="foot1" style="order:9"></div>
 </div>
 <script>
+let _boot=(location.hash||'');   // 최초 딥링크 해시 캡처(showTab('map')의 writeHash가 지우기 전에)
 const DATA=__GEOJSON__;
 let POINTS=null;   // 시설포인트(11MB)는 첫 토글 시 nli_points.json 지연로딩(초기 로딩 경량화)
 const F=DATA.features;
@@ -920,7 +921,7 @@ function writeHash(){if(applyingHash)return;
   try{history.replaceState(null,'',h?('#'+h):(location.pathname+location.search));}catch(e){}
 }
 function applyHash(){
-  const raw=(location.hash||'').replace(/^#/,'');if(!raw)return;
+  const raw=((location.hash&&location.hash.length>1)?location.hash:(_boot||'')).replace(/^#/,'');_boot='';if(!raw)return;
   const P={};raw.split('&').forEach(kv=>{const i=kv.indexOf('=');if(i>0){try{P[kv.slice(0,i)]=decodeURIComponent(kv.slice(i+1));}catch(e){}}});
   applyingHash=true;
   try{
