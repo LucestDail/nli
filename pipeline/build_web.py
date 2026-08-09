@@ -216,6 +216,11 @@ TEMPLATE = r'''<!DOCTYPE html>
  .recgridfld{display:grid;grid-template-columns:1fr 1fr;gap:16px}
  .recgridfld input[type=number],.recgridfld input[type=text]{width:100%}
  @media(max-width:640px){.recgridfld{grid-template-columns:1fr}}
+ /* 다이나믹 find: 둘러보기 리스트 + 검색/추천 */
+ .findlist{display:flex;flex-direction:column;gap:6px;max-height:360px;overflow:auto}
+ .findlist .valcell{cursor:pointer}
+ #findResult{animation:vin .3s cubic-bezier(.22,1,.36,1)}
+ @media(max-width:640px){.findlist{max-height:300px}}
  /* 반응형 */
  @media(max-width:960px){
    .grid2{grid-template-columns:1fr}
@@ -302,22 +307,7 @@ TEMPLATE = r'''<!DOCTYPE html>
    <div class="detail" id="detail" style="display:none"></div>
  </div>
 
- <div class="view" id="v-rank" style="display:none"><div class="wrap">
-   <h2>지역 순위</h2><div class="sub">테마·시도·유형을 골라 정렬하세요. 행 클릭 → 상세, ⊕ → 비교담기, ♡ → 관심</div>
-   <div class="flex" style="margin-bottom:10px">
-     <select id="rankMetric"></select><select id="rankSido"></select>
-     <select id="rankCohort"><option value="">전체 유형</option><option>도시</option><option>도농복합</option><option>농촌</option></select>
-     <span class="muted" id="rankCount"></span></div>
-   <div class="flex" style="margin-bottom:16px;position:relative;background:#faf8f4;border:1px solid var(--line);border-radius:12px;padding:9px 12px">
-     <span style="font-size:12px;color:var(--terra);font-weight:700">🚇 통근 보정</span>
-     <span style="position:relative;display:inline-block"><input type="text" id="rankBase" placeholder="기준지(출발지) 입력 (예: 역삼동)" style="width:230px" autocomplete="off"><div class="ac" id="rankbac" style="left:0;top:42px;right:auto;width:280px"></div></span>
-     <span id="commuteInfo" class="muted"></span>
-     <span id="commuteKmWrap" style="display:none;align-items:center;gap:7px;font-size:12px;color:var(--mid)">이내 <input type="range" id="commuteKm" min="2" max="40" step="1" value="10" style="width:120px"><b id="commuteKmV" style="color:var(--ocean);font-weight:700">10km</b>
-     <button class="btn" id="commuteClear" style="padding:4px 12px">해제</button></span></div>
-   <div class="card" style="padding:0;max-height:64vh;overflow:auto"><table id="rankTable"></table></div>
- </div></div>
-
- <div class="view" id="v-compare" style="display:none"><div class="wrap inswrap">
+  <div class="view" id="v-compare" style="display:none"><div class="wrap inswrap">
    <div class="card" style="background:linear-gradient(135deg,#eef4f1,#eaf1f4);border:0;margin-bottom:20px">
      <div style="font-size:12px;font-weight:800;color:var(--sky);letter-spacing:.08em">핵심 인사이트</div>
      <h2 style="margin:6px 0 10px">데이터로 읽는 전국 생활여건</h2>
@@ -360,27 +350,55 @@ TEMPLATE = r'''<!DOCTYPE html>
    </div>
  </div></div>
 
- <div class="view" id="v-rec" style="display:none"><div class="wrap">
-   <h2>내 동네 추천 <span class="muted" style="font-size:14px;font-weight:400">— 가구유형·예산·통근으로 맞춤</span></h2>
-   <div class="sub">가구유형에 맞는 가중치로 살기지수를 다시 계산하고, 예산·통근 조건으로 걸러 <b>맞춤 동네 Top10</b>을 추천합니다.</div>
-   <div class="card" style="margin-bottom:18px">
-     <div class="fld">가구유형 <span class="muted" style="font-weight:400;text-transform:none;letter-spacing:0">— 도메인 가중치 자동 설정</span></div>
-     <div class="seg" id="recHouseSeg" style="margin:7px 0 16px"><button data-h="일반" class="on">일반</button><button data-h="육아">육아</button><button data-h="1인">1인가구</button><button data-h="고령">고령</button><button data-h="반려">반려동물</button></div>
-     <div class="recgridfld">
-       <div><div class="fld">예산 — 아파트 평당가 상한 <span class="muted" style="font-weight:400;text-transform:none;letter-spacing:0">(만원, 비우면 전체)</span></div>
-         <input type="number" id="recBudget" placeholder="예: 3000" style="width:100%;margin-top:6px" oninput="recBudget=+this.value||null"></div>
-       <div><div class="fld">통근 기준지 <span class="muted" style="font-weight:400;text-transform:none;letter-spacing:0">(선택 · 직선 반경 필터)</span></div>
-         <span style="position:relative;display:block;margin-top:6px"><input type="text" id="recBase" placeholder="예: 역삼동" autocomplete="off" style="width:100%"><div class="ac" id="recbac" style="left:0;top:42px;right:auto;width:260px"></div></span>
-         <span id="recBaseLabel" class="muted" style="margin-left:8px;font-size:12px"></span>
-         <div id="recKmWrap" style="display:none;align-items:center;gap:7px;margin-top:8px;font-size:12px;color:var(--mid)">반경 <input type="range" id="recKm" min="2" max="40" step="1" value="10" style="width:130px" oninput="recKm=+this.value;document.getElementById('recKmV').textContent=recKm+'km'"><b id="recKmV" style="color:var(--ocean);font-weight:700">10km</b></div></div>
+ <div class="view" id="v-rec" style="display:none"><div class="wrap inswrap">
+   <div id="findLanding">
+     <h2>내 동네 찾기</h2>
+     <div class="sub">순위를 둘러보고, <b>동네를 검색</b>하거나 <b>조건으로 맞춤 추천</b>을 받아보세요.</div>
+     <div class="grid2" style="gap:16px;margin-bottom:16px">
+       <div class="card"><div class="flex" style="justify-content:space-between;align-items:center;gap:8px"><h3 style="margin:0">💎 가성비 동네</h3>
+           <div class="flex" style="gap:6px;flex-shrink:0"><select id="valSido"></select><button class="btn dltools" onclick="shareValue(this)">📤</button></div></div>
+         <div class="muted" style="margin:6px 0 10px">살기지수 높고 아파트값 낮은 · 클릭 → 상세</div>
+         <div id="valueRank" class="findlist"></div></div>
+       <div class="card"><div class="flex" style="justify-content:space-between;align-items:center;gap:8px"><h3 style="margin:0">🏆 지역 순위</h3>
+           <button class="btn" onclick="findShowRank()">전체 순위 →</button></div>
+         <div class="muted" style="margin:6px 0 10px">종합 살기지수 상위 · 클릭 → 상세</div>
+         <div id="findRankTop" class="findlist"></div></div>
      </div>
-     <button class="btn on" style="margin-top:16px;padding:10px 22px" onclick="recRun()">🎯 추천받기</button>
+     <div class="card findsearch">
+       <h3 style="margin:0 0 4px">🔎 동네 검색 · 맞춤 추천</h3>
+       <div class="muted" style="margin-bottom:8px">동네 이름으로 찾거나, 조건을 넣어 나에게 맞는 동네를 추천받으세요.</div>
+       <div style="position:relative"><input type="text" id="findSearch" placeholder="동네 이름 검색 (예: 역삼동, 노형동)" autocomplete="off" style="width:100%"><div class="ac" id="findsac" style="left:0;right:0;top:42px;width:auto"></div></div>
+       <div class="fld" style="margin-top:18px">조건으로 맞춤 추천 <span class="muted" style="font-weight:400;text-transform:none;letter-spacing:0">— 가구유형 가중치</span></div>
+       <div class="seg" id="recHouseSeg" style="margin:7px 0 14px"><button data-h="일반" class="on">일반</button><button data-h="육아">육아</button><button data-h="1인">1인가구</button><button data-h="고령">고령</button><button data-h="반려">반려동물</button></div>
+       <div class="recgridfld">
+         <div><div class="fld">예산 — 평당가 상한 <span class="muted" style="font-weight:400;text-transform:none;letter-spacing:0">(만원, 비우면 전체)</span></div>
+           <input type="number" id="recBudget" placeholder="예: 3000" style="width:100%;margin-top:6px" oninput="recBudget=+this.value||null"></div>
+         <div><div class="fld">통근 기준지 <span class="muted" style="font-weight:400;text-transform:none;letter-spacing:0">(선택)</span></div>
+           <span style="position:relative;display:block;margin-top:6px"><input type="text" id="recBase" placeholder="예: 역삼동" autocomplete="off" style="width:100%"><div class="ac" id="recbac" style="left:0;top:42px;right:auto;width:260px"></div></span>
+           <span id="recBaseLabel" class="muted" style="font-size:12px"></span>
+           <div id="recKmWrap" style="display:none;align-items:center;gap:7px;margin-top:8px;font-size:12px;color:var(--mid)">반경 <input type="range" id="recKm" min="2" max="40" step="1" value="10" style="width:130px" oninput="recKm=+this.value;document.getElementById('recKmV').textContent=recKm+'km'"><b id="recKmV" style="color:var(--ocean);font-weight:700">10km</b></div></div>
+       </div>
+       <button class="btn on" style="margin-top:16px;padding:11px 26px;width:100%;font-size:15px" onclick="recRun()">🎯 맞춤 동네 추천받기</button>
+     </div>
    </div>
-   <div id="recResults"><div class="card muted">가구유형을 고르고 <b>추천받기</b>를 누르면 맞춤 동네 Top10이 나옵니다.</div></div>
-   <div class="card" style="margin-top:18px"><div class="flex" style="justify-content:space-between;align-items:center;gap:8px"><h3 style="margin:0">💎 가성비 동네 <span class="muted" style="font-weight:400">— 살기지수는 높고 아파트값은 낮은</span></h3>
-     <div class="flex" style="gap:6px;flex-shrink:0"><select id="valSido"></select><button class="btn dltools" onclick="shareValue(this)">📤 공유</button></div></div>
-     <div class="muted" style="margin:10px 0 12px">종합지수 백분위 − 아파트 평당가 백분위 순 · 인구 3천+ · 실거래 있는 동 · <b>클릭 → 상세</b></div>
-     <div id="valueRank" class="valgrid"></div></div>
+   <div id="findResult" style="display:none">
+     <button class="btn" onclick="findBack()" style="margin-bottom:16px">← 돌아가기</button>
+     <div id="findDongCard" style="display:none"></div>
+     <div id="recResults" style="display:none"></div>
+     <div id="rankPanel" style="display:none">
+       <h2 style="margin-bottom:4px">지역 순위</h2><div class="sub">테마·시도·유형으로 정렬 · 행 클릭 → 상세 · ⊕ 비교담기 · ♡ 관심</div>
+       <div class="flex" style="margin-bottom:10px"><select id="rankMetric"></select><select id="rankSido"></select>
+         <select id="rankCohort"><option value="">전체 유형</option><option>도시</option><option>도농복합</option><option>농촌</option></select>
+         <span class="muted" id="rankCount"></span></div>
+       <div class="flex" style="margin-bottom:16px;position:relative;background:#faf8f4;border:1px solid var(--line);border-radius:12px;padding:9px 12px">
+         <span style="font-size:12px;color:var(--terra);font-weight:700">🚇 통근 보정</span>
+         <span style="position:relative;display:inline-block"><input type="text" id="rankBase" placeholder="기준지(출발지) 입력 (예: 역삼동)" style="width:230px" autocomplete="off"><div class="ac" id="rankbac" style="left:0;top:42px;right:auto;width:280px"></div></span>
+         <span id="commuteInfo" class="muted"></span>
+         <span id="commuteKmWrap" style="display:none;align-items:center;gap:7px;font-size:12px;color:var(--mid)">이내 <input type="range" id="commuteKm" min="2" max="40" step="1" value="10" style="width:120px"><b id="commuteKmV" style="color:var(--ocean);font-weight:700">10km</b>
+         <button class="btn" id="commuteClear" style="padding:4px 12px">해제</button></span></div>
+       <div class="card" style="padding:0;max-height:64vh;overflow:auto"><table id="rankTable"></table></div>
+     </div>
+   </div>
  </div></div>
 
  <div class="view" id="v-diag" style="display:none"><div class="wrap inswrap">
@@ -474,17 +492,16 @@ function renderInsight(){renderCompare();renderDiag();renderStats();}
 function showTab(v){
   if(!['map','find','insight'].includes(v))v='map';
   document.querySelectorAll('nav .tab').forEach(x=>x.classList.toggle('on',x.dataset.v===v));
-  const show = v==='map'?['map'] : v==='find'?['rec','rank'] : ['compare','diag','stats'];
+  const show = v==='map'?['map'] : v==='find'?['rec'] : ['compare','diag','stats'];
   document.getElementById('app').style.overflowY=(v==='map'?'hidden':'auto');
   ['map','rec','rank','compare','stats','diag'].forEach(x=>{const el=document.getElementById('v-'+x);if(!el)return;
     const on=show.includes(x);
     el.style.display=on?(x==='map'?'flex':'block'):'none';
     if(on&&x!=='map'){el.style.flex='0 0 auto';el.style.overflow='visible';el.style.animation='none';void el.offsetWidth;el.style.animation='vin .3s cubic-bezier(.22,1,.36,1)';}});
   document.getElementById('foot1').style.display=(v==='map'?'none':'block');
-  if(v==='find'){document.getElementById('v-rec').style.order='1';document.getElementById('v-rank').style.order='2';}
   if(v==='insight'){document.getElementById('v-compare').style.order='1';document.getElementById('v-diag').style.order='2';document.getElementById('v-stats').style.order='3';}
   if(v==='map'&&map){setTimeout(()=>map.invalidateSize(),60);renderMapSliders();}
-  else if(v==='find'){renderRec();renderRank();}
+  else if(v==='find'){renderFind();}
   else if(v==='insight')renderInsight();
   writeHash();
 }
@@ -656,7 +673,7 @@ function renderValueRank(){
   let val=pr.map(p=>({p:p,g:pctl(nS,nliW(p))-pctl(pS,p.price)})).sort((a,b)=>b.g-a.g);
   if(fs)val=val.filter(x=>x.p.sido===fs);
   window._valTop=val.slice(0,12);
-  el.innerHTML=val.length?val.slice(0,12).map((x,i)=>{const p=x.p;return '<div class="valcell" onclick="goDetail(\''+p.adm_nm+'\')"><div class="valnm"><b>'+(i+1)+'.</b> '+p.adm_nm+'<span>'+p.sido+'</span></div><div class="valv"><span class="g" style="background:'+GC[gradeOf(p)]+'">'+gradeOf(p)+'</span> <b>'+nliW(p)+'</b><i>'+Math.round(p.price*3.3058).toLocaleString()+'만/평</i></div></div>'}).join(''):'<div class="muted">해당 지역에 실거래 데이터가 있는 동이 없습니다.</div>';
+  el.innerHTML=val.length?val.slice(0,12).map((x,i)=>{const p=x.p;return '<div class="valcell" onclick="findShowDong(\''+p.adm_nm+'\')"><div class="valnm"><b>'+(i+1)+'.</b> '+p.adm_nm+'<span>'+p.sido+'</span></div><div class="valv"><span class="g" style="background:'+GC[gradeOf(p)]+'">'+gradeOf(p)+'</span> <b>'+nliW(p)+'</b><i>'+Math.round(p.price*3.3058).toLocaleString()+'만/평</i></div></div>'}).join(''):'<div class="muted">해당 지역에 실거래 데이터가 있는 동이 없습니다.</div>';
 }
 function shareValue(btn){
   const top=(window._valTop||[]).slice(0,5);if(!top.length)return;
@@ -669,7 +686,26 @@ function shareValue(btn){
   if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(msg).then(ok,()=>prompt('공유 문구',msg));
   else prompt('공유 문구',msg);
 }
-function renderRec(){renderValueRank();}
+function renderFind(){renderValueRank();renderFindRankTop();document.getElementById('findLanding').style.display='block';document.getElementById('findResult').style.display='none';}
+function renderFindRankTop(){const el=document.getElementById('findRankTop');if(!el)return;
+  const arr=F.map(f=>f.properties).filter(p=>(p.pop_total||0)>0).sort((a,b)=>nliW(b)-nliW(a)).slice(0,8);
+  el.innerHTML=arr.map((p,i)=>'<div class="valcell" onclick="findShowDong(\''+p.adm_nm+'\')"><div class="valnm"><b>'+(i+1)+'.</b> '+p.adm_nm+'<span>'+(p.sido||'')+'</span></div><div class="valv"><span class="g" style="background:'+GC[gradeOf(p)]+'">'+gradeOf(p)+'</span> <b>'+nliW(p)+'</b></div></div>').join('');}
+function findOpen(mode){document.getElementById('findLanding').style.display='none';const r=document.getElementById('findResult');r.style.display='block';
+  ['findDongCard','recResults','rankPanel'].forEach(id=>{const e=document.getElementById(id);if(e)e.style.display=(id===mode?'block':'none')});
+  r.style.animation='none';void r.offsetWidth;r.style.animation='vin .3s cubic-bezier(.22,1,.36,1)';const app=document.getElementById('app');if(app)app.scrollTop=0;}
+function findBack(){document.getElementById('findResult').style.display='none';document.getElementById('findLanding').style.display='block';const app=document.getElementById('app');if(app)app.scrollTop=0;}
+function findShowDong(adm){const f=F.find(x=>x.properties.adm_nm===adm);if(!f)return;document.getElementById('findDongCard').innerHTML=findDongHTML(f.properties);findOpen('findDongCard');}
+function findShowRank(){findOpen('rankPanel');renderRank();}
+function findDongHTML(p){const doms=DOMS.map(d=>[d,p['score_'+d]]).filter(x=>x[1]!=null).sort((a,b)=>b[1]-a[1]);
+  const strong=doms.slice(0,3),weak=doms.slice(-3).reverse();
+  const chip=(x,col)=>'<span class="dchip" style="border-color:'+col+'55;cursor:default"><b>'+DOMINFO[x[0]][0]+'</b>'+SHORT[x[0]]+' <i style="color:'+col+'">'+Math.round(x[1])+'</i></span>';
+  const pr=p.price!=null?Math.round(p.price*3.3058).toLocaleString()+'만/평':'실거래 없음';
+  return '<div class="card"><div class="flex" style="justify-content:space-between;align-items:flex-start;gap:12px">'
+    +'<div style="min-width:0"><h2 style="margin:0">'+fullN(p)+'</h2><div class="muted" style="margin-top:4px">'+(p.cohort||'')+' · 인구 '+(p.pop_total||0).toLocaleString()+'명 · 평당 '+pr+'</div></div>'
+    +'<div style="text-align:right;flex-shrink:0"><span class="g" style="background:'+GC[gradeOf(p)]+';font-size:15px;padding:3px 10px">'+gradeOf(p)+'</span><div style="font-size:30px;font-weight:800;color:var(--ocean);line-height:1.15">'+nliW(p)+'</div><div class="muted" style="font-size:11px">종합 살기지수</div></div></div>'
+    +'<div style="margin-top:16px"><div class="fld">💪 강점 도메인</div><div style="margin-top:6px">'+strong.map(x=>chip(x,'#2f6b4e')).join('')+'</div></div>'
+    +'<div style="margin-top:12px"><div class="fld">🔻 약한 도메인</div><div style="margin-top:6px">'+weak.map(x=>chip(x,'#b0603f')).join('')+'</div></div>'
+    +'<div class="flex" style="margin-top:18px;gap:8px"><button class="btn on" onclick="goDetail(\''+p.adm_nm+'\')">🗺 지도에서 자세히</button><button class="btn" onclick="addCmp(\''+p.adm_nm+'\')">⊕ 비교에 담기</button></div></div>';}
 function recRun(){
   const ww=PRESETS[REC_MAP[recHouse]]||PRESETS['균등'];
   let arr=SP.filter(p=>(p.pop_total||0)>0);
@@ -677,7 +713,7 @@ function recRun(){
   if(recBase){const bf=F.find(f=>f.properties.adm_nm===recBase),bp=bf&&bf.properties;
     if(bp&&bp.clat!=null)arr=arr.filter(p=>{if(p.clat==null)return false;p._km=hav(bp.clat,bp.clon,p.clat,p.clon);return p._km<=recKm;});}
   const top=arr.map(p=>({p:p,s:nliWith(p,ww)})).filter(x=>x.s!=null).sort((a,b)=>b.s-a.s).slice(0,10);
-  const el=document.getElementById('recResults');
+  const el=document.getElementById('recResults');findOpen('recResults');
   if(!top.length){el.innerHTML='<div class="card muted">조건에 맞는 동네가 없습니다. 예산을 높이거나 통근 반경을 넓혀보세요.</div>';return;}
   const cond=[REC_MAP[recHouse]!=='균등'?recHouse+' 가중치':'균등 가중치'];
   if(recBudget)cond.push('평당 ≤'+recBudget.toLocaleString()+'만');
@@ -1077,6 +1113,7 @@ button{float:right;padding:8px 14px;cursor:pointer;border:1px solid #2f6b4e;back
 }
 recompRank();initMap();showTab('map');
 attachAC(document.getElementById('gsearch'),document.getElementById('gac'),goDetail);
+attachAC(document.getElementById('findSearch'),document.getElementById('findsac'),findShowDong);
 attachAC(document.getElementById('cmpSearch'),document.getElementById('cmpac'),adm=>{addCmp(adm)});
 attachAC(document.getElementById('rankBase'),document.getElementById('rankbac'),setCommuteBase);
 document.querySelectorAll('#recHouseSeg button').forEach(b=>b.onclick=()=>recSetHouse(b.dataset.h,b));
