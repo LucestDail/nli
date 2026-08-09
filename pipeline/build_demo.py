@@ -79,11 +79,11 @@ body{font-family:-apple-system,'Malgun Gothic',sans-serif;color:var(--ink);backg
 .nav a{color:#eaf1f2;text-decoration:none;font-size:12px;padding:6px 10px;border:1px solid rgba(255,255,255,.25);border-radius:999px;white-space:nowrap}
 .nav a.p{background:#fff;color:var(--ink);border-color:#fff;font-weight:700}
 .nav a .lb{margin-left:5px}
-@media(max-width:760px){.nav{gap:5px;padding:0 10px}.nav a .lb{display:none}.nav a{padding:6px 9px;font-size:15px}.nav .sp{gap:4px}.nav .brand-lb{display:none}}
+@media(max-width:760px){.nav{padding:0 12px}.nav .sp{display:none}}
 section{min-height:100vh;scroll-snap-align:start;scroll-snap-stop:always;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;padding:70px 20px 46px;position:relative;z-index:0}
 /* 섹션별 배경 이미지 — 그레이톤·낮은 opacity, 섹션과 함께 스크롤(고정 아님). 콘텐츠 아래·전역 배경 위. */
-section::before{content:"";position:absolute;inset:0;z-index:-1;background-position:center;background-size:cover;background-repeat:no-repeat;filter:grayscale(1) contrast(.97);opacity:.34;pointer-events:none}
-section::after{content:"";position:absolute;inset:0;z-index:-1;background:radial-gradient(ellipse at center,rgba(247,245,239,.2),rgba(247,245,239,.58));pointer-events:none}
+section::before{content:"";position:absolute;inset:0;z-index:-1;background-position:center;background-size:cover;background-repeat:no-repeat;filter:grayscale(1) contrast(.95);opacity:.16;pointer-events:none}
+section::after{content:"";position:absolute;inset:0;z-index:-1;background:radial-gradient(ellipse at center,rgba(247,245,239,.35),rgba(247,245,239,.72));pointer-events:none}
 .s1::before{background-image:url(assets/bg1.jpg)}
 .s2::before{background-image:url(assets/bg2.jpg)}
 .s3::before{background-image:url(assets/bg3.jpg)}
@@ -121,10 +121,9 @@ h2{font-size:clamp(23px,4.4vw,38px);font-weight:800;letter-spacing:-.02em}
 .p{color:var(--terra);font-weight:800;letter-spacing:.5px}
 /* 세로 마퀴 순위 리스트(가구맞춤·가성비) — 위→아래로 흐름, 값 마스킹 유지 */
 .vmarq{position:relative;max-width:580px;margin:22px auto 0;height:342px;overflow:hidden;-webkit-mask-image:linear-gradient(180deg,transparent,#000 13%,#000 87%,transparent);mask-image:linear-gradient(180deg,transparent,#000 13%,#000 87%,transparent)}
-.vtrack{display:flex;flex-direction:column;gap:9px;animation:vscroll 30s linear infinite}
+.vtrack{display:flex;flex-direction:column;animation:vscroll 46s linear infinite;will-change:transform}
 @keyframes vscroll{from{transform:translateY(-50%)}to{transform:translateY(0)}}
-.vmarq:hover .vtrack{animation-play-state:paused}
-.vr{display:flex;align-items:center;gap:12px;background:rgba(255,255,255,.93);border:1px solid var(--line);border-radius:13px;padding:12px 16px;text-align:left;box-shadow:0 2px 8px rgba(20,30,40,.04)}
+.vr{display:flex;align-items:center;gap:12px;margin-bottom:9px;background:rgba(255,255,255,.93);border:1px solid var(--line);border-radius:13px;padding:12px 16px;text-align:left;box-shadow:0 2px 8px rgba(20,30,40,.04)}
 .vrk{flex-shrink:0;width:26px;height:26px;border-radius:8px;background:var(--ocean);color:#fff;font-weight:800;font-size:12px;display:flex;align-items:center;justify-content:center}
 .vnm{font-weight:800;font-size:14.5px;flex:1;min-width:0}
 .vreg{display:block;font-size:11px;color:var(--mid);font-weight:500}
@@ -209,12 +208,12 @@ BODY = f"""
     <a href="index.html#v=rec"><span class="ic">🎯</span><span class="lb">내 동네 찾기</span></a>
     <a href="index.html#v=diag"><span class="ic">🩺</span><span class="lb">지자체 진단</span></a>
     <a href="index.html"><span class="ic">🗺</span><span class="lb">전국 지도</span></a>
-    <a class="p" href="mailto:seunghyun.oh@bespinglobal.com?subject=%5B%EB%8F%99%EB%84%A4%EC%82%B4%EA%B8%B0%EC%A7%80%EC%88%98%5D%20%EB%8F%84%EC%9E%85%C2%B7%EC%A0%9C%ED%9C%B4%20%EB%AC%B8%EC%9D%98"><span class="ic">📬</span><span class="lb">도입·제휴 문의</span></a>
+    <a class="p" href="mailto:lucestdail@kakao.com?subject=%5B%EB%8F%99%EB%84%A4%EC%82%B4%EA%B8%B0%EC%A7%80%EC%88%98%5D%20%EB%8F%84%EC%9E%85%C2%B7%EC%A0%9C%ED%9C%B4%20%EB%AC%B8%EC%9D%98"><span class="ic">📬</span><span class="lb">도입·제휴 문의</span></a>
   </div></div>
 
 <section class="s1"><div class="wrap rev"><div class="kick">공공데이터로 답하다</div>
   <h1>어디가<br>살기 좋은 동네일까?</h1>
-  <div class="sub">아파트값만 보면 모릅니다. 의료·교육·교통·안전·복지까지, 전국 읍면동을 <b>9가지 생활 도메인</b>으로 채점하고 <b>아파트 실거래가·대중교통 소요시간</b>까지 결합했습니다.</div>
+  <div class="sub">아파트값만 보면 모릅니다. 의료·교육·교통·안전·복지까지,<br>전국 읍면동을 <b>9가지 생활 도메인</b>으로 채점하고<br><b>아파트 실거래가·대중교통 소요시간</b>까지 결합했습니다.</div>
   <div class="kpis">
     <div class="kpi has" tabindex="0"><b data-count="{NDONG}" data-comma="1">0</b><span>읍면동</span><div class="tip"><span class="t">전국 읍면동(행정동)</span>실제 생활권 단위. 시군구(약 250개)보다 <b>14배 정밀</b>한 해상도로 채점.</div></div>
     <div class="kpi has" tabindex="0"><b data-count="9">0</b><span>생활 도메인</span><div class="tip"><span class="t">9개 생활 도메인</span>의료·교육·생활편의·문화여가·교통·안전·환경·복지·반려. 삶에 매일 닿는 영역으로 종합.</div></div>
@@ -225,12 +224,12 @@ BODY = f"""
 
 <section class="s2"><div class="wrap rev"><div class="kick">무엇으로 재나</div>
   <h2>'살기 좋음'은 9가지입니다</h2>
-  <div class="sub">집값·평수로는 안 보입니다. 병원이 가까운지, 아이 학교·안전은, 버스는 자주 오는지 — 매일의 삶을 만드는 건 이 <b>9가지</b>입니다.</div>
+  <div class="sub">집값·평수로는 안 보입니다.<br>병원이 가까운지, 아이 학교·안전은, 버스는 자주 오는지<br>매일의 삶을 만드는 건 이 <b>9가지</b>입니다.</div>
   <div class="domg">{DOMG}</div></div></section>
 
 <section class="s3"><div class="wrap rev"><div class="kick">당신에게 맞는</div>
   <h2>가구에 맞는 동네는 다릅니다</h2>
-  <div class="sub">육아 가구라면 교육·안전·의료를 더 중요하게 — 가중치를 바꿔 다시 계산합니다.</div>
+  <div class="sub">육아 가구라면 교육·안전·의료를 더 중요하게<br>가중치를 바꿔 다시 계산합니다.</div>
   {VREC}</div></section>
 
 <section class="s4"><div class="wrap rev"><div class="kick">가격 대비</div>
@@ -240,12 +239,12 @@ BODY = f"""
 
 <section class="s5"><div class="wrap rev"><div class="kick">지자체·기관용</div>
   <h2>우리 지역, 뭐가 부족할까?</h2>
-  <div class="sub">인구는 많은데 특정 생활 인프라가 하위 20%인 <span class="hi">사각지대</span>를 찾아냅니다. 시설 입지·예산 배분의 근거.</div>
+  <div class="sub">인구는 많은데 특정 생활 인프라가 하위 20%인<br><span class="hi">사각지대</span>를 찾아냅니다. 시설 입지·예산 배분의 근거.</div>
   <div class="bars"><div style="text-align:left;font-weight:800;margin-bottom:10px">가장 부족한 3개 영역 <span style="color:var(--mid);font-weight:500;font-size:12px">(전국 평균 대비 부족폭)</span></div>{DBARS}</div></div></section>
 
 <section class="s6"><div class="wrap rev"><div class="kick">믿을 수 있나</div>
   <h2>100% 공공데이터 · 투명·재현</h2>
-  <div class="sub">추측 없이, 전부 공개 데이터로. 이만큼 긁어다 융합했습니다 — 32개 지표.</div></div>
+  <div class="sub">추측 없이, 전부 공개 데이터로. 이만큼 긁어다 융합했습니다<br>32개 지표.</div></div>
   <div class="marq"><div class="track">{row1}</div><div class="track r">{row2}</div></div>
   <div class="wrap rev"><div class="note">점수는 전국 읍면동 상대평가(백분위) 기반 참고용입니다.</div></div></section>
 
@@ -256,13 +255,16 @@ BODY = f"""
     <a class="lc" href="index.html#v=rec"><span class="i">🎯</span><b>내 동네 찾기</b><span class="d">가구·예산·통근으로 맞춤 추천 + 가성비 동네</span><span class="ar">→</span></a>
     <a class="lc" href="index.html#v=diag"><span class="i">🩺</span><b>지자체 진단</b><span class="d">우리 지역 취약 도메인·사각지대 리포트</span><span class="ar">→</span></a>
     <a class="lc" href="index.html"><span class="i">🗺</span><b>전국 지도 탐색</b><span class="d">동별 색칠·시설 위치·클릭 상세</span><span class="ar">→</span></a>
-    <a class="lc" href="mailto:seunghyun.oh@bespinglobal.com?subject=%5B%EB%8F%99%EB%84%A4%EC%82%B4%EA%B8%B0%EC%A7%80%EC%88%98%5D%20%EB%8F%84%EC%9E%85%C2%B7%EC%A0%9C%ED%9C%B4%20%EB%AC%B8%EC%9D%98"><span class="i">📬</span><b>도입·제휴 문의</b><span class="d">지자체·기관·프롭테크</span><span class="ar">→</span></a>
+    <a class="lc" href="mailto:lucestdail@kakao.com?subject=%5B%EB%8F%99%EB%84%A4%EC%82%B4%EA%B8%B0%EC%A7%80%EC%88%98%5D%20%EB%8F%84%EC%9E%85%C2%B7%EC%A0%9C%ED%9C%B4%20%EB%AC%B8%EC%9D%98"><span class="i">📬</span><b>도입·제휴 문의</b><span class="d">지자체·기관·프롭테크</span><span class="ar">→</span></a>
   </div>
   <div class="foot" style="margin-top:32px">동네살기지수(NLI) · 공공데이터 기반 생활입지 인텔리전스</div></div></section>
 """
 
 JS = """
 <script>
+// 진입 시 항상 최상단(모바일 스냅/스크롤복원이 2번째 섹션으로 튀는 것 방지)
+history.scrollRestoration='manual';
+addEventListener('load',()=>scrollTo(0,0));setTimeout(()=>scrollTo(0,0),0);
 // 카운터 상승 애니메이션(읍면동·도메인·지표 / 진단 점수)
 function countUp(el){
   const t=+el.dataset.count, comma=el.dataset.comma, dur=1100, t0=performance.now();
