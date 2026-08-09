@@ -93,7 +93,7 @@ def meta():
     return {"domains": logic.DOM_NAMES, "indicators": len(ds),
             "sources": [{"key": d.get("key"), "name": d.get("name"), "domain": d.get("domain"),
                          "source": d.get("source"), "updated": d.get("updated"), "license": d.get("license")} for d in ds],
-            "note": "점수는 전국 읍면동 상대평가(백분위) 참고용. 복지 지오코딩 약 88% 커버."}
+            "note": "점수는 전국 읍면동 상대평가(백분위) 참고용. 복지 지오코딩 약 89% 커버."}
 
 
 @app.get("/api/dong/{adm_cd}")
