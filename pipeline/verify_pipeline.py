@@ -84,7 +84,7 @@ def check_index():
     ck("nli_points.json" in html and "ensurePoints" in html, "시설점 지연로딩", "fetch('nli_points.json')")
     n_old = len(re.findall(r'"r_old":', html))
     ck(n_old >= N_DONG - 10, "r_old 임베드", f"{n_old}개")
-    for token in ("function applyHash", "🔗 공유", "정보량(엔트로피)", "통근 보정", "인구밀도 기준",
+    for token in ("function applyHash", "🔗 공유", "정보량(엔트로피)", "통근 보정", "인구밀도",
                   "지역 생활여건 진단", "내 동네 추천", "이 동네 공유", "도입·제휴 문의", "32개 지표"):
         ck(token in html, f"기능 문자열 '{token[:18]}'", "임베드됨" if token in html else "없음")
     # 탭 구조 무결성(3탭 IA: 지도/내동네/인사이트)

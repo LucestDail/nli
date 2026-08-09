@@ -201,8 +201,16 @@ TEMPLATE = r'''<!DOCTYPE html>
  .place{transition:background .12s,transform .12s}.place:hover{transform:translateX(2px)}
  /* 통계 정렬(데스크탑 균형) */
  #scatter{text-align:center}
- #regHeat{overflow-x:auto}
+ #regHeat,#domCorr,#sidoDom{overflow-x:auto}
  .card>.flex{align-items:center}
+ /* 분석(stats) 대시보드 — 2열 그리드로 스크롤 최소화 */
+ .statwrap{max-width:1340px}
+ .statdash{display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:start;margin-top:4px}
+ .statdash .card{margin:0}
+ .statdash .card h3{margin:0 0 6px}
+ .statdash .mini{font-size:11.5px;color:var(--mid);margin-bottom:9px;line-height:1.5}
+ .statdash table.heat td,.statdash table.heat th{padding:4px 5px;font-size:10.5px}
+ @media(max-width:1080px){.statdash{grid-template-columns:1fr}}
  /* 반응형 */
  @media(max-width:960px){
    .grid2{grid-template-columns:1fr}
@@ -345,29 +353,29 @@ TEMPLATE = r'''<!DOCTYPE html>
    <div id="compareBody"></div>
  </div></div>
 
- <div class="view" id="v-stats" style="display:none"><div class="wrap">
-   <h2>지역 통계·추론</h2><div class="sub">지역 특성(인구·밀도·연령·아파트값)과 살기지수의 관계, 지역 유형별 격차 분석 (실시간 계산)</div>
+ <div class="view" id="v-stats" style="display:none"><div class="wrap statwrap">
+   <h2>지역 통계·추론</h2><div class="sub" style="margin-bottom:14px">지역 특성(인구·밀도·연령·아파트값)과 살기지수의 관계, 지역 유형별 격차 분석 (실시간 계산)</div>
    <div class="kpis" id="statKpi"></div>
-   <div class="card"><h3>지역 특성 × 도메인 상관</h3>
-     <div class="muted" style="margin-bottom:12px">인구·밀도·연령구조가 각 도메인 점수와 어떻게 연관되는지 · <b style="color:#2f6b4e">초록=정비례(+)</b> / <b style="color:#b0603f">주황=반비례(−)</b> · |r|≥0.3부터 뚜렷</div>
-     <div id="regHeat"></div></div>
-   <div class="card" style="margin-top:18px"><h3>도메인 간 상관 <span class="muted" style="font-weight:400">— 어떤 생활 인프라가 함께 몰리나</span></h3>
-     <div class="muted" style="margin-bottom:12px">두 도메인 점수가 같이 높아지는 정도 · <b style="color:#2f6b4e">초록=동반(+)</b> · 값 클수록 "한 동네에 함께 갖춰짐"</div>
-     <div id="domCorr"></div></div>
-   <div class="card" style="margin-top:18px"><h3>시도 × 도메인 프로파일 <span class="muted" style="font-weight:400">— 지역별 강점 도메인</span></h3>
-     <div class="muted" style="margin-bottom:12px">각 열(도메인)에서 <b style="color:#2f6b4e">진한 초록=그 도메인이 상대적으로 강한 시도</b> · 시도는 종합지수 순</div>
-     <div id="sidoDom"></div></div>
-   <div class="grid2" style="margin-top:18px">
-     <div class="card"><h3>도농 유형별 도메인 점수</h3>
-       <div class="flex" style="justify-content:space-between;margin-bottom:10px"><span class="muted">도시·도농복합·농촌 평균 (막대 길수록 높음)</span>
-         <div class="seg" style="width:210px"><button data-ck="cohort" class="on">행정동명 기준</button><button data-ck="cohort_d">인구밀도 기준</button></div></div>
+   <div class="statdash">
+     <div class="card"><h3>지역 특성 × 도메인 상관</h3>
+       <div class="mini">인구·밀도·연령구조가 각 도메인과 어떻게 연관되는지 · <b style="color:#2f6b4e">초록=정비례(+)</b> / <b style="color:#b0603f">주황=반비례(−)</b> · |r|≥0.3부터 뚜렷</div>
+       <div id="regHeat"></div></div>
+     <div class="card"><h3>도메인 간 상관 <span class="muted" style="font-weight:400;font-size:13px">— 함께 몰리나</span></h3>
+       <div class="mini">두 도메인이 같이 높아지는 정도 · <b style="color:#2f6b4e">초록=동반(+)</b> · 값 클수록 "한 동네에 함께 갖춰짐"</div>
+       <div id="domCorr"></div></div>
+     <div class="card"><h3>시도 × 도메인 프로파일 <span class="muted" style="font-weight:400;font-size:13px">— 지역별 강점</span></h3>
+       <div class="mini">각 열(도메인)에서 <b style="color:#2f6b4e">진한 초록=상대적으로 강한 시도</b> · 시도는 종합지수 순</div>
+       <div id="sidoDom"></div></div>
+     <div class="card"><div class="flex" style="justify-content:space-between;align-items:baseline;margin-bottom:8px"><h3 style="margin:0">도농 유형별 도메인 점수</h3>
+         <div class="seg" style="width:200px"><button data-ck="cohort" class="on">행정동명</button><button data-ck="cohort_d">인구밀도</button></div></div>
+       <div class="mini">도시·도농복합·농촌 평균 (막대 길수록 높음)</div>
        <div id="cohortBars"></div></div>
-     <div class="card"><h3>시도별 종합지수 순위</h3><div class="muted" style="margin-bottom:12px">17개 시도 평균 종합지수</div><div id="sidoRank"></div></div>
+     <div class="card"><h3>시도별 종합지수 순위</h3><div class="mini">17개 시도 평균 종합지수</div><div id="sidoRank"></div></div>
+     <div class="card"><h3>산점도 · 회귀분석 <span class="muted" style="font-weight:400;font-size:13px">— 특성×지표</span></h3>
+       <div class="flex" style="margin:8px 0 10px;font-size:13px;color:var(--mid)">X축 <select id="sx"></select> Y축 <select id="sy"></select> <span id="regInfo"></span></div>
+       <div id="scatter"></div>
+       <div id="scatterNote" style="margin-top:10px;text-align:center;font-size:13px;color:var(--ink)"></div></div>
    </div>
-   <div class="card" style="margin-top:18px"><h3>산점도 · 회귀분석 <span class="muted" style="font-weight:400">— 지역 특성과 지표 관계</span></h3>
-     <div class="flex" style="margin:10px 0 12px;font-size:13px;color:var(--mid)">X축 <select id="sx"></select> Y축 <select id="sy"></select> <span id="regInfo"></span></div>
-     <div id="scatter"></div>
-     <div id="scatterNote" style="margin-top:12px;text-align:center;font-size:13.5px;color:var(--ink)"></div></div>
  </div></div>
 
  <div class="view" id="v-rec" style="display:none"><div class="wrap">
@@ -806,7 +814,7 @@ function renderStats(){
 
 
   // 지역 특성 × 도메인 상관 히트맵
-  let ht='<table class="heat"><tr><th></th>'+dkAll.map(d=>`<th>${VARS[d]}</th>`).join('')+'</tr>';
+  let ht='<table class="heat"><tr><th></th>'+dkAll.map(d=>`<th title="${VARS[d]}">${d==='NLI'?'종합':DOMINFO[d][0]}</th>`).join('')+'</tr>';
   REG.forEach(([rk,rn],ri)=>{ht+=`<tr><td style="font-weight:700;background:#f7f5f1;text-align:left;white-space:nowrap">${rn}</td>`+dvAll.map((dv,di)=>{const r=pearson(regV[ri],dv);return `<td style="background:${corrColor(r)};color:${Math.abs(r)>=.5?'#fff':'#1a2530'};${Math.abs(r)>=.3?'font-weight:700':''}">${r.toFixed(2)}</td>`}).join('')+'</tr>';});
   document.getElementById('regHeat').innerHTML=ht+'</table>';
 
