@@ -63,7 +63,7 @@ TEMPLATE = r'''<!DOCTYPE html>
  .wrap{max-width:1220px;margin:0 auto;padding:34px 30px 60px}
  .hero-t{font-family:var(--serif);font-size:38px;font-weight:700;letter-spacing:-.5px;margin:0 0 6px;color:var(--ocean);line-height:1.1}
  h2{font-size:24px;font-weight:700;letter-spacing:-.03em;margin:0 0 5px;color:var(--ink)}
- .sub{color:var(--mid);font-size:14.5px;margin-bottom:26px;max-width:640px}
+ .sub{color:var(--mid);font-size:14.5px;margin-bottom:26px;max-width:640px;word-break:keep-all}
  .kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:30px}
  .kpi{background:var(--card);border:1px solid var(--line);border-radius:var(--r-lg);padding:20px;box-shadow:var(--sh);position:relative;overflow:hidden}
  .kpi::before{content:"";position:absolute;left:0;top:0;width:100%;height:3px;background:var(--grad);opacity:.85}
@@ -201,6 +201,19 @@ TEMPLATE = r'''<!DOCTYPE html>
  .statdash .mini{font-size:11.5px;color:var(--mid);margin-bottom:9px;line-height:1.5}
  .statdash table.heat td,.statdash table.heat th{padding:4px 5px;font-size:10.5px}
  @media(max-width:1080px){.statdash{grid-template-columns:1fr}}
+ .statdash,.statdash>.card{min-width:0}
+ #regHeat,#domCorr,#sidoDom{max-width:100%}
+ /* 데스크톱 전용 도구(복사·CSV·인쇄·공유) — 모바일 숨김(간단 조회/열람만) */
+ .mobile-only{display:none}
+ @media(max-width:640px){
+   .dltools{display:none!important}
+   .statdash .sd-heavy{display:none}   /* 무거운 히트맵은 모바일 숨김 → 서사 카드 위주 */
+   .mobile-only{display:block}
+ }
+ /* 내 동네 추천 폼 — 통일 그리드 */
+ .recgridfld{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+ .recgridfld input[type=number],.recgridfld input[type=text]{width:100%}
+ @media(max-width:640px){.recgridfld{grid-template-columns:1fr}}
  /* 반응형 */
  @media(max-width:960px){
    .grid2{grid-template-columns:1fr}
@@ -248,14 +261,7 @@ TEMPLATE = r'''<!DOCTYPE html>
      <div class="tab" data-v="find">🎯 내 동네 찾기</div>
      <div class="tab" data-v="insight">📊 인사이트</div>
    </div>
-   <div class="gsearch"><input id="gsearch" placeholder="지역 검색 (예: 강남구 역삼)" autocomplete="off"><div class="ac" id="gac"></div></div>
-   <button class="btn" id="shareBtn" title="현재 화면 링크 복사" style="margin-left:8px;flex-shrink:0">🔗 공유</button>
  </nav>
- <div id="insightSeg" class="iseg" style="display:none">
-   <button data-s="compare" class="on" onclick="setInsightSub('compare')">⚖️ 비교</button>
-   <button data-s="diag" onclick="setInsightSub('diag')">🩺 지자체 진단</button>
-   <button data-s="stats" onclick="setInsightSub('stats')">📊 분석</button>
- </div>
  <div id="routeModal" class="rmodal" style="display:none" onclick="if(event.target===this)closeRoute()"><div class="rmbox">
    <div class="rmhd"><b id="rmTitle"></b><span class="rmclose" onclick="closeRoute()">✕</span></div>
    <div id="rmSummary" class="rmsum"></div>
@@ -266,6 +272,8 @@ TEMPLATE = r'''<!DOCTYPE html>
  <div class="view map" id="v-map" style="display:flex">
    <button class="asideToggle" id="asideToggle" aria-label="필터 열기">☰ 지표·필터</button>
    <aside>
+     <div class="sec"><h3>지역 검색</h3>
+       <div style="position:relative"><input type="text" id="gsearch" placeholder="예: 강남구 역삼" autocomplete="off" style="width:100%"><div class="ac" id="gac" style="left:0;right:0;top:40px;width:auto"></div></div></div>
      <div class="sec"><h3>지표</h3>
        <select id="metric"></select>
        <div class="seg" id="modes" style="margin-top:8px">
@@ -318,13 +326,14 @@ TEMPLATE = r'''<!DOCTYPE html>
    <h2>지역 통계·추론</h2><div class="sub" style="margin-bottom:14px">지역 특성(인구·밀도·연령·아파트값)과 살기지수의 관계, 지역 유형별 격차 분석 (실시간 계산)</div>
    <div class="kpis" id="statKpi"></div>
    <div class="statdash">
-     <div class="card"><h3>지역 특성 × 도메인 상관</h3>
+     <div class="card mobile-only" style="grid-column:1/-1"><div class="muted">📱 상세 상관 히트맵은 데스크톱에서 볼 수 있어요. 아래는 핵심 지표·순위 요약입니다.</div></div>
+     <div class="card sd-heavy"><h3>지역 특성 × 도메인 상관</h3>
        <div class="mini">인구·밀도·연령구조가 각 도메인과 어떻게 연관되는지 · <b style="color:#2f6b4e">초록=정비례(+)</b> / <b style="color:#b0603f">주황=반비례(−)</b> · |r|≥0.3부터 뚜렷</div>
        <div id="regHeat"></div></div>
-     <div class="card"><h3>도메인 간 상관 <span class="muted" style="font-weight:400;font-size:13px">— 함께 몰리나</span></h3>
+     <div class="card sd-heavy"><h3>도메인 간 상관 <span class="muted" style="font-weight:400;font-size:13px">— 함께 몰리나</span></h3>
        <div class="mini">두 도메인이 같이 높아지는 정도 · <b style="color:#2f6b4e">초록=동반(+)</b> · 값 클수록 "한 동네에 함께 갖춰짐"</div>
        <div id="domCorr"></div></div>
-     <div class="card"><h3>시도 × 도메인 프로파일 <span class="muted" style="font-weight:400;font-size:13px">— 지역별 강점</span></h3>
+     <div class="card sd-heavy"><h3>시도 × 도메인 프로파일 <span class="muted" style="font-weight:400;font-size:13px">— 지역별 강점</span></h3>
        <div class="mini">각 열(도메인)에서 <b style="color:#2f6b4e">진한 초록=상대적으로 강한 시도</b> · 시도는 종합지수 순</div>
        <div id="sidoDom"></div></div>
      <div class="card"><div class="flex" style="justify-content:space-between;align-items:baseline;margin-bottom:8px"><h3 style="margin:0">도농 유형별 도메인 점수</h3>
@@ -344,12 +353,12 @@ TEMPLATE = r'''<!DOCTYPE html>
    <div class="sub">가구유형에 맞는 가중치로 살기지수를 다시 계산하고, 예산·통근 조건으로 걸러 <b>맞춤 동네 Top10</b>을 추천합니다.</div>
    <div class="card" style="margin-bottom:18px">
      <div class="fld">가구유형 <span class="muted" style="font-weight:400;text-transform:none;letter-spacing:0">— 도메인 가중치 자동 설정</span></div>
-     <div class="seg" id="recHouseSeg" style="max-width:540px;margin:7px 0 16px"><button data-h="일반" class="on">일반</button><button data-h="육아">육아</button><button data-h="1인">1인가구</button><button data-h="고령">고령</button><button data-h="반려">반려동물</button></div>
-     <div class="grid2" style="gap:16px">
+     <div class="seg" id="recHouseSeg" style="margin:7px 0 16px"><button data-h="일반" class="on">일반</button><button data-h="육아">육아</button><button data-h="1인">1인가구</button><button data-h="고령">고령</button><button data-h="반려">반려동물</button></div>
+     <div class="recgridfld">
        <div><div class="fld">예산 — 아파트 평당가 상한 <span class="muted" style="font-weight:400;text-transform:none;letter-spacing:0">(만원, 비우면 전체)</span></div>
-         <input type="number" id="recBudget" placeholder="예: 3000" style="width:180px;margin-top:6px" oninput="recBudget=+this.value||null"></div>
+         <input type="number" id="recBudget" placeholder="예: 3000" style="width:100%;margin-top:6px" oninput="recBudget=+this.value||null"></div>
        <div><div class="fld">통근 기준지 <span class="muted" style="font-weight:400;text-transform:none;letter-spacing:0">(선택 · 직선 반경 필터)</span></div>
-         <span style="position:relative;display:inline-block;margin-top:6px"><input type="text" id="recBase" placeholder="예: 역삼동" autocomplete="off" style="width:200px"><div class="ac" id="recbac" style="left:0;top:42px;right:auto;width:260px"></div></span>
+         <span style="position:relative;display:block;margin-top:6px"><input type="text" id="recBase" placeholder="예: 역삼동" autocomplete="off" style="width:100%"><div class="ac" id="recbac" style="left:0;top:42px;right:auto;width:260px"></div></span>
          <span id="recBaseLabel" class="muted" style="margin-left:8px;font-size:12px"></span>
          <div id="recKmWrap" style="display:none;align-items:center;gap:7px;margin-top:8px;font-size:12px;color:var(--mid)">반경 <input type="range" id="recKm" min="2" max="40" step="1" value="10" style="width:130px" oninput="recKm=+this.value;document.getElementById('recKmV').textContent=recKm+'km'"><b id="recKmV" style="color:var(--ocean);font-weight:700">10km</b></div></div>
      </div>
@@ -357,7 +366,7 @@ TEMPLATE = r'''<!DOCTYPE html>
    </div>
    <div id="recResults"><div class="card muted">가구유형을 고르고 <b>추천받기</b>를 누르면 맞춤 동네 Top10이 나옵니다.</div></div>
    <div class="card" style="margin-top:18px"><div class="flex" style="justify-content:space-between;align-items:center;gap:8px"><h3 style="margin:0">💎 가성비 동네 <span class="muted" style="font-weight:400">— 살기지수는 높고 아파트값은 낮은</span></h3>
-     <div class="flex" style="gap:6px;flex-shrink:0"><select id="valSido"></select><button class="btn" onclick="shareValue(this)">📤 공유</button></div></div>
+     <div class="flex" style="gap:6px;flex-shrink:0"><select id="valSido"></select><button class="btn dltools" onclick="shareValue(this)">📤 공유</button></div></div>
      <div class="muted" style="margin:10px 0 12px">종합지수 백분위 − 아파트 평당가 백분위 순 · 인구 3천+ · 실거래 있는 동 · <b>클릭 → 상세</b></div>
      <div id="valueRank" class="valgrid"></div></div>
  </div></div>
@@ -374,7 +383,7 @@ TEMPLATE = r'''<!DOCTYPE html>
    <div class="card" style="padding:0;max-height:56vh;overflow:auto"><table id="diagTable"></table></div>
  </div></div>
 
- <div class="foot" id="foot1"></div>
+ <div class="foot" id="foot1" style="order:9"></div>
 </div>
 <script>
 const DATA=__GEOJSON__;
@@ -448,15 +457,12 @@ function attachAC(input,box,onPick){
   document.addEventListener('click',e=>{if(!input.parentElement.contains(e.target))box.style.display='none'});
 }
 
-// 3탭 IA: map / find(추천+순위) / insight(비교·진단·분석 세그먼트)
-let insightSub='compare';
-function renderInsight(){if(insightSub==='diag')renderDiag();else if(insightSub==='stats')renderStats();else renderCompare();}
-function setInsightSub(s){insightSub=s;document.querySelectorAll('#insightSeg button').forEach(b=>b.classList.toggle('on',b.dataset.s===s));showTab('insight');}
+// 3탭 IA: map / find(추천+순위) / insight(비교·진단·분석 한 페이지)
+function renderInsight(){renderCompare();renderDiag();renderStats();}
 function showTab(v){
   if(!['map','find','insight'].includes(v))v='map';
   document.querySelectorAll('nav .tab').forEach(x=>x.classList.toggle('on',x.dataset.v===v));
-  document.getElementById('insightSeg').style.display=(v==='insight'?'flex':'none');
-  const show = v==='map'?['map'] : v==='find'?['rec','rank'] : [insightSub];
+  const show = v==='map'?['map'] : v==='find'?['rec','rank'] : ['compare','diag','stats'];
   document.getElementById('app').style.overflowY=(v==='map'?'hidden':'auto');
   ['map','rec','rank','compare','stats','diag'].forEach(x=>{const el=document.getElementById('v-'+x);if(!el)return;
     const on=show.includes(x);
@@ -464,6 +470,7 @@ function showTab(v){
     if(on&&x!=='map'){el.style.flex='0 0 auto';el.style.overflow='visible';el.style.animation='none';void el.offsetWidth;el.style.animation='vin .3s cubic-bezier(.22,1,.36,1)';}});
   document.getElementById('foot1').style.display=(v==='map'?'none':'block');
   if(v==='find'){document.getElementById('v-rec').style.order='1';document.getElementById('v-rank').style.order='2';}
+  if(v==='insight'){document.getElementById('v-compare').style.order='1';document.getElementById('v-diag').style.order='2';document.getElementById('v-stats').style.order='3';}
   if(v==='map'&&map){setTimeout(()=>map.invalidateSize(),60);renderMapSliders();}
   else if(v==='find'){renderRec();renderRank();}
   else if(v==='insight')renderInsight();
@@ -693,7 +700,7 @@ function setCommuteBase(adm){commuteBase=adm;
   document.getElementById('commuteInfo').innerHTML=`<b style="color:var(--ocean)">${adm}</b> 기준 · <span style="font-size:11px">동 클릭 시 🚇대중교통 시간</span> ·`;
   document.getElementById('commuteKmWrap').style.display='inline-flex';renderRank();writeHash();}
 
-function addCmp(adm){if(cmp.includes(adm))return;if(cmp.length>=4){alert('최대 4곳까지 비교할 수 있어요');return}cmp.push(adm);insightSub='compare';document.querySelectorAll('#insightSeg button').forEach(b=>b.classList.toggle('on',b.dataset.s==='compare'));showTab('insight');}
+function addCmp(adm){if(cmp.includes(adm))return;if(cmp.length>=4){alert('최대 4곳까지 비교할 수 있어요');return}cmp.push(adm);showTab('insight');renderCompare();}
 function renderCompare(){
   document.getElementById('cmpClear').onclick=()=>{cmp=[];renderCompare()};
   const b=document.getElementById('compareBody');
@@ -831,12 +838,11 @@ function customSelect(sel){
 document.addEventListener('click',()=>document.querySelectorAll('.csel.open').forEach(x=>x.classList.remove('open')));
 /* 막대 성장 애니메이션: data-w(%너비)/data-h(%높이) → 다음 프레임에 목표값 적용 */
 function growBars(){requestAnimationFrame(()=>{document.querySelectorAll('[data-w]').forEach(e=>{e.style.width=e.dataset.w+'%';e.removeAttribute('data-w');});document.querySelectorAll('[data-h]').forEach(e=>{e.style.height=e.dataset.h+'%';e.removeAttribute('data-h');});});}
-document.getElementById('foot1').innerHTML='데이터 출처 · 공공데이터포털 표준데이터 · SGIS 경계·인구(2025 2분기) · 건강보험심사평가원(2026.6) · 소상공인시장진흥공단 · 국토교통부 아파트 실거래가 · safetydata.go.kr · VWorld 지오코딩   ·   방법 · 시설밀도(인구 1만명당·면적 ㎢당 혼합)와 근접성의 백분위 결합 → 도메인 가중평균, 도농 코호트·인구가중 중심점 보정   ·   9개 도메인 32개 지표 읍면동 정밀(복지는 지오코딩 약 89% 커버) · 점수는 전국 읍면동 상대평가(백분위)로 참고용입니다<br><a href="mailto:seunghyun.oh@bespinglobal.com?subject=%5B%EB%8F%99%EB%84%A4%EC%82%B4%EA%B8%B0%EC%A7%80%EC%88%98%5D%20%EB%8F%84%EC%9E%85%C2%B7%EC%A0%9C%ED%9C%B4%20%EB%AC%B8%EC%9D%98&body=%EA%B8%B0%EA%B4%80/%EB%8B%B4%EB%8B%B9%EC%9E%90%3A%0A%EA%B4%80%EC%8B%AC%20%EC%A7%80%EC%97%AD/%EB%82%B4%EC%9A%A9%3A%0A%EC%97%B0%EB%9D%BD%EC%B2%98%3A%0A" style="display:inline-block;margin-top:9px;color:var(--ocean);font-weight:700;text-decoration:none">📬 지자체·기관 도입·제휴 문의</a>';
+document.getElementById('foot1').innerHTML='데이터 출처 · 공공데이터포털 표준데이터 · SGIS 경계·인구(2025 2분기) · 건강보험심사평가원(2026.6) · 소상공인시장진흥공단 · 국토교통부 아파트 실거래가 · safetydata.go.kr · VWorld 지오코딩   ·   방법 · 시설밀도(인구 1만명당·면적 ㎢당 혼합)와 근접성의 백분위 결합 → 도메인 가중평균, 도농 코호트·인구가중 중심점 보정   ·   9개 도메인 32개 지표 읍면동 정밀(복지는 지오코딩 약 89% 커버) · 점수는 전국 읍면동 상대평가(백분위)로 참고용입니다<br><a href="mailto:lucestdail@kakao.com?subject=%5B%EB%8F%99%EB%84%A4%EC%82%B4%EA%B8%B0%EC%A7%80%EC%88%98%5D%20%EB%8F%84%EC%9E%85%C2%B7%EC%A0%9C%ED%9C%B4%20%EB%AC%B8%EC%9D%98&body=%EA%B8%B0%EA%B4%80/%EB%8B%B4%EB%8B%B9%EC%9E%90%3A%0A%EA%B4%80%EC%8B%AC%20%EC%A7%80%EC%97%AD/%EB%82%B4%EC%9A%A9%3A%0A%EC%97%B0%EB%9D%BD%EC%B2%98%3A%0A" style="display:inline-block;margin-top:9px;color:var(--ocean);font-weight:700;text-decoration:none">📬 지자체·기관 도입·제휴 문의</a>';
 /* ---------- 공유 딥링크: 현재 상태 ↔ location.hash ---------- */
 function curTab(){const t=document.querySelector('nav .tab.on');return t?t.dataset.v:'map';}
 function writeHash(){if(applyingHash)return;
   const q=[],v=curTab();if(v!=='map')q.push('v='+v);
-  if(v==='insight')q.push('seg='+insightSub);
   if(curDetail)q.push('d='+encodeURIComponent(curDetail));
   if(W.some(x=>Math.abs(x-1)>1e-6))q.push('w='+W.map(x=>+(+x).toFixed(2)).join(','));
   if(mMetric&&mMetric!=='NLI')q.push('m='+mMetric);
@@ -860,10 +866,7 @@ function applyHash(){
     if(P.c)cmp=P.c.split('~').filter(Boolean).slice(0,4);
     let v=P.d?'map':(P.v||'map');
     const alias={home:'map',rec:'find',rank:'find',compare:'insight',stats:'insight',diag:'insight'};
-    if(P.seg&&['compare','diag','stats'].includes(P.seg))insightSub=P.seg;
-    else if(['compare','diag','stats'].includes(v))insightSub=v;
     if(alias[v])v=alias[v];
-    document.querySelectorAll('#insightSeg button').forEach(b=>b.classList.toggle('on',b.dataset.s===insightSub));
     showTab(v);
     if(P.md)document.querySelectorAll('#modes button').forEach(x=>x.classList.toggle('on',x.dataset.m===P.md));
     const ms=document.getElementById('metric');if(ms){ms.value=mMetric;ms.dispatchEvent(new Event('change'));}
@@ -900,7 +903,7 @@ function diagCardHTML(g,rankOf,total){
   return `<div class="flex" style="justify-content:space-between;align-items:flex-start;gap:12px">
     <div style="min-width:0"><h3 style="margin:0 0 4px">${g.sido} ${g.sgg}</h3>
       <div class="muted">전국 취약순위 <b style="color:var(--terra)">${rankOf.get(g.key)}</b>/${total} · 인구 ${g.pop.toLocaleString()}명 · ${g.dongs.length}개 동 · 등급 ${gdist||'—'}</div></div>
-    <div class="flex" style="gap:6px;flex-shrink:0;justify-content:flex-end"><button class="btn" onclick="diagToMap()">🗺 지도</button><button class="btn" onclick="copyDiagReport(this)">📋 복사</button><button class="btn" onclick="downloadDiagCSV()">⬇ CSV</button><button class="btn" onclick="printDiagReport()">🖨 인쇄</button></div></div>
+    <div class="flex" style="gap:6px;flex-shrink:0;justify-content:flex-end"><button class="btn" onclick="diagToMap()">🗺 지도</button><span class="dltools flex" style="gap:6px"><button class="btn" onclick="copyDiagReport(this)">📋 복사</button><button class="btn" onclick="downloadDiagCSV()">⬇ CSV</button><button class="btn" onclick="printDiagReport()">🖨 인쇄</button></span></div></div>
    <div class="dkpi">
      <div class="kpi"><b style="color:${color(g.nli)}">${g.nli.toFixed(1)}</b><span>평균 종합지수 · 전국 백분위</span></div>
      <div class="kpi"><b style="color:var(--terra)">${g.blindN}</b><span>사각지대 · 동 × 도메인</span></div></div>
@@ -1074,11 +1077,6 @@ document.querySelectorAll('select').forEach(customSelect);
   const close=()=>{as.classList.remove('open');bd.classList.remove('on')};
   tg.onclick=()=>{const o=as.classList.toggle('open');bd.classList.toggle('on',o)};bd.onclick=close;
   as.addEventListener('change',()=>{if(window.innerWidth<=820)close()});})();
-// 공유 버튼: 현재 상태 링크 복사
-document.getElementById('shareBtn').onclick=function(){writeHash();const btn=this,u=location.href;
-  const ok=()=>{const o=btn.textContent;btn.textContent='✓ 복사됨';setTimeout(()=>btn.textContent=o,1400);};
-  if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(u).then(ok,()=>prompt('링크 복사',u));
-  else prompt('링크 복사',u);};
 applyHash();   // 딥링크로 진입 시 상태 복원
 growBars();
 setTimeout(()=>{if(map)map.invalidateSize();},120);

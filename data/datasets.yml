@@ -220,7 +220,7 @@ datasets:
   reader: csv
   lon: 경도
   lat: 위도
-  source: LOCALDATA 인허가
+  source: 지방행정인허가데이터개방
   updated: 2026-08
   license: 공공누리1형
   export_points: false
@@ -231,7 +231,7 @@ datasets:
   reader: csv
   lon: 경도
   lat: 위도
-  source: LOCALDATA 인허가
+  source: 지방행정인허가데이터개방
   updated: 2026-08
   license: 공공누리1형
   export_points: false
@@ -242,7 +242,7 @@ datasets:
   reader: csv
   lon: 경도
   lat: 위도
-  source: LOCALDATA 인허가
+  source: 지방행정인허가데이터개방
   updated: 2026-08
   license: 공공누리1형
   export_points: false
@@ -253,7 +253,7 @@ datasets:
   reader: csv
   lon: 경도
   lat: 위도
-  source: LOCALDATA 인허가
+  source: 지방행정인허가데이터개방
   updated: 2026-08
   license: 공공누리1형
   export_points: false
@@ -264,7 +264,7 @@ datasets:
   reader: csv
   lon: 경도
   lat: 위도
-  source: LOCALDATA 인허가
+  source: 지방행정인허가데이터개방
   updated: 2026-08
   license: 공공누리1형
   export_points: false
@@ -297,7 +297,7 @@ datasets:
   reader: csv
   lon: 경도
   lat: 위도
-  source: LOCALDATA 인허가
+  source: 지방행정인허가데이터개방
   updated: 2026-08
   license: 공공누리1형
   export_points: false
