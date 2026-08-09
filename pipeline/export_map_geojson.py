@@ -42,7 +42,7 @@ def score_props():
          LEFT JOIN sido sd ON substr(s.adm_cd,1,2)=sd.SIDO_CD LEFT JOIN sgg sg ON substr(s.adm_cd,1,5)=sg.SIGUNGU_CD""").df()
     props = {}
     for _, r in rows.iterrows():
-        d = {}
+        d = {'adm_cd': r['adm_cd']}   # API 키로 노출(행정동 코드)
         for c in rows.columns:
             if c == 'adm_cd': continue
             v = r[c]
