@@ -47,6 +47,9 @@ TEMPLATE = r'''<!DOCTYPE html>
  nav .tab:hover{background:rgba(255,255,255,.08);color:#fff}
  nav .tab.on{background:#fff;color:var(--ocean);font-weight:600}
  .tabs{display:flex;align-items:center;gap:2px}
+ .iseg{display:flex;gap:6px;padding:9px 16px;background:#fff;border-bottom:1px solid var(--line);flex-shrink:0;z-index:90}
+ .iseg button{padding:8px 16px;border:1px solid var(--line);background:#fff;border-radius:999px;cursor:pointer;font-size:13px;font-family:var(--sans);color:var(--mid);font-weight:600;transition:.15s}
+ .iseg button.on{background:var(--ocean);color:#fff;border-color:var(--ocean)}
  .gsearch{margin-left:auto;position:relative}
  .gsearch input{padding:9px 15px 9px 34px;border:0;border-radius:999px;font-size:13px;width:250px;background:rgba(255,255,255,.14);color:#fff;font-family:var(--sans);transition:.18s}
  .gsearch input::placeholder{color:#9fb6bf}.gsearch input:focus{background:#fff;color:var(--ink);width:290px;outline:none}
@@ -233,17 +236,18 @@ TEMPLATE = r'''<!DOCTYPE html>
  <nav>
    <div class="logo">🏘</div><div class="brand">동네살기지수<small>NLI</small></div>
    <div class="tabs">
-     <div class="tab on" data-v="map">지도</div>
-     <div class="tab" data-v="home">홈</div>
-     <div class="tab" data-v="rank">순위</div>
-     <div class="tab" data-v="rec">🎯 추천</div>
-     <div class="tab" data-v="compare">비교</div>
-     <div class="tab" data-v="stats">통계</div>
-     <div class="tab" data-v="diag">🩺 진단</div>
+     <div class="tab on" data-v="map">🗺 지도</div>
+     <div class="tab" data-v="find">🎯 내 동네 찾기</div>
+     <div class="tab" data-v="insight">📊 인사이트</div>
    </div>
    <div class="gsearch"><input id="gsearch" placeholder="지역 검색 (예: 강남구 역삼)" autocomplete="off"><div class="ac" id="gac"></div></div>
    <button class="btn" id="shareBtn" title="현재 화면 링크 복사" style="margin-left:8px;flex-shrink:0">🔗 공유</button>
  </nav>
+ <div id="insightSeg" class="iseg" style="display:none">
+   <button data-s="compare" class="on" onclick="setInsightSub('compare')">⚖️ 비교</button>
+   <button data-s="diag" onclick="setInsightSub('diag')">🩺 지자체 진단</button>
+   <button data-s="stats" onclick="setInsightSub('stats')">📊 분석</button>
+ </div>
  <div id="routeModal" class="rmodal" style="display:none" onclick="if(event.target===this)closeRoute()"><div class="rmbox">
    <div class="rmhd"><b id="rmTitle"></b><span class="rmclose" onclick="closeRoute()">✕</span></div>
    <div id="rmSummary" class="rmsum"></div>
@@ -463,14 +467,27 @@ function attachAC(input,box,onPick){
   document.addEventListener('click',e=>{if(!input.parentElement.contains(e.target))box.style.display='none'});
 }
 
-document.querySelectorAll('nav .tab').forEach(t=>t.onclick=()=>{
-  document.querySelectorAll('nav .tab').forEach(x=>x.classList.remove('on'));t.classList.add('on');
-  const v=t.dataset.v;['home','map','rank','compare','stats','diag','rec'].forEach(x=>document.getElementById('v-'+x).style.display=(x===v?(x==='map'?'flex':'block'):'none'));
-  if(v!=='map'){const el=document.getElementById('v-'+v);el.style.animation='none';void el.offsetWidth;el.style.animation='vin .3s cubic-bezier(.22,1,.36,1)';}
+// 3탭 IA: map / find(추천+순위) / insight(비교·진단·분석 세그먼트)
+let insightSub='compare';
+function renderInsight(){if(insightSub==='diag')renderDiag();else if(insightSub==='stats')renderStats();else renderCompare();}
+function setInsightSub(s){insightSub=s;document.querySelectorAll('#insightSeg button').forEach(b=>b.classList.toggle('on',b.dataset.s===s));showTab('insight');}
+function showTab(v){
+  if(!['map','find','insight'].includes(v))v='map';
+  document.querySelectorAll('nav .tab').forEach(x=>x.classList.toggle('on',x.dataset.v===v));
+  document.getElementById('insightSeg').style.display=(v==='insight'?'flex':'none');
+  const show = v==='map'?['map'] : v==='find'?['rec','rank'] : [insightSub];
+  document.getElementById('app').style.overflowY=(v==='map'?'hidden':'auto');
+  ['map','rec','rank','compare','stats','diag','home'].forEach(x=>{const el=document.getElementById('v-'+x);if(!el)return;
+    const on=show.includes(x);
+    el.style.display=on?(x==='map'?'flex':'block'):'none';
+    if(on&&x!=='map'){el.style.flex='0 0 auto';el.style.overflow='visible';el.style.animation='none';void el.offsetWidth;el.style.animation='vin .3s cubic-bezier(.22,1,.36,1)';}});
+  if(v==='find'){document.getElementById('v-rec').style.order='1';document.getElementById('v-rank').style.order='2';}
   if(v==='map'&&map){setTimeout(()=>map.invalidateSize(),60);renderMapSliders();}
-  if(v==='home')renderHome();if(v==='rank')renderRank();if(v==='compare')renderCompare();if(v==='stats')renderStats();if(v==='diag')renderDiag();if(v==='rec')renderRec();
+  else if(v==='find'){renderRec();renderRank();}
+  else if(v==='insight')renderInsight();
   writeHash();
-});
+}
+document.querySelectorAll('nav .tab').forEach(t=>t.onclick=()=>showTab(t.dataset.v));
 
 function renderHome(){
   const avg=(F.reduce((s,f)=>s+(nliW(f.properties)||0),0)/F.length).toFixed(1);
@@ -718,7 +735,7 @@ function setCommuteBase(adm){commuteBase=adm;
   document.getElementById('commuteInfo').innerHTML=`<b style="color:var(--ocean)">${adm}</b> 기준 · <span style="font-size:11px">동 클릭 시 🚇대중교통 시간</span> ·`;
   document.getElementById('commuteKmWrap').style.display='inline-flex';renderRank();writeHash();}
 
-function addCmp(adm){if(cmp.includes(adm))return;if(cmp.length>=4){alert('최대 4곳까지 비교할 수 있어요');return}cmp.push(adm);document.querySelector('nav .tab[data-v=compare]').click();}
+function addCmp(adm){if(cmp.includes(adm))return;if(cmp.length>=4){alert('최대 4곳까지 비교할 수 있어요');return}cmp.push(adm);insightSub='compare';document.querySelectorAll('#insightSeg button').forEach(b=>b.classList.toggle('on',b.dataset.s==='compare'));showTab('insight');}
 function renderCompare(){
   document.getElementById('cmpClear').onclick=()=>{cmp=[];renderCompare()};
   const b=document.getElementById('compareBody');
@@ -861,6 +878,7 @@ document.getElementById('foot1').textContent='데이터 출처 · 공공데이�
 function curTab(){const t=document.querySelector('nav .tab.on');return t?t.dataset.v:'map';}
 function writeHash(){if(applyingHash)return;
   const q=[],v=curTab();if(v!=='map')q.push('v='+v);
+  if(v==='insight')q.push('seg='+insightSub);
   if(curDetail)q.push('d='+encodeURIComponent(curDetail));
   if(W.some(x=>Math.abs(x-1)>1e-6))q.push('w='+W.map(x=>+(+x).toFixed(2)).join(','));
   if(mMetric&&mMetric!=='NLI')q.push('m='+mMetric);
@@ -882,11 +900,16 @@ function applyHash(){
     if(P.md)mMode=P.md;
     if(P.cb){commuteBase=P.cb;commuteKm=+P.ck||10;}
     if(P.c)cmp=P.c.split('~').filter(Boolean).slice(0,4);
-    const v=P.d?'map':(P.v||'map');
-    const tb=document.querySelector('nav .tab[data-v='+v+']');if(tb)tb.click();
+    let v=P.d?'map':(P.v||'map');
+    const alias={home:'map',rec:'find',rank:'find',compare:'insight',stats:'insight',diag:'insight'};
+    if(P.seg&&['compare','diag','stats'].includes(P.seg))insightSub=P.seg;
+    else if(['compare','diag','stats'].includes(v))insightSub=v;
+    if(alias[v])v=alias[v];
+    document.querySelectorAll('#insightSeg button').forEach(b=>b.classList.toggle('on',b.dataset.s===insightSub));
+    showTab(v);
     if(P.md)document.querySelectorAll('#modes button').forEach(x=>x.classList.toggle('on',x.dataset.m===P.md));
     const ms=document.getElementById('metric');if(ms){ms.value=mMetric;ms.dispatchEvent(new Event('change'));}
-    if(P.cb){const ci=document.getElementById('commuteInfo');if(ci){ci.innerHTML='<b style="color:var(--ocean)">'+P.cb+'</b> 기준 ·';document.getElementById('commuteKmWrap').style.display='inline-flex';document.getElementById('commuteKm').value=commuteKm;document.getElementById('commuteKmV').textContent=commuteKm+'km';}if(v==='rank')renderRank();}
+    if(P.cb){const ci=document.getElementById('commuteInfo');if(ci){ci.innerHTML='<b style="color:var(--ocean)">'+P.cb+'</b> 기준 ·';document.getElementById('commuteKmWrap').style.display='inline-flex';document.getElementById('commuteKm').value=commuteKm;document.getElementById('commuteKmV').textContent=commuteKm+'km';}if(v==='find')renderRank();}
     if(P.sx){const sx=document.getElementById('sx'),sy=document.getElementById('sy');if(sx&&sx.onchange){sx.value=P.sx;if(P.sy&&sy)sy.value=P.sy;sx.dispatchEvent(new Event('change'));}}
     if(P.d){const f=F.find(x=>x.properties.adm_nm===P.d);if(f)showDetail(f.properties,true);}
   }catch(e){}
@@ -1079,7 +1102,7 @@ button{float:right;padding:8px 14px;cursor:pointer;border:1px solid #2f6b4e;back
 </body></html>`;
   const w=window.open('','_blank');if(w){w.document.write(html);w.document.close();}else prompt('팝업이 차단되었습니다. 리포트 복사 버튼을 사용하세요.');
 }
-recompRank();initMap();renderHome();
+recompRank();initMap();showTab('map');
 attachAC(document.getElementById('gsearch'),document.getElementById('gac'),goDetail);
 attachAC(document.getElementById('cmpSearch'),document.getElementById('cmpac'),adm=>{addCmp(adm)});
 attachAC(document.getElementById('rankBase'),document.getElementById('rankbac'),setCommuteBase);
