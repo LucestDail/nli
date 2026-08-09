@@ -330,6 +330,7 @@ TEMPLATE = r'''<!DOCTYPE html>
 
  <div class="view" id="v-stats" style="display:none"><div class="wrap statwrap inswrap">
    <h2>지역 통계·추론</h2><div class="sub" style="margin-bottom:14px">지역 특성(인구·밀도·연령·아파트값)과 살기지수의 관계, 지역 유형별 격차 분석 (실시간 계산)</div>
+   <div id="statNarr"></div>
    <div class="kpis" id="statKpi"></div>
    <div class="statdash">
      <div class="card mobile-only" style="grid-column:1/-1"><div class="muted">📱 상세 상관 히트맵은 데스크톱에서 볼 수 있어요. 아래는 핵심 지표·순위 요약입니다.</div></div>
@@ -724,7 +725,7 @@ function recRun(){
   const cond=[REC_MAP[recHouse]!=='균등'?recHouse+' 가중치':'균등 가중치'];
   if(recBudget)cond.push('평당 ≤'+recBudget.toLocaleString()+'만');
   if(recBase){const bf=F.find(f=>f.properties.adm_nm===recBase);cond.push((bf?bf.properties.adm_nm:recBase)+' '+recKm+'km 이내');}
-  el.innerHTML='<div class="muted" style="margin-bottom:10px">조건: '+cond.join(' · ')+' → 맞춤 살기지수 Top '+top.length+'</div><div class="recgrid">'+top.map((x,i)=>recCard(x.p,i+1,x.s)).join('')+'</div>';
+  el.innerHTML='<h2 style="margin:0 0 4px">🎯 맞춤 동네 Top '+top.length+'</h2><div class="muted" style="margin-bottom:14px">조건: '+cond.join(' · ')+' · 클릭 → 지도 상세</div><div class="recgrid">'+top.map((x,i)=>recCard(x.p,i+1,x.s)).join('')+'</div>';
 }
 function showDom(d){mMode='basic';document.querySelectorAll('#modes button').forEach(x=>x.classList.toggle('on',x.dataset.m==='basic'));document.querySelector('nav .tab[data-v=map]').click();const s=document.getElementById('metric');if(s){s.value=d;s.dispatchEvent(new Event('change'));}}
 
@@ -806,6 +807,16 @@ function renderStats(){
   let best=['',0];REG.forEach(([rk,rn],ri)=>dkAll.forEach((d,di)=>{const r=pearson(regV[ri],dvAll[di]);if(Math.abs(r)>Math.abs(best[1]))best=[rn+'↔'+VARS[d],r];}));
   // 아파트값 ↔ 종합지수 상관
   const prV=SP.map(p=>sval(p,'price')), priceNli=pearson(prV,SP.map(p=>nliW(p)));
+  // 서사: 계산된 상관을 평문 문장으로(핵심 인사이트를 앞세움)
+  const _sgn=v=>v>=0?'+':'', _strg=v=>{const a=Math.abs(v);return a<.15?'거의 무관':a<.3?'약한 관계':a<.5?'뚜렷한 관계':'강한 관계';};
+  const _sn=document.getElementById('statNarr');
+  if(_sn)_sn.innerHTML='<div class="card" style="background:linear-gradient(135deg,#eef4f1,#eaf1f4);border:0;margin-bottom:16px">'
+    +'<div style="font-size:12px;font-weight:800;color:var(--sky);letter-spacing:.08em">이 데이터가 말하는 것</div>'
+    +'<div style="font-size:14.5px;line-height:1.85;margin-top:6px;max-width:900px;word-break:keep-all">'
+    +'· <b>아파트값 ↔ 살기지수</b>는 '+_strg(priceNli)+'('+_sgn(priceNli)+priceNli.toFixed(2)+') — 비싼 동네가 꼭 살기 좋은 건 아닙니다.<br>'
+    +'· 가장 뚜렷한 관계는 <b>'+best[0]+'</b>('+_sgn(best[1])+best[1].toFixed(2)+') — 지역 특성이 생활여건을 크게 좌우합니다.<br>'
+    +'· <b>고령 비중 ↔ 의료</b>는 '+_strg(eldMed)+'('+_sgn(eldMed)+eldMed.toFixed(2)+'), <b>의료 접근성</b>은 도시가 농촌의 <b>'+gap.toFixed(1)+'배</b> — 정책이 필요한 지점입니다.'
+    +'</div></div>';
   document.getElementById('statKpi').innerHTML=
     `<div class="kpi"><b>${avgNLI.toFixed(1)}</b><span>평균 종합지수</span></div>
      <div class="kpi"><b style="color:${priceNli>=0?'#2f6b4e':'#b0603f'}">${priceNli>=0?'+':''}${priceNli.toFixed(2)}</b><span>아파트값 ↔ 살기지수</span></div>
