@@ -108,11 +108,17 @@ h2{font-size:clamp(23px,4.4vw,38px);font-weight:800;letter-spacing:-.02em}
 .bar{display:flex;align-items:center;gap:10px;margin:8px 0}
 .bl{width:104px;flex-shrink:0;text-align:left;font-size:13px;font-weight:700}
 .bt{flex:1;height:16px;background:#f0ede7;border-radius:6px;overflow:hidden}
-.bf{height:100%;border-radius:6px;background:linear-gradient(90deg,#c9754f,#b0603f)}
+.bf{display:block;height:100%;border-radius:6px;background:linear-gradient(90deg,#c9754f,#b0603f);transition:width .8s cubic-bezier(.22,1,.36,1)}
 .bv{width:38px;flex-shrink:0;text-align:right;font-weight:800;font-size:13px;color:var(--terra)}
 .cta{display:flex;gap:12px;flex-wrap:wrap;justify-content:center;margin-top:30px}
 .btn{text-decoration:none;padding:13px 24px;border-radius:999px;font-weight:700;font-size:14.5px;border:1.5px solid var(--ocean);color:var(--ocean);background:rgba(255,255,255,.7);transition:.15s;white-space:nowrap}
 .btn.p{background:var(--ocean);color:#fff}.btn:hover{transform:translateY(-2px)}
+.links{display:grid;grid-template-columns:1fr 1fr;gap:12px;max-width:640px;margin:26px auto 0}
+.lc{position:relative;display:block;text-decoration:none;text-align:left;background:rgba(255,255,255,.94);border:1px solid var(--line);border-radius:16px;padding:18px 20px;color:var(--ink);transition:.16s;box-shadow:0 2px 8px rgba(20,30,40,.05)}
+.lc:hover{border-color:var(--ocean);transform:translateY(-3px);box-shadow:0 8px 22px rgba(20,30,40,.1)}
+.lc .i{font-size:26px;display:block;margin-bottom:8px}.lc b{font-size:16px;display:block}.lc .d{font-size:12.5px;color:var(--mid);display:block;margin-top:3px}
+.lc .ar{position:absolute;top:18px;right:18px;color:var(--ocean);font-weight:800;font-size:18px}
+@media(max-width:640px){.links{grid-template-columns:1fr}}
 .note{color:var(--mid);font-size:12px;margin-top:14px}.hi{color:var(--terra);font-weight:800}.hg{color:var(--ocean);font-weight:800}
 /* 데이터 마퀴 */
 .marq{margin-top:24px;width:100vw;overflow:hidden;-webkit-mask-image:linear-gradient(90deg,transparent,#000 8%,#000 92%,transparent);mask-image:linear-gradient(90deg,transparent,#000 8%,#000 92%,transparent)}
@@ -132,15 +138,17 @@ DOMG = "".join(
     f'<b>지표</b>: {" · ".join(IND_BY_DOM[d])}.<div class="m">산출: {COMPUTE}</div></div></div>'
     for d in DK)
 
-def maskcard(name, reg, big, small):
-    return (f'<div class="ex"><div class="exn"><span class="mask">{name}</span><span class="reg mask">{reg}</span></div>'
-            f'<div class="exv"><b class="mask">{big}</b><br><span class="mask">{small}</span></div>'
-            f'<span class="lock">🔒</span></div>')
+def card(name, reg, big_html, small_html):
+    # 지역명·단위는 노출, 숫자만 .mask(오해 소지 방지 + 제품가치 보호)
+    return (f'<div class="ex"><div class="exn">{name}<span class="reg">{reg}</span></div>'
+            f'<div class="exv">{big_html}<br>{small_html}</div><span class="lock">🔒</span></div>')
 
-REC = "".join(maskcard(p["full_nm"].split(" ", 1)[1], p["full_nm"].split()[0][:2],
-                       f"{round(wn(p),1)}점", f"평당 {round(p['price']*3.3058):,}만") for p in rec)
-VAL = "".join(maskcard(p["full_nm"].split(" ", 1)[1], p["full_nm"].split()[0][:2],
-                       f"살기 {round(nli(p))}점", f"평당 {round(p['price']*3.3058):,}만 · 강점 {top_domains(p)}") for p in value)
+REC = "".join(card(p["full_nm"].split(" ", 1)[1], p["full_nm"].split()[0][:2],
+                   f'<b><span class="mask">{round(wn(p),1)}</span>점</b>',
+                   f'평당 <span class="mask">{round(p["price"]*3.3058):,}</span>만') for p in rec)
+VAL = "".join(card(p["full_nm"].split(" ", 1)[1], p["full_nm"].split()[0][:2],
+                   f'<b>살기 <span class="mask">{round(nli(p))}</span>점</b>',
+                   f'평당 <span class="mask">{round(p["price"]*3.3058):,}</span>만 · 강점 {top_domains(p)}') for p in value)
 DBARS = "".join(
     f'<div class="bar"><span class="bl">{IC[d]} {SH[d]}</span>'
     f'<span class="bt"><span class="bf" style="width:{abs(v)/maxa*100:.0f}%"></span></span>'
@@ -154,8 +162,7 @@ row2 = "".join(srcs[half:]) * 2
 
 BODY = f"""
 <div class="bg"><div class="blob b1"></div><div class="blob b2"></div><div class="blob b3"></div></div><div class="dots"></div>
-<div class="nav"><span>🏘 <b>동네살기지수</b></span><div class="sp">
-  <a href="index.html#v=rec">내 동네 찾기</a><a href="index.html#v=diag">지자체 진단</a><a class="p" href="index.html">전체 도구</a></div></div>
+<div class="nav"><span>🏘 <b>동네살기지수</b></span></div>
 
 <section><div class="wrap rev"><div class="kick">공공데이터로 답하다</div>
   <h1>어디가<br>살기 좋은 동네일까?</h1>
@@ -166,32 +173,29 @@ BODY = f"""
     <div class="kpi has" tabindex="0"><b>32</b><span>공공데이터 지표</span><div class="tip"><span class="t">32개 공공데이터 지표</span>9개 도메인을 32종 공개 데이터로 정량화. 100% 재현 가능.</div></div>
   </div>
   <div class="badge">＋ 아파트 실거래가 · 대중교통 결합</div>
-  <div class="cta"><a class="btn p" href="index.html">🗺 전국 지도 열기</a></div></div></section>
+  <div class="note">↓ 스크롤해서 살펴보세요</div></div></section>
 
 <section><div class="wrap rev"><div class="kick">무엇으로 재나</div>
   <h2>'살기 좋음'은 9가지입니다</h2>
-  <div class="sub">각 카드에 마우스를 올리면(모바일은 탭) 무슨 데이터로 어떻게 재는지 나옵니다.</div>
+  <div class="sub">집값·평수로는 안 보입니다. 병원이 가까운지, 아이 학교·안전은, 버스는 자주 오는지 — 매일의 삶을 만드는 건 이 <b>9가지</b>입니다.</div>
   <div class="domg">{DOMG}</div></div></section>
 
 <section><div class="wrap rev"><div class="kick">당신에게 맞는</div>
   <h2>가구에 맞는 동네는 다릅니다</h2>
   <div class="sub">육아 가구라면 교육·안전·의료를 더 중요하게 — 가중치를 바꿔 다시 계산합니다.</div>
   <div class="exs">{REC}</div>
-  <div class="hint">🔒 실제 동네·점수는 <b>도구</b>에서 조건 입력 후 확인하세요.</div>
-  <div class="cta"><a class="btn" href="index.html#v=rec">🎯 내 조건으로 추천받기</a></div></div></section>
+  <div class="hint">🔒 점수·가격 수치는 도구에서 조건 입력 후 확인 (오해 방지를 위해 데모에선 가림)</div></div></section>
 
 <section><div class="wrap rev"><div class="kick">가격 대비</div>
   <h2>싸고 살기 좋은 곳이 있다</h2>
   <div class="sub"><span class="hg">살기지수는 높은데 아파트값은 낮은</span> 가성비 동네. 비싼 동네가 꼭 살기 좋은 건 아닙니다.</div>
   <div class="exs">{VAL}</div>
-  <div class="hint">🔒 실제 동네는 <b>도구</b>에서 공개됩니다.</div>
-  <div class="cta"><a class="btn" href="index.html#v=rec">💎 가성비 동네 보기</a></div></div></section>
+  <div class="hint">🔒 점수·가격 수치는 도구에서 확인</div></div></section>
 
 <section><div class="wrap rev"><div class="kick">지자체·기관용</div>
   <h2>우리 지역, 뭐가 부족할까?</h2>
   <div class="sub">인구는 많은데 특정 생활 인프라가 하위 20%인 <span class="hi">사각지대</span>를 찾아냅니다. 시설 입지·예산 배분의 근거.</div>
-  <div class="bars"><div style="text-align:left;font-weight:800;margin-bottom:6px">가장 부족한 3개 영역 <span style="color:var(--mid);font-weight:500;font-size:12px">(전국 평균 대비 부족폭)</span></div>{DBARS}</div>
-  <div class="cta"><a class="btn" href="index.html#v=diag">🩺 우리 지자체 진단 보기</a></div></div></section>
+  <div class="bars"><div style="text-align:left;font-weight:800;margin-bottom:10px">가장 부족한 3개 영역 <span style="color:var(--mid);font-weight:500;font-size:12px">(전국 평균 대비 부족폭)</span></div>{DBARS}</div></div></section>
 
 <section><div class="wrap rev"><div class="kick">믿을 수 있나</div>
   <h2>100% 공공데이터 · 투명·재현</h2>
@@ -199,14 +203,16 @@ BODY = f"""
   <div class="marq"><div class="track">{row1}</div><div class="track r">{row2}</div></div>
   <div class="wrap rev"><div class="note">점수는 전국 읍면동 상대평가(백분위) 기반 참고용입니다.</div></div></section>
 
-<section style="min-height:82vh"><div class="wrap rev">
-  <h2>지금 확인해보세요</h2>
-  <div class="cta">
-    <a class="btn p" href="index.html#v=rec">🎯 내게 맞는 동네</a>
-    <a class="btn" href="index.html#v=diag">🩺 지자체 진단</a>
-    <a class="btn" href="mailto:seunghyun.oh@bespinglobal.com?subject=%5B%EB%8F%99%EB%84%A4%EC%82%B4%EA%B8%B0%EC%A7%80%EC%88%98%5D%20%EB%AC%B8%EC%9D%98">📬 도입 문의</a>
+<section style="min-height:88vh"><div class="wrap rev">
+  <h2>이제 직접 확인해보세요</h2>
+  <div class="sub">데모는 여기까지. 실제 데이터·수치는 도구에서.</div>
+  <div class="links">
+    <a class="lc" href="index.html#v=rec"><span class="i">🎯</span><b>내 동네 찾기</b><span class="d">가구·예산·통근으로 맞춤 추천 + 가성비 동네</span><span class="ar">→</span></a>
+    <a class="lc" href="index.html#v=diag"><span class="i">🩺</span><b>지자체 진단</b><span class="d">우리 지역 취약 도메인·사각지대 리포트</span><span class="ar">→</span></a>
+    <a class="lc" href="index.html"><span class="i">🗺</span><b>전국 지도 탐색</b><span class="d">동별 색칠·시설 위치·클릭 상세</span><span class="ar">→</span></a>
+    <a class="lc" href="mailto:seunghyun.oh@bespinglobal.com?subject=%5B%EB%8F%99%EB%84%A4%EC%82%B4%EA%B8%B0%EC%A7%80%EC%88%98%5D%20%EB%8F%84%EC%9E%85%C2%B7%EC%A0%9C%ED%9C%B4%20%EB%AC%B8%EC%9D%98"><span class="i">📬</span><b>도입·제휴 문의</b><span class="d">지자체·기관·프롭테크</span><span class="ar">→</span></a>
   </div>
-  <div class="foot" style="margin-top:36px">동네살기지수(NLI) · 공공데이터 기반 생활입지 인텔리전스</div></div></section>
+  <div class="foot" style="margin-top:32px">동네살기지수(NLI) · 공공데이터 기반 생활입지 인텔리전스</div></div></section>
 """
 
 JS = """
