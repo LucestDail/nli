@@ -201,6 +201,8 @@ TEMPLATE = r'''<!DOCTYPE html>
  .statdash .mini{font-size:11.5px;color:var(--mid);margin-bottom:9px;line-height:1.5}
  .statdash table.heat td,.statdash table.heat th{padding:4px 5px;font-size:10.5px}
  @media(max-width:1080px){.statdash{grid-template-columns:1fr}}
+ .inswrap{max-width:1560px;padding-left:26px;padding-right:26px}
+ .statwrap.inswrap{max-width:1560px}
  .statdash,.statdash>.card{min-width:0}
  #regHeat,#domCorr,#sidoDom{max-width:100%}
  /* 데스크톱 전용 도구(복사·CSV·인쇄·공유) — 모바일 숨김(간단 조회/열람만) */
@@ -315,14 +317,24 @@ TEMPLATE = r'''<!DOCTYPE html>
    <div class="card" style="padding:0;max-height:64vh;overflow:auto"><table id="rankTable"></table></div>
  </div></div>
 
- <div class="view" id="v-compare" style="display:none"><div class="wrap">
+ <div class="view" id="v-compare" style="display:none"><div class="wrap inswrap">
+   <div class="card" style="background:linear-gradient(135deg,#eef4f1,#eaf1f4);border:0;margin-bottom:20px">
+     <div style="font-size:12px;font-weight:800;color:var(--sky);letter-spacing:.08em">핵심 인사이트</div>
+     <h2 style="margin:6px 0 10px">데이터로 읽는 전국 생활여건</h2>
+     <div class="muted" style="font-size:14.5px;line-height:1.8;max-width:820px">
+       · <b style="color:var(--ink)">비싼 동네 ≠ 살기 좋은 동네</b> — 아파트값과 살기지수는 약한 양의 상관에 그칩니다.<br>
+       · <b style="color:var(--ink)">인구가 모이는 곳이 인프라도 좋습니다</b> — 인구밀도가 높을수록 종합 생활여건이 뚜렷이 높습니다.<br>
+       · <b style="color:var(--ink)">고령 지역일수록 의료·교통 접근성이 낮습니다</b> — 시설·예산이 필요한 지점입니다.<br>
+       아래에서 <b style="color:var(--ocean)">지역 비교 → 지자체 진단 → 통계 분석</b> 순으로 확인하세요.
+     </div>
+   </div>
    <h2>지역 비교 <span class="muted" style="font-size:14px;font-weight:400">최대 4곳</span></h2>
    <div class="sub">검색으로 추가하거나 순위·지도에서 ⊕로 담으세요. 각 행에서 가장 좋은 값은 초록으로 강조됩니다.</div>
    <div class="flex" style="margin-bottom:16px;position:relative"><input type="text" id="cmpSearch" placeholder="지역 추가 (예: 노형동)" style="width:280px" autocomplete="off"><div class="ac" id="cmpac" style="left:0;top:44px;right:auto"></div><button class="btn" id="cmpClear">비우기</button></div>
    <div id="compareBody"></div>
  </div></div>
 
- <div class="view" id="v-stats" style="display:none"><div class="wrap statwrap">
+ <div class="view" id="v-stats" style="display:none"><div class="wrap statwrap inswrap">
    <h2>지역 통계·추론</h2><div class="sub" style="margin-bottom:14px">지역 특성(인구·밀도·연령·아파트값)과 살기지수의 관계, 지역 유형별 격차 분석 (실시간 계산)</div>
    <div class="kpis" id="statKpi"></div>
    <div class="statdash">
@@ -371,7 +383,7 @@ TEMPLATE = r'''<!DOCTYPE html>
      <div id="valueRank" class="valgrid"></div></div>
  </div></div>
 
- <div class="view" id="v-diag" style="display:none"><div class="wrap">
+ <div class="view" id="v-diag" style="display:none"><div class="wrap inswrap">
    <h2>지역 생활여건 진단 <span class="muted" style="font-size:14px;font-weight:400">— 지자체 229곳 · 연중</span></h2>
    <div class="sub">시군구(지자체) 단위로 <b>취약 도메인</b>(전국 평균 대비 낮은 생활 인프라)과 <b>사각지대 동</b>(인구 1만+ 인데 특정 도메인 하위 20%)을 진단합니다. 시설 입지·예산 배분 근거로 활용하세요. 표의 행 또는 지자체를 고르면 아래 카드가 갱신됩니다.</div>
    <div class="flex" style="margin-bottom:14px">
@@ -1078,6 +1090,7 @@ document.querySelectorAll('select').forEach(customSelect);
   tg.onclick=()=>{const o=as.classList.toggle('open');bd.classList.toggle('on',o)};bd.onclick=close;
   as.addEventListener('change',()=>{if(window.innerWidth<=820)close()});})();
 applyHash();   // 딥링크로 진입 시 상태 복원
+window.addEventListener('hashchange',applyHash);   // 해시 변경(딥링크 재진입) 대응
 growBars();
 setTimeout(()=>{if(map)map.invalidateSize();},120);
 </script></body></html>'''
