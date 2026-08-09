@@ -37,8 +37,18 @@ TEMPLATE = r'''<!DOCTYPE html>
   --sh:0 1px 3px rgba(20,30,40,.05);--sh2:0 12px 34px -10px rgba(20,30,40,.22);
   --grad:linear-gradient(135deg,#1c4c60,#2f7d94);}
  *{box-sizing:border-box}
- html,body{margin:0;height:100%;font-family:var(--sans);color:var(--ink);background:var(--bg);line-height:1.55;-webkit-font-smoothing:antialiased;letter-spacing:-.01em}
- #app{display:flex;flex-direction:column;height:100%}
+ html{background:var(--bg)}  /* 캔버스 폴백. body엔 bg 없음 → 음수 z-index .appbg가 비쳐야 함 */
+ html,body{margin:0;height:100%;font-family:var(--sans);color:var(--ink);line-height:1.55;-webkit-font-smoothing:antialiased;letter-spacing:-.01em}
+ /* 배경 그래픽 (데모 디자인 시스템 — 그라디언트·블롭·도트). 콘텐츠는 투명 뷰 위로 뜬다. */
+ .appbg{position:fixed;inset:0;z-index:-2;overflow:hidden;pointer-events:none;background:linear-gradient(160deg,#eaf1ec,#e3ecee 55%,#dde8ec)}
+ .appbg .blob{position:absolute;border-radius:50%;filter:blur(66px);opacity:.5;animation:drift 26s ease-in-out infinite}
+ .appbg .b1{width:48vw;height:48vw;left:-12vw;top:-10vw;background:#a9ccb8}
+ .appbg .b2{width:42vw;height:42vw;right:-10vw;top:18vh;background:#b7d3dc;animation-delay:-8s}
+ .appbg .b3{width:38vw;height:38vw;left:22vw;bottom:-16vw;background:#e3d1b4;animation-delay:-15s}
+ @keyframes drift{0%,100%{transform:translate(0,0) scale(1)}33%{transform:translate(3vw,-3vh) scale(1.07)}66%{transform:translate(-3vw,3vh) scale(.95)}}
+ .appdots{position:fixed;inset:0;z-index:-1;opacity:.6;pointer-events:none;background-image:radial-gradient(rgba(50,72,82,.14) 1px,transparent 1px);background-size:24px 24px}
+ @media(prefers-reduced-motion:reduce){.appbg .blob{animation:none}}
+ #app{display:flex;flex-direction:column;height:100%;position:relative;z-index:0}
  nav{background:rgba(19,42,54,.88);backdrop-filter:saturate(180%) blur(12px);color:#eaf1f2;display:flex;align-items:center;gap:6px;padding:0 20px;height:60px;flex-shrink:0;position:relative;z-index:1000;border-bottom:1px solid rgba(255,255,255,.06)}
  nav .logo{width:30px;height:30px;border-radius:9px;background:var(--grad);display:flex;align-items:center;justify-content:center;font-size:16px;box-shadow:0 3px 10px rgba(0,0,0,.25)}
  nav .brand{font-weight:700;font-size:17px;letter-spacing:-.02em;margin:0 18px 0 9px;white-space:nowrap;color:#fff}
@@ -232,6 +242,7 @@ TEMPLATE = r'''<!DOCTYPE html>
    h2{font-size:20px}
  }
 </style></head><body>
+<div class="appbg"><span class="blob b1"></span><span class="blob b2"></span><span class="blob b3"></span></div><div class="appdots"></div>
 <div id="app">
  <nav>
    <div class="logo">🏘</div><div class="brand">동네살기지수<small>NLI</small></div>
