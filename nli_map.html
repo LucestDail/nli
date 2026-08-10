@@ -215,7 +215,14 @@
  .findlist{display:flex;flex-direction:column;gap:6px;max-height:360px;overflow:auto}
  .findlist .valcell{cursor:pointer}
  #findResult{animation:vin .3s cubic-bezier(.22,1,.36,1)}
- @media(max-width:640px){.findlist{max-height:300px}}
+ @media(max-width:640px){.findlist{max-height:260px}}
+ .bhd{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
+ .bhd h3{margin:0}
+ .findlist .valcell{gap:8px}
+ .findlist .valnm{flex:1;min-width:0}
+ .findlist .valv{flex-shrink:0}
+ @media(max-width:640px){.inswrap{padding-left:13px;padding-right:13px}.findlist .valnm{font-size:12.5px}}
+ @media(max-width:640px){.bhd{gap:6px}.bhd .csel,.bhd select{min-width:0}.bhd>*:not(h3){margin-left:auto}}
  /* 반응형 */
  @media(max-width:960px){
    .grid2{grid-template-columns:1fr}
@@ -351,11 +358,11 @@
      <h2>내 동네 찾기</h2>
      <div class="sub">순위를 둘러보고, <b>동네를 검색</b>하거나 <b>조건으로 맞춤 추천</b>을 받아보세요.</div>
      <div class="grid2" style="gap:16px;margin-bottom:16px">
-       <div class="card"><div class="flex" style="justify-content:space-between;align-items:center;gap:8px"><h3 style="margin:0">💎 가성비 동네</h3>
+       <div class="card"><div class="bhd"><h3 style="margin:0">💎 가성비 동네</h3>
            <div class="flex" style="gap:6px;flex-shrink:0"><select id="valSido"></select><button class="btn dltools" onclick="shareValue(this)">📤</button></div></div>
          <div class="muted" style="margin:6px 0 10px">살기지수 높고 아파트값 낮은 · 클릭 → 상세</div>
          <div id="valueRank" class="findlist"></div></div>
-       <div class="card"><div class="flex" style="justify-content:space-between;align-items:center;gap:8px"><h3 style="margin:0">🏆 지역 순위</h3>
+       <div class="card"><div class="bhd"><h3 style="margin:0">🏆 지역 순위</h3>
            <button class="btn" onclick="findShowRank()">전체 순위 →</button></div>
          <div class="muted" style="margin:6px 0 10px">종합 살기지수 상위 · 클릭 → 상세</div>
          <div id="findRankTop" class="findlist"></div></div>
