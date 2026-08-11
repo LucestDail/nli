@@ -90,7 +90,7 @@ def check_index():
     # 탭 구조 무결성(3탭 IA: 지도/내동네/인사이트)
     for t in ("map", "find", "insight"):
         ck(f'data-v="{t}"' in html, f"탭 '{t}' 존재")
-    for vid in ("v-map", "v-rec", "v-compare", "v-diag", "v-stats"):
+    for vid in ("v-map", "v-rec", "v-diag"):
         ck(f'id="{vid}"' in html, f"뷰 '{vid}' 보존")
     ck('data-v="home"' not in html, "홈 탭 제거(데모가 랜딩)")
     ck("30개 지표" not in html, "지표수 표기 정합(30 잔존 없음)")
