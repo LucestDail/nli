@@ -199,9 +199,10 @@
  .diagdash>.card{height:68vh;overflow:auto}
  @media(max-width:900px){.diagdash{grid-template-columns:1fr}.diagdash>.card{height:auto}.diagdash>.card:first-child{max-height:56vh}}
  /* 통계 모달 대시보드 그리드 */
- .statgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;margin-top:16px}
+ .statgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:14px;margin-top:16px;align-items:start}
  .statgrid .sc{background:#faf8f4;border:1px solid var(--line);border-radius:14px;padding:15px 16px;min-width:0;overflow:auto}
  .statgrid .sc.span2{grid-column:1/-1}
+ .statgrid td[title],.statgrid circle[onclick]{cursor:pointer}
  .statgrid .sc h4{margin:0 0 10px;font-size:13.5px;color:var(--ink);font-weight:800;display:flex;align-items:baseline;gap:6px;flex-wrap:wrap}
  .statgrid .sc h4 span{font-weight:400;font-size:11.5px;color:var(--mid)}
  @media(max-width:760px){.statgrid{grid-template-columns:1fr}}
@@ -305,7 +306,7 @@
    <div id="cmpBody"></div>
  </div>
 
- <div id="diagStatModal" class="rmodal" style="display:none" onclick="if(event.target===this)closeDiagStat()"><div class="rmbox" style="width:960px;max-width:96vw;max-height:92vh">
+ <div id="diagStatModal" class="rmodal" style="display:none" onclick="if(event.target===this)closeDiagStat()"><div class="rmbox" style="width:97vw;max-width:1600px;max-height:94vh">
    <div class="rmhd"><b>📊 통계 분석</b><span class="rmclose" onclick="closeDiagStat()">✕</span></div>
    <div id="diagStatBody"></div>
  </div></div>
@@ -1013,41 +1014,44 @@ function renderDiag(){
 function selectDiag(k){diagSel=k;renderDiag();}
 function pickDiag(k){diagSel=k;if(!diagCmp.includes(k))diagCmp.push(k);renderDiag();}
 function closeDiagStat(){document.getElementById('diagStatModal').style.display='none';}
+let _dstat=null;
+function corrCol(r){if(r==null||isNaN(r))return '#f0ede7';const a=Math.min(1,Math.abs(r)),c=r>=0?[47,107,78]:[176,96,63];return 'rgba('+c[0]+','+c[1]+','+c[2]+','+(0.1+0.78*a).toFixed(2)+')';}
 function openDiagStat(){
   const dd=diagData(),rows=dd.rows,nf=n=>(n||0).toLocaleString(),SD=s=>s.replace('특별자치도','').replace('특별자치시','').replace('광역시','').replace('특별시','').replace('자치도','');
   const dcol=k=>k<4?CMPCOL[k]:'hsl('+((k*67)%360)+',55%,45%)';
   let keys=diagCmp.length?diagCmp.slice():(diagSel?[diagSel]:[]);
   const gs=keys.map(k=>rows.find(r=>r.key===k)).filter(Boolean);
   if(!gs.length){alert('표에서 지자체를 클릭해 담으세요.');return;}
+  const dongs=[];gs.forEach((g,k)=>g.dongs.forEach(p=>dongs.push({p:p,k:k})));
+  _dstat={gs:gs,dongs:dongs,dcol:dcol};
   const natRank=[...rows].sort((a,b)=>a.nli-b.nli),rankOf=new Map();natRank.forEach((r,i)=>rankOf.set(r.key,i+1));
   const single=gs.length===1;
-  // 레이더(채움 없이 선만 → 겹쳐도 읽힘, 단일은 옅은 채움)
+  // 레이더(선only, 꼭짓점 툴팁)
   const N=DOMS.length,cx=150,cy=148,R=104,ang=i=>(-90+i*360/N)*Math.PI/180,pt=(i,r)=>[cx+r*Math.cos(ang(i)),cy+r*Math.sin(ang(i))];
   let rg='';[0.25,0.5,0.75,1].forEach(t=>{rg+='<polygon points="'+DOMS.map((_,i)=>pt(i,R*t).map(v=>v.toFixed(1)).join(',')).join(' ')+'" fill="none" stroke="#e7e1d5" stroke-width="1"/>';});
   DOMS.forEach((d,i)=>{const a=pt(i,R);rg+='<line x1="'+cx+'" y1="'+cy+'" x2="'+a[0].toFixed(1)+'" y2="'+a[1].toFixed(1)+'" stroke="#eee"/>';const l=pt(i,R+14);rg+='<text x="'+l[0].toFixed(1)+'" y="'+l[1].toFixed(1)+'" font-size="12" text-anchor="middle" dominant-baseline="middle">'+DOMINFO[d][0]+'</text>';});
-  gs.forEach((g,k)=>{const col=dcol(k),ptsA=DOMS.map((d,i)=>pt(i,R*((g.dom[d]||0)/100))),pts=ptsA.map(a=>a.map(x=>x.toFixed(1)).join(',')).join(' ');
-    rg+='<polygon points="'+pts+'" fill="'+(single?col+'22':'none')+'" stroke="'+col+'" stroke-width="2.2" stroke-linejoin="round"/>';
-    ptsA.forEach(a=>{rg+='<circle cx="'+a[0].toFixed(1)+'" cy="'+a[1].toFixed(1)+'" r="2.4" fill="'+col+'"/>';});});
+  gs.forEach((g,k)=>{const col=dcol(k),ptsA=DOMS.map((d,i)=>pt(i,R*((g.dom[d]||0)/100)));rg+='<polygon points="'+ptsA.map(a=>a.map(x=>x.toFixed(1)).join(',')).join(' ')+'" fill="'+(single?col+'22':'none')+'" stroke="'+col+'" stroke-width="2.2" stroke-linejoin="round"/>';ptsA.forEach((a,i)=>{rg+='<circle cx="'+a[0].toFixed(1)+'" cy="'+a[1].toFixed(1)+'" r="3" fill="'+col+'"><title>'+g.sgg+' · '+SHORT[DOMS[i]]+' '+Math.round(g.dom[DOMS[i]])+'점</title></circle>';});});
   const radar='<svg viewBox="0 0 300 296" style="width:100%;max-width:320px">'+rg+'</svg>';
   const legend='<div style="display:flex;flex-direction:column;gap:5px;margin-top:8px;align-items:flex-start">'+gs.map((g,k)=>'<span style="font-size:12.5px;display:inline-flex;align-items:center;gap:6px"><i style="width:11px;height:11px;border-radius:3px;background:'+dcol(k)+';display:inline-block;flex-shrink:0"></i><b>'+g.sgg+'</b> <span class="muted">'+SD(g.sido)+'</span> <span style="color:'+color(g.nli)+';font-weight:800">'+g.nli.toFixed(1)+'</span></span>').join('')+'</div>';
   // 바
-  const bar=(g,k,val,w,col)=>'<div style="display:flex;align-items:center;gap:8px;margin:5px 0;font-size:12.5px"><span style="width:70px;text-align:right;white-space:nowrap;overflow:hidden;text-overflow:ellipsis"><i style="width:8px;height:8px;border-radius:2px;background:'+dcol(k)+';display:inline-block;margin-right:4px"></i>'+g.sgg+'</span><div style="flex:1;background:var(--line2);border-radius:5px;height:15px"><div style="height:100%;border-radius:5px;background:'+col+';width:'+w+'%"></div></div><b style="width:34px;color:'+col+'">'+val+'</b></div>';
-  const nliBars=gs.map((g,k)=>bar(g,k,g.nli.toFixed(1),g.nli,color(g.nli))).join('');
+  const bar=(g,k,val,w,col,tip)=>'<div style="display:flex;align-items:center;gap:8px;margin:5px 0;font-size:12.5px" title="'+tip+'"><span style="width:66px;text-align:right;white-space:nowrap;overflow:hidden;text-overflow:ellipsis"><i style="width:8px;height:8px;border-radius:2px;background:'+dcol(k)+';display:inline-block;margin-right:3px"></i>'+g.sgg+'</span><div style="flex:1;background:var(--line2);border-radius:5px;height:15px"><div style="height:100%;border-radius:5px;background:'+col+';width:'+w+'%"></div></div><b style="width:34px;color:'+col+'">'+val+'</b></div>';
+  const nliBars=gs.map((g,k)=>bar(g,k,g.nli.toFixed(1),g.nli,color(g.nli),g.sgg+' 평균 종합지수 '+g.nli.toFixed(1))).join('');
   const maxBl=Math.max(1,Math.max.apply(null,gs.map(g=>g.blindN)));
-  const blBars=gs.map((g,k)=>bar(g,k,g.blindN,g.blindN/maxBl*100,'#b0603f')).join('');
-  // 히트맵
-  let hm='<table class="heat" style="font-size:11px;width:auto"><tr><th></th>'+DKEYS.map(d=>'<th>'+DOMINFO[d][0]+'</th>').join('')+'<th>종합</th></tr>';
-  gs.forEach(g=>{hm+='<tr><td style="text-align:left;font-weight:700;white-space:nowrap;background:#f2efe9">'+g.sgg+'</td>'+DKEYS.map(d=>{const v=g.dom[d];return '<td style="background:'+color(v)+';color:'+(v>=50?'#fff':'#1a2530')+'">'+Math.round(v)+'</td>';}).join('')+'<td style="background:'+color(g.nli)+';color:'+(g.nli>=50?'#fff':'#1a2530')+';font-weight:800">'+g.nli.toFixed(0)+'</td></tr>';});
+  const blBars=gs.map((g,k)=>bar(g,k,g.blindN,g.blindN/maxBl*100,'#b0603f',g.sgg+' 사각지대 '+g.blindN+'건')).join('');
+  // 지자체 × 도메인 히트맵(셀 툴팁)
+  let hm='<table class="heat" style="font-size:11px;width:auto"><tr><th></th>'+DKEYS.map(d=>'<th title="'+VARS[d]+'">'+DOMINFO[d][0]+'</th>').join('')+'<th>종합</th></tr>';
+  gs.forEach(g=>{hm+='<tr><td style="text-align:left;font-weight:700;white-space:nowrap;background:#f2efe9">'+g.sgg+'</td>'+DKEYS.map(d=>{const v=g.dom[d];return '<td style="background:'+color(v)+';color:'+(v>=50?'#fff':'#1a2530')+'" title="'+g.sgg+' · '+VARS[d]+' '+Math.round(v)+'점">'+Math.round(v)+'</td>';}).join('')+'<td style="background:'+color(g.nli)+';color:'+(g.nli>=50?'#fff':'#1a2530')+';font-weight:800">'+g.nli.toFixed(0)+'</td></tr>';});
   hm+='</table>';
-  // 산점도
-  const spts=[];gs.forEach((g,k)=>g.dongs.forEach(p=>{const x=p.dens!=null?Math.log10(1+p.dens):null,y=nliW(p);if(x!=null&&y!=null)spts.push([x,y,k]);}));
-  let scatter='';
-  if(spts.length>=2){const xs=spts.map(a=>a[0]),ys=spts.map(a=>a[1]),xmin=Math.min.apply(null,xs),xmax=Math.max.apply(null,xs),ymin=Math.min.apply(null,ys),ymax=Math.max.apply(null,ys);
-    const W=620,H=250,pd=40,sx=v=>pd+(v-xmin)/((xmax-xmin)||1)*(W-2*pd),sy=v=>H-pd-(v-ymin)/((ymax-ymin)||1)*(H-2*pd);
-    scatter='<svg viewBox="0 0 '+W+' '+H+'" style="width:100%">' + '<line x1="'+pd+'" y1="'+(H-pd)+'" x2="'+(W-pd)+'" y2="'+(H-pd)+'" stroke="#ddd"/><line x1="'+pd+'" y1="'+pd+'" x2="'+pd+'" y2="'+(H-pd)+'" stroke="#ddd"/>'
-      +spts.map(a=>'<circle cx="'+sx(a[0]).toFixed(1)+'" cy="'+sy(a[1]).toFixed(1)+'" r="3.2" fill="'+dcol(a[2])+'" opacity=".72"/>').join('')
-      +'<text x="'+(W/2)+'" y="'+(H-6)+'" font-size="11" text-anchor="middle" fill="#5b6b77">인구밀도(로그) →</text><text x="12" y="'+(H/2)+'" font-size="11" fill="#5b6b77" text-anchor="middle" transform="rotate(-90 12 '+(H/2)+')">↑ 종합 살기지수</text></svg>';
-  } else scatter='<div class="muted" style="font-size:12px">표시할 동 데이터가 부족합니다.</div>';
+  // 도메인 간 상관 히트맵(선택 동 기준)
+  const dv9=DKEYS.map(d=>dongs.map(o=>o.p['score_'+d]));
+  let dc='<table class="heat" style="font-size:10.5px;width:auto"><tr><th></th>'+DKEYS.map(d=>'<th title="'+VARS[d]+'">'+DOMINFO[d][0]+'</th>').join('')+'</tr>';
+  DKEYS.forEach((d,i)=>{dc+='<tr><td style="text-align:left;font-weight:700;white-space:nowrap;background:#f2efe9">'+DOMINFO[d][0]+' '+SHORT[d]+'</td>'+DKEYS.map((d2,j)=>{if(i===j)return '<td style="background:#f0ede7;color:#c9beac">·</td>';const r=pearson(dv9[i],dv9[j]);return '<td style="background:'+corrCol(r)+';color:'+(Math.abs(r)>=.5?'#fff':'#1a2530')+'" title="'+SHORT[d]+'↔'+SHORT[d2]+' r='+r.toFixed(2)+'">'+r.toFixed(2)+'</td>';}).join('')+'</tr>';});
+  dc+='</table>';
+  // 지역특성 × 도메인 상관
+  const regV=REG.map(rr=>dongs.map(o=>sval(o.p,rr[0]))),dvA=[...DKEYS.map(d=>dongs.map(o=>o.p['score_'+d])),dongs.map(o=>nliW(o.p))],dkA=[...DKEYS,'NLI'];
+  let rh='<table class="heat" style="font-size:10.5px;width:auto"><tr><th></th>'+dkA.map(d=>'<th title="'+VARS[d]+'">'+(d==='NLI'?'종합':DOMINFO[d][0])+'</th>').join('')+'</tr>';
+  REG.forEach((rr,ri)=>{rh+='<tr><td style="text-align:left;font-weight:700;white-space:nowrap;background:#f2efe9">'+rr[1]+'</td>'+dvA.map((dv,di)=>{const r=pearson(regV[ri],dv);return '<td style="background:'+corrCol(r)+';color:'+(Math.abs(r)>=.5?'#fff':'#1a2530')+'" title="'+rr[1]+'↔'+VARS[dkA[di]]+' r='+(isNaN(r)?'-':r.toFixed(2))+'">'+(isNaN(r)?'–':r.toFixed(2))+'</td>';}).join('')+'</tr>';});
+  rh+='</table>';
   // 편차 표
   const bestHi=d=>Math.max.apply(null,gs.map(g=>(g.rankDom.find(x=>x[0]===d)||[0,-99])[1]));
   let t='<div style="overflow:auto"><table style="font-size:12.5px"><tr><th style="text-align:left"></th>'+gs.map((g,k)=>'<th style="color:'+dcol(k)+'">'+g.sgg+'</th>').join('')+'</tr>';
@@ -1056,18 +1060,38 @@ function openDiagStat(){
   t+='<tr><td style="text-align:left">사각지대 / 관할동 / 인구</td>'+gs.map(g=>'<td class="n">'+g.blindN+' / '+g.dongs.length+' / '+nf(g.pop)+'</td>').join('')+'</tr>';
   DKEYS.forEach(function(d){const hi=Math.round(bestHi(d));t+='<tr><td style="text-align:left">'+DOMINFO[d][0]+' '+SHORT[d]+'</td>'+gs.map(function(g){const dv=Math.round((g.rankDom.find(x=>x[0]===d)||[0,0])[1]);return '<td class="n" style="color:'+(dv<0?'#b0603f':'#2f6b4e')+';'+(dv===hi?'background:#e4f0e8;font-weight:800':'')+'">'+(dv>=0?'+':'')+dv+'</td>';}).join('')+'</tr>';});
   t+='</table></div>';
-  let bl='';gs.filter(g=>g.blindN).forEach(function(g){bl+='<div style="margin-top:10px"><div class="fld" style="font-size:11.5px">'+g.sgg+' <span class="muted" style="font-weight:400;text-transform:none;letter-spacing:0">'+g.blindN+'건 · 상위 5</span></div><div style="overflow:auto"><table style="font-size:12px;margin-top:4px"><tr><th style="text-align:left">동</th><th>인구</th><th style="text-align:left">취약</th><th>점수</th></tr>'+g.blind.slice(0,5).map(b=>'<tr><td style="text-align:left">'+b.p.adm_nm+'</td><td class="n">'+nf(b.p.pop_total)+'</td><td style="text-align:left">'+METRICS[b.d]+'</td><td class="n" style="color:#b0603f;font-weight:700">'+Math.round(b.v)+'</td></tr>').join('')+'</table></div></div>';});
+  let bl='';gs.filter(g=>g.blindN).forEach(function(g){bl+='<div style="margin-top:10px"><div class="fld" style="font-size:11.5px">'+g.sgg+' <span class="muted" style="font-weight:400;text-transform:none;letter-spacing:0">'+g.blindN+'건 · 상위 5</span></div><div style="overflow:auto"><table style="font-size:12px;margin-top:4px"><tr><th style="text-align:left">동</th><th>인구</th><th style="text-align:left">취약</th><th>점수</th></tr>'+g.blind.slice(0,5).map(b=>'<tr onclick="goDetail(\''+b.p.adm_nm+'\')" style="cursor:pointer"><td style="text-align:left">'+b.p.adm_nm+'</td><td class="n">'+nf(b.p.pop_total)+'</td><td style="text-align:left">'+METRICS[b.d]+'</td><td class="n" style="color:#b0603f;font-weight:700">'+Math.round(b.v)+'</td></tr>').join('')+'</table></div></div>';});
+  // 산점도 축 옵션
+  const xo=['dens','price','eld','yth','apt','old','pop'],yo=['NLI'].concat(DKEYS);
+  const sel=(id,opts,def)=>'<select id="'+id+'" onchange="renderDStatScatter()" style="font-size:12px;padding:4px 8px">'+opts.map(k=>'<option value="'+k+'"'+(k===def?' selected':'')+'>'+VARS[k]+'</option>').join('')+'</select>';
   document.getElementById('diagStatBody').innerHTML=
-    '<div class="flex" style="justify-content:space-between;align-items:baseline;gap:10px"><h2 style="margin:0">'+(single?gs[0].sido+' '+gs[0].sgg:gs.length+'개 지자체 비교 분석')+'</h2><div class="muted">지자체 평균 기준 · 표 편차=전국 평균 대비</div></div>'
+    '<div class="flex" style="justify-content:space-between;align-items:baseline;gap:10px;flex-wrap:wrap"><h2 style="margin:0">'+(single?gs[0].sido+' '+gs[0].sgg:gs.length+'개 지자체 비교 분석')+'</h2><div class="muted">관할 동 '+dongs.length+'개 · 표 편차=전국 지자체 평균 대비 · 셀·점 호버 시 상세, 동 클릭 시 지도</div></div>'
     +'<div class="statgrid">'
     +'<div class="sc"><h4>📊 도메인 프로파일 <span>레이더 · 평균 점수(백분위)</span></h4><div style="text-align:center">'+radar+'</div>'+legend+'</div>'
-    +'<div class="sc"><h4>📈 종합지수 · 사각지대</h4><div class="fld" style="font-size:11px">🟢 평균 종합지수</div>'+nliBars+'<div class="fld" style="font-size:11px;margin-top:14px">🔴 사각지대(동×도메인)</div>'+blBars+'</div>'
-    +'<div class="sc span2"><h4>🟩 도메인 히트맵 <span>지자체 평균 점수 · 초록 높음</span></h4><div style="overflow:auto">'+hm+'</div></div>'
-    +'<div class="sc span2"><h4>⣿ 관할 동 산점도 <span>인구밀도 × 종합 살기지수 · 점=동, 색=지자체</span></h4>'+scatter+'</div>'
+    +'<div class="sc"><h4>📈 종합지수 · 사각지대</h4><div class="fld" style="font-size:11px">🟢 평균 종합지수</div>'+nliBars+'<div class="fld" style="font-size:11px;margin-top:12px">🔴 사각지대(동×도메인)</div>'+blBars+'</div>'
+    +'<div class="sc"><h4>🔗 도메인 간 상관 <span>관할 동 기준 · 초록=동반</span></h4><div style="overflow:auto">'+dc+'</div></div>'
+    +'<div class="sc"><h4>🧭 지역특성 × 도메인 <span>관할 동 기준 · 초록=정비례</span></h4><div style="overflow:auto">'+rh+'</div></div>'
+    +'<div class="sc span2"><h4>🟩 지자체 × 도메인 히트맵 <span>평균 점수 · 초록 높음</span></h4><div style="overflow:auto">'+hm+'</div></div>'
+    +'<div class="sc span2"><h4>⣿ 관할 동 산점도 <span>축 선택 · 점=동(호버·클릭) · 색=지자체</span></h4><div class="flex" style="gap:8px;margin-bottom:8px;font-size:12px">X '+sel('dsX',xo,'dens')+' Y '+sel('dsY',yo,'NLI')+' <span id="dsReg" class="muted"></span></div><div id="dsScatterBox"></div></div>'
     +'<div class="sc span2"><h4>📋 도메인 편차 표 <span>전국 지자체 평균 대비 · 행별 최고 초록</span></h4>'+t+'</div>'
-    +(bl?'<div class="sc span2"><h4>🎯 사각지대 동</h4>'+bl+'</div>':'')
+    +(bl?'<div class="sc span2"><h4>🎯 사각지대 동 <span>클릭 → 지도 상세</span></h4>'+bl+'</div>':'')
     +'</div>';
   document.getElementById('diagStatModal').style.display='flex';
+  renderDStatScatter();
+}
+function renderDStatScatter(){
+  if(!_dstat)return;const box=document.getElementById('dsScatterBox');if(!box)return;
+  const xk=document.getElementById('dsX').value,yk=document.getElementById('dsY').value;
+  const pts=_dstat.dongs.map(o=>({x:sval(o.p,xk),y:sval(o.p,yk),k:o.k,adm:o.p.adm_nm,nm:o.p.full_nm||o.p.adm_nm})).filter(a=>a.x!=null&&a.y!=null&&!isNaN(a.x)&&!isNaN(a.y));
+  if(pts.length<3){box.innerHTML='<div class="muted" style="font-size:12px">표시할 동 데이터가 부족합니다.</div>';document.getElementById('dsReg').textContent='';return;}
+  const xs=pts.map(a=>a.x),ys=pts.map(a=>a.y),r=ols(xs,ys),xmin=Math.min.apply(null,xs),xmax=Math.max.apply(null,xs),ymin=Math.min.apply(null,ys),ymax=Math.max.apply(null,ys);
+  const W=880,H=320,pd=44,sx=v=>pd+(v-xmin)/((xmax-xmin)||1)*(W-2*pd),sy=v=>H-pd-(v-ymin)/((ymax-ymin)||1)*(H-2*pd);
+  let g='<svg viewBox="0 0 '+W+' '+H+'" style="width:100%"><line x1="'+pd+'" y1="'+(H-pd)+'" x2="'+(W-pd)+'" y2="'+(H-pd)+'" stroke="#ddd"/><line x1="'+pd+'" y1="'+pd+'" x2="'+pd+'" y2="'+(H-pd)+'" stroke="#ddd"/>';
+  g+=pts.map(a=>'<circle cx="'+sx(a.x).toFixed(1)+'" cy="'+sy(a.y).toFixed(1)+'" r="3.6" fill="'+_dstat.dcol(a.k)+'" opacity=".72" style="cursor:pointer" onclick="goDetail(\''+a.adm+'\')"><title>'+a.nm+' · '+VARS[xk]+' '+a.x.toFixed(1)+' · '+VARS[yk]+' '+a.y.toFixed(1)+'</title></circle>').join('');
+  if(!isNaN(r.slope))g+='<line x1="'+sx(xmin).toFixed(1)+'" y1="'+sy(r.intercept+r.slope*xmin).toFixed(1)+'" x2="'+sx(xmax).toFixed(1)+'" y2="'+sy(r.intercept+r.slope*xmax).toFixed(1)+'" stroke="#c0392b" stroke-width="2"/>';
+  g+='<text x="'+(W/2)+'" y="'+(H-8)+'" font-size="12" text-anchor="middle" fill="#5b6b77">'+VARS[xk]+' →</text><text x="14" y="'+(H/2)+'" font-size="12" fill="#5b6b77" text-anchor="middle" transform="rotate(-90 14 '+(H/2)+')">↑ '+VARS[yk]+'</text></svg>';
+  box.innerHTML=g;
+  const R=r.r||0;document.getElementById('dsReg').innerHTML='· <b>R² '+r.r2.toFixed(2)+'</b> · r '+R.toFixed(2)+' · n='+r.n;
 }
 function downloadDiagCSV(){
   if(!diagCur)return;const g=diagCur.g;
