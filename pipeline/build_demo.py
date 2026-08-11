@@ -205,10 +205,10 @@ BODY = f"""
 <div class="bg"><div class="blob b1"></div><div class="blob b2"></div><div class="blob b3"></div></div><div class="dots"></div>
 <div class="nav"><span>🏘 <b class="brand-lb">동네살기지수</b></span>
   <div class="sp">
-    <a href="index.html"><span class="ic">🗺</span><span class="lb">지도</span></a>
-    <a href="index.html#v=find"><span class="ic">🎯</span><span class="lb">내 동네 찾기</span></a>
-    <a href="index.html#v=insight"><span class="ic">📊</span><span class="lb">인사이트</span></a>
-    <a class="p" href="mailto:lucestdail@kakao.com?subject=%5B%EB%8F%99%EB%84%A4%EC%82%B4%EA%B8%B0%EC%A7%80%EC%88%98%5D%20%EB%8F%84%EC%9E%85%C2%B7%EC%A0%9C%ED%9C%B4%20%EB%AC%B8%EC%9D%98"><span class="ic">📬</span><span class="lb">문의</span></a>
+    <a href="index.html"><span class="lb">지도</span></a>
+    <a href="index.html#v=find"><span class="lb">내 동네 찾기</span></a>
+    <a href="index.html#v=insight"><span class="lb">인사이트</span></a>
+    <a class="p" href="mailto:lucestdail@kakao.com?subject=%5B%EB%8F%99%EB%84%A4%EC%82%B4%EA%B8%B0%EC%A7%80%EC%88%98%5D%20%EB%8F%84%EC%9E%85%C2%B7%EC%A0%9C%ED%9C%B4%20%EB%AC%B8%EC%9D%98"><span class="lb">문의</span></a>
   </div></div>
 
 <section class="s1"><div class="wrap rev"><div class="kick">공공데이터로 답하다</div>
@@ -252,10 +252,10 @@ BODY = f"""
   <h2>이제 직접 확인해보세요</h2>
   <div class="sub">데모는 여기까지. 실제 데이터·수치는 도구에서.</div>
   <div class="links">
-    <a class="lc" href="index.html#v=find"><span class="i">🎯</span><b>내 동네 찾기</b><span class="d">가구·예산·통근 맞춤 추천 + 가성비 + 순위</span><span class="ar">→</span></a>
-    <a class="lc" href="index.html#v=insight"><span class="i">📊</span><b>인사이트</b><span class="d">지역 비교 · 지자체 진단 · 통계 분석</span><span class="ar">→</span></a>
-    <a class="lc" href="index.html"><span class="i">🗺</span><b>지도</b><span class="d">동별 색칠·시설 위치·클릭 상세</span><span class="ar">→</span></a>
-    <a class="lc" href="mailto:lucestdail@kakao.com?subject=%5B%EB%8F%99%EB%84%A4%EC%82%B4%EA%B8%B0%EC%A7%80%EC%88%98%5D%20%EB%8F%84%EC%9E%85%C2%B7%EC%A0%9C%ED%9C%B4%20%EB%AC%B8%EC%9D%98"><span class="i">📬</span><b>도입·제휴 문의</b><span class="d">지자체·기관·프롭테크</span><span class="ar">→</span></a>
+    <a class="lc" href="index.html#v=find"><b>내 동네 찾기</b><span class="d">가구·예산·통근 맞춤 추천 + 가성비 + 순위</span><span class="ar">→</span></a>
+    <a class="lc" href="index.html#v=insight"><b>인사이트</b><span class="d">지역 비교 · 지자체 진단 · 통계 분석</span><span class="ar">→</span></a>
+    <a class="lc" href="index.html"><b>지도</b><span class="d">동별 색칠·시설 위치·클릭 상세</span><span class="ar">→</span></a>
+    <a class="lc" href="mailto:lucestdail@kakao.com?subject=%5B%EB%8F%99%EB%84%A4%EC%82%B4%EA%B8%B0%EC%A7%80%EC%88%98%5D%20%EB%8F%84%EC%9E%85%C2%B7%EC%A0%9C%ED%9C%B4%20%EB%AC%B8%EC%9D%98"><b>도입·제휴 문의</b><span class="d">지자체·기관·프롭테크</span><span class="ar">→</span></a>
   </div>
   <div class="foot" style="margin-top:32px">동네살기지수(NLI) · 공공데이터 기반 생활입지 인텔리전스</div></div></section>
 """

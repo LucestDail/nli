@@ -1096,8 +1096,10 @@ function openDiagStat(){
     +'<div class="sc"><h4>지역 특성 ↔ 생활여건 <span>인구밀도·고령 등이 도메인과 연관되는 정도(초록=정비례)</span></h4><div style="overflow:auto">'+rh+'</div></div>'
     +'<div class="sc"><h4>지자체 × 도메인 점수 <span>평균 점수 · 초록 높음</span></h4><div style="overflow:auto">'+hm+'</div></div>'
     +'<div class="sc wide"><h4>관할 동 산점도 <span>축 선택 · 점=동(호버·클릭) · 색=지자체</span></h4><div class="flex" style="gap:8px;margin-bottom:8px;font-size:12px">X '+sel('dsX',xo,'dens')+' Y '+sel('dsY',yo,'NLI')+' <span id="dsReg" class="muted"></span></div><div id="dsScatterBox"></div></div>'
-    +'<div class="sc"><h4>도메인 편차 표 <span>전국 지자체 평균 대비 · 행별 최고 초록</span></h4>'+t+'</div>'
-    +'<div class="sc full"><h4>관할 동 전체 <span>'+dongs.length+'개 · 종합지수 낮은 순 · <b style="color:#b0603f">●사각</b> 사각지대('+totalBl+'건) · 스크롤 · 클릭→지도</span></h4>'+dt+'</div>'
+    +'</div>'
+    +'<div class="statgrid">'
+    +'<div class="sc"><h4>도메인 편차 표 <span>선택 지자체 · 전국 지자체 평균 대비 · 행별 최고 초록</span></h4>'+t+'</div>'
+    +'<div class="sc wide"><h4>관할 동 전체 <span>'+dongs.length+'개 · 종합지수 낮은 순 · <b style="color:#b0603f">●사각</b> 사각지대('+totalBl+'건) · 스크롤 · 클릭→지도</span></h4>'+dt+'</div>'
     +'</div>';
   document.getElementById('diagStatModal').style.display='flex';
   renderDStatScatter();
