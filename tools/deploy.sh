@@ -42,20 +42,24 @@ Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>"
 git worktree remove --force "$WT"
 
 # ── 2) 홈랩 (scp -O · 집 내부망일 때만) ──
+# 2026-08-11: 홈랩 sshd가 키 전용(PasswordAuthentication no). SSH 인증=키, sudo만 비번($SSHPASS).
+HL_KEY="${HL_KEY:-$HOME/.ssh/haru_homelab_ed25519}"
 if [ "$GH_ONLY" = "--gh-only" ]; then
   echo "▶ [2/3] 홈랩 건너뜀(--gh-only)"
 elif ! curl -s -m 5 -o /dev/null "$HL_URL/"; then
   echo "▶ [2/3] 홈랩 미도달(출근/외부?) — 건너뜀"
+elif [ ! -f "$HL_KEY" ]; then
+  echo "▶ [2/3] 홈랩 SSH 키 없음($HL_KEY) — 건너뜀"
 else
-  : "${SSHPASS:?SSHPASS 환경변수에 홈랩 비밀번호를 설정하세요}"
-  echo "▶ [2/3] 홈랩 배포 (scp -O)"
-  # scp는 반드시 -O (홈랩 sshd SFTP 서브시스템 비활성)
+  : "${SSHPASS:?SSHPASS 환경변수에 sudo 비밀번호를 설정하세요(1234)}"
+  echo "▶ [2/3] 홈랩 배포 (키 인증 scp -O)"
+  # scp는 반드시 -O (홈랩 sshd SFTP 서브시스템 비활성) · 인증=키
   PTS=""; [ -f nli_points.json ] && PTS="nli_points.json"
-  sshpass -e scp -O -o StrictHostKeyChecking=no -o ConnectTimeout=15 index.html $PTS "$HL_USER@$HL_HOST:/tmp/"
+  scp -O -i "$HL_KEY" -o StrictHostKeyChecking=no -o ConnectTimeout=15 index.html $PTS "$HL_USER@$HL_HOST:/tmp/"
   BK="index.html.bak-$(date +%Y%m%d-%H%M%S)"
-  # 로컬 $SSHPASS를 원격 sudo -S(stdin 비번)로 전개. 내부망 자기 서버 전제.
+  # sudo는 stdin 비번($SSHPASS). 내부망 자기 서버 전제.
   PMV=""; [ -n "$PTS" ] && PMV="echo '$SSHPASS' | sudo -S mv /tmp/nli_points.json $HL_DIR/nli_points.json;"
-  sshpass -e ssh -o StrictHostKeyChecking=no "$HL_USER@$HL_HOST" \
+  ssh -i "$HL_KEY" -o StrictHostKeyChecking=no "$HL_USER@$HL_HOST" \
     "echo '$SSHPASS' | sudo -S cp $HL_DIR/index.html $HL_DIR/$BK 2>/dev/null; \
      echo '$SSHPASS' | sudo -S mv /tmp/index.html $HL_DIR/index.html; \
      $PMV \
