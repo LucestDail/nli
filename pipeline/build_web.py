@@ -204,9 +204,9 @@ TEMPLATE = r'''<!DOCTYPE html>
  .inswrap{max-width:1560px;padding-left:26px;padding-right:26px}
  .statwrap.inswrap{max-width:1560px}
  /* 진단 무스크롤 대시보드: 좌 리포트 · 우 순위표(각자 내부 스크롤) */
- .diagdash{display:grid;grid-template-columns:1fr minmax(0,440px);gap:16px;align-items:start}
- .diagdash>.card{max-height:76vh;overflow:auto}
- @media(max-width:900px){.diagdash{grid-template-columns:1fr}.diagdash>.card{max-height:none}.diagdash>.card:first-child{max-height:56vh}}
+ .diagdash{display:grid;grid-template-columns:1fr minmax(0,440px);gap:16px;align-items:stretch}
+ .diagdash>.card{height:68vh;overflow:auto}
+ @media(max-width:900px){.diagdash{grid-template-columns:1fr}.diagdash>.card{height:auto}.diagdash>.card:first-child{max-height:56vh}}
  .statdash,.statdash>.card{min-width:0}
  #regHeat,#domCorr,#sidoDom{max-width:100%}
  /* 데스크톱 전용 도구(복사·CSV·인쇄·공유) — 모바일 숨김(간단 조회/열람만) */
@@ -1001,7 +1001,7 @@ function renderDiag(){
   renderDiagCmp(rows);
   let h='<tr><th>비교</th><th>취약<br>순위</th><th>지자체</th><th>평균<br>지수</th><th>최약 도메인</th><th>사각<br>지대</th><th>동</th></tr>';
   list.forEach(r=>{const w=r.rankDom[0],inc=diagCmp.includes(r.key);
-    h+=`<tr onclick="selectDiag('${r.key}')" style="cursor:pointer${r.key===diagSel?';background:#eef4ef':''}">
+    h+=`<tr onclick="pickDiag('${r.key}')" style="cursor:pointer${r.key===diagSel?';background:#e4f0e8;box-shadow:inset 3px 0 0 var(--ocean)':''}">
       <td style="text-align:center"><span onclick="event.stopPropagation();toggleDiagCmp('${r.key}')" title="비교 담기" style="cursor:pointer;font-weight:800;font-size:15px;color:${inc?'#2f6b4e':'#c9beac'}">${inc?'✓':'⊕'}</span></td>
       <td style="text-align:center;color:var(--mid)">${rankOf.get(r.key)}</td>
       <td style="text-align:left"><b>${r.sgg}</b> <span class="muted">${r.sido.replace('특별자치도','').replace('특별자치시','').replace('광역시','').replace('특별시','').replace('자치도','')}</span></td>
@@ -1012,6 +1012,7 @@ function renderDiag(){
   document.getElementById('diagTable').innerHTML=h;
 }
 function selectDiag(k){diagSel=k;renderDiag();}
+function pickDiag(k){diagSel=k;if(!diagCmp.includes(k)&&diagCmp.length<4)diagCmp.push(k);renderDiag();}
 function closeDiagStat(){document.getElementById('diagStatModal').style.display='none';}
 function openDiagStat(){
   const dd=diagData(),rows=dd.rows,nf=n=>(n||0).toLocaleString(),SD=s=>s.replace('특별자치도','').replace('특별자치시','').replace('광역시','').replace('특별시','').replace('자치도','');
