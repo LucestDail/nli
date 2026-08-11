@@ -715,8 +715,10 @@ function findDongHTML(p){const doms=DOMS.map(d=>[d,p['score_'+d]]).filter(x=>x[1
   const strong=doms.slice(0,3),weak=doms.slice(-3).reverse();
   const chip=(x,col)=>'<span class="dchip" style="border-color:'+col+'55;cursor:default"><b>'+DOMINFO[x[0]][0]+'</b>'+SHORT[x[0]]+' <i style="color:'+col+'">'+Math.round(x[1])+'</i></span>';
   const pr=p.price!=null?Math.round(p.price*3.3058).toLocaleString()+'만/평':'실거래 없음';
+  const _r=nliRank.get(p.adm_nm),pct=_r==null?null:Math.max(1,Math.round((1-_r)*100));
   return '<div class="card"><div class="flex" style="justify-content:space-between;align-items:flex-start;gap:12px">'
-    +'<div style="min-width:0"><h2 style="margin:0">'+fullN(p)+'</h2><div class="muted" style="margin-top:4px">'+(p.cohort||'')+' · 인구 '+(p.pop_total||0).toLocaleString()+'명 · 평당 '+pr+'</div></div>'
+    +'<div style="min-width:0"><h2 style="margin:0">'+fullN(p)+'</h2><div class="muted" style="margin-top:4px">'+(p.cohort||'')+' · 인구 '+(p.pop_total||0).toLocaleString()+'명 · 평당 '+pr+'</div>'
+    +(pct?'<div style="margin-top:8px;display:inline-block;background:rgba(180,124,82,.12);color:var(--terra);font-weight:800;font-size:13px;border-radius:999px;padding:5px 14px">전국 상위 '+pct+'%</div>':'')+'</div>'
     +'<div style="text-align:right;flex-shrink:0"><span class="g" style="background:'+GC[gradeOf(p)]+';font-size:15px;padding:3px 10px">'+gradeOf(p)+'</span><div style="font-size:30px;font-weight:800;color:var(--ocean);line-height:1.15">'+nliW(p)+'</div><div class="muted" style="font-size:11px">종합 살기지수</div></div></div>'
     +'<div style="margin-top:16px"><div class="fld">💪 강점 도메인</div><div style="margin-top:6px">'+strong.map(x=>chip(x,'#2f6b4e')).join('')+'</div></div>'
     +'<div style="margin-top:12px"><div class="fld">🔻 약한 도메인</div><div style="margin-top:6px">'+weak.map(x=>chip(x,'#b0603f')).join('')+'</div></div>'
@@ -971,7 +973,7 @@ function diagCardHTML(g,rankOf,total){
   const gc=g.dongs.reduce((m,p)=>{const gr=gradeOf(p);m[gr]=(m[gr]||0)+1;return m},{});
   const gdist=['S','A','B','C','D'].filter(x=>gc[x]).map(x=>`<span style="color:${GC[x]};font-weight:700">${x}</span> ${gc[x]}`).join(' · ');
   const weak=g.rankDom.slice(0,3),strong=g.rankDom.slice(-2).reverse();
-  const chip=(d,dv,neg)=>`<span class="dchip" style="border-color:${neg?'#b0603f':'#2f6b4e'}55" onclick="showDom('${d}')"><b>${DOMINFO[d][0]}</b>${SHORT[d]} <i style="color:${neg?'#b0603f':'#2f6b4e'}">${dv>=0?'+':''}${Math.round(dv)}</i></span>`;
+  const chip=(d,dv,neg)=>`<span class="dchip" style="border-color:${neg?'#b0603f':'#2f6b4e'}55" onclick="showDom('${d}')"><b>${DOMINFO[d][0]}</b>${SHORT[d]} <i style="color:${dv>=0?'#2f6b4e':'#b0603f'}">${dv>=0?'+':''}${Math.round(dv)}</i></span>`;
   const bl=g.blind.slice(0,9).map(b=>`<div class="valcell" onclick="goDetail('${b.p.adm_nm}')"><div class="valnm">${b.p.adm_nm}<span>${(b.p.pop_total||0).toLocaleString()}명</span></div><div class="valv"><span class="dchip" style="border-color:#b0603f55;margin:0"><b>${DOMINFO[b.d][0]}</b>${SHORT[b.d]}</span> <b style="color:#b0603f">${Math.round(b.v)}</b></div></div>`).join('');
   return `<div class="flex" style="justify-content:space-between;align-items:flex-start;gap:12px">
     <div style="min-width:0"><h3 style="margin:0 0 4px">${g.sido} ${g.sgg}</h3>
@@ -983,7 +985,7 @@ function diagCardHTML(g,rankOf,total){
    <div class="grid2" style="margin-top:16px;gap:16px">
      <div><div class="fld" style="color:#b0603f;font-size:11.5px">🔴 취약 도메인 <span class="muted" style="font-weight:400;text-transform:none;letter-spacing:0">전국 평균 대비</span></div>
        <div style="margin-top:8px">${weak.map(w=>chip(w[0],w[1],true)).join('')}</div></div>
-     <div><div class="fld" style="color:#2f6b4e;font-size:11.5px">🟢 강점 도메인</div>
+     <div><div class="fld" style="color:#2f6b4e;font-size:11.5px">🟢 상대 강점 <span class="muted" style="font-weight:400;text-transform:none;letter-spacing:0">전국 평균 대비</span></div>
        <div style="margin-top:8px">${strong.map(w=>chip(w[0],w[1],false)).join('')}</div></div></div>
    <div style="margin-top:18px"><div class="fld" style="font-size:11.5px">🎯 사각지대 동 <span class="muted" style="font-weight:400;text-transform:none;letter-spacing:0">인구 많은 순 · 클릭 → 지도 상세</span></div>
      ${g.blindN?`<div class="valgrid" style="margin-top:8px">${bl}</div>`+(g.blindN>9?`<div class="muted" style="margin-top:8px">외 ${g.blindN-9}건</div>`:''):'<div class="muted" style="margin-top:8px">사각지대 없음 — 인구 1만+ 동에서 하위 20% 도메인 없음</div>'}</div>`;
@@ -1076,7 +1078,7 @@ function diagReportMD(g,rank,total){
     g.blind.forEach(b=>L.push(`| ${b.p.adm_nm} | ${nf(b.p.pop_total)} | ${METRICS[b.d]} | ${Math.round(b.v)} |`));
     L.push('',`→ 우선 보강: ${P.prio}.`);
   } else L.push(`사각지대 없음 — 인구 1만+ 동에서 하위 20% 도메인 없음.`);
-  L.push('',`## 🟢 강점 도메인`);
+  L.push('',`## 🟢 상대 강점 도메인 (전국 지자체 평균 대비)`);
   P.strong.forEach(w=>L.push(`- ${METRICS[w[0]]}: 전국 지자체 평균 대비 +${Math.round(w[1])}`));
   L.push('','---',`방법론: 각 지표를 밀도(인구·면적)·근접성 백분위로 혼합 → 도메인 가중평균 → 종합지수. 점수는 전국 읍면동 상대평가(백분위)로 참고용. 복지·돌봄은 지오코딩 약 89% 커버.`);
   return L.join('\n');
