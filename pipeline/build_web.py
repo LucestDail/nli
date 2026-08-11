@@ -1078,12 +1078,12 @@ function openDiagStat(){
     +'<div class="statgrid">'
     +'<div class="sc"><h4>📊 도메인 프로파일 <span>레이더 · 평균 점수(백분위)</span></h4><div style="text-align:center">'+radar+'</div>'+legend+'</div>'
     +'<div class="sc"><h4>📈 종합지수 · 사각지대</h4><div class="fld" style="font-size:11px">🟢 평균 종합지수</div>'+nliBars+'<div class="fld" style="font-size:11px;margin-top:12px">🔴 사각지대(동×도메인)</div>'+blBars+'</div>'
-    +'<div class="sc"><h4>🔗 도메인 간 상관 <span>관할 동 기준 · 초록=동반</span></h4><div style="overflow:auto">'+dc+'</div></div>'
-    +'<div class="sc"><h4>🧭 지역특성 × 도메인 <span>관할 동 기준 · 초록=정비례</span></h4><div style="overflow:auto">'+rh+'</div></div>'
-    +'<div class="sc span2"><h4>🟩 지자체 × 도메인 히트맵 <span>평균 점수 · 초록 높음</span></h4><div style="overflow:auto">'+hm+'</div></div>'
+    +'<div class="sc"><h4>🔗 함께 갖춰지는 도메인 <span>관할 동 기준 · 두 도메인이 같이 좋은 정도(초록=동반)</span></h4><div style="overflow:auto">'+dc+'</div></div>'
+    +'<div class="sc"><h4>🧭 지역 특성 ↔ 생활여건 <span>인구밀도·고령 등이 도메인과 연관되는 정도(초록=정비례)</span></h4><div style="overflow:auto">'+rh+'</div></div>'
+    +'<div class="sc"><h4>🟩 지자체 × 도메인 점수 <span>평균 점수 · 초록 높음</span></h4><div style="overflow:auto">'+hm+'</div></div>'
     +'<div class="sc span2"><h4>⣿ 관할 동 산점도 <span>축 선택 · 점=동(호버·클릭) · 색=지자체</span></h4><div class="flex" style="gap:8px;margin-bottom:8px;font-size:12px">X '+sel('dsX',xo,'dens')+' Y '+sel('dsY',yo,'NLI')+' <span id="dsReg" class="muted"></span></div><div id="dsScatterBox"></div></div>'
-    +'<div class="sc span2"><h4>📋 도메인 편차 표 <span>전국 지자체 평균 대비 · 행별 최고 초록</span></h4>'+t+'</div>'
-    +(bl?'<div class="sc span2"><h4>🎯 사각지대 동 <span>클릭 → 지도 상세</span></h4>'+bl+'</div>':'')
+    +'<div class="sc"><h4>📋 도메인 편차 표 <span>전국 지자체 평균 대비 · 행별 최고 초록</span></h4>'+t+'</div>'
+    +(bl?'<div class="sc"><h4>🎯 사각지대 동 <span>클릭 → 지도 상세</span></h4>'+bl+'</div>':'')
     +'</div>';
   document.getElementById('diagStatModal').style.display='flex';
   renderDStatScatter();
@@ -1095,7 +1095,7 @@ function renderDStatScatter(){
   if(pts.length<3){box.innerHTML='<div class="muted" style="font-size:12px">표시할 동 데이터가 부족합니다.</div>';document.getElementById('dsReg').textContent='';return;}
   const xs=pts.map(a=>a.x),ys=pts.map(a=>a.y),r=ols(xs,ys),xmin=Math.min.apply(null,xs),xmax=Math.max.apply(null,xs),ymin=Math.min.apply(null,ys),ymax=Math.max.apply(null,ys);
   const W=880,H=320,pd=44,sx=v=>pd+(v-xmin)/((xmax-xmin)||1)*(W-2*pd),sy=v=>H-pd-(v-ymin)/((ymax-ymin)||1)*(H-2*pd);
-  let g='<svg viewBox="0 0 '+W+' '+H+'" style="width:100%"><line x1="'+pd+'" y1="'+(H-pd)+'" x2="'+(W-pd)+'" y2="'+(H-pd)+'" stroke="#ddd"/><line x1="'+pd+'" y1="'+pd+'" x2="'+pd+'" y2="'+(H-pd)+'" stroke="#ddd"/>';
+  let g='<svg viewBox="0 0 '+W+' '+H+'" preserveAspectRatio="xMidYMid meet" style="width:100%;max-height:440px;display:block"><line x1="'+pd+'" y1="'+(H-pd)+'" x2="'+(W-pd)+'" y2="'+(H-pd)+'" stroke="#ddd"/><line x1="'+pd+'" y1="'+pd+'" x2="'+pd+'" y2="'+(H-pd)+'" stroke="#ddd"/>';
   g+=pts.map(a=>'<circle cx="'+sx(a.x).toFixed(1)+'" cy="'+sy(a.y).toFixed(1)+'" r="3.6" fill="'+_dstat.dcol(a.k)+'" opacity=".72" style="cursor:pointer" onclick="goDetail(\''+a.adm+'\')"><title>'+a.nm+' · '+VARS[xk]+' '+a.x.toFixed(1)+' · '+VARS[yk]+' '+a.y.toFixed(1)+'</title></circle>').join('');
   if(!isNaN(r.slope))g+='<line x1="'+sx(xmin).toFixed(1)+'" y1="'+sy(r.intercept+r.slope*xmin).toFixed(1)+'" x2="'+sx(xmax).toFixed(1)+'" y2="'+sy(r.intercept+r.slope*xmax).toFixed(1)+'" stroke="#c0392b" stroke-width="2"/>';
   g+='<text x="'+(W/2)+'" y="'+(H-8)+'" font-size="12" text-anchor="middle" fill="#5b6b77">'+VARS[xk]+' →</text><text x="14" y="'+(H/2)+'" font-size="12" fill="#5b6b77" text-anchor="middle" transform="rotate(-90 14 '+(H/2)+')">↑ '+VARS[yk]+'</text></svg>';
