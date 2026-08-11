@@ -207,6 +207,13 @@ TEMPLATE = r'''<!DOCTYPE html>
  .diagdash{display:grid;grid-template-columns:1fr minmax(0,440px);gap:16px;align-items:stretch}
  .diagdash>.card{height:68vh;overflow:auto}
  @media(max-width:900px){.diagdash{grid-template-columns:1fr}.diagdash>.card{height:auto}.diagdash>.card:first-child{max-height:56vh}}
+ /* 통계 모달 대시보드 그리드 */
+ .statgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;margin-top:16px}
+ .statgrid .sc{background:#faf8f4;border:1px solid var(--line);border-radius:14px;padding:15px 16px;min-width:0;overflow:auto}
+ .statgrid .sc.span2{grid-column:1/-1}
+ .statgrid .sc h4{margin:0 0 10px;font-size:13.5px;color:var(--ink);font-weight:800;display:flex;align-items:baseline;gap:6px;flex-wrap:wrap}
+ .statgrid .sc h4 span{font-weight:400;font-size:11.5px;color:var(--mid)}
+ @media(max-width:760px){.statgrid{grid-template-columns:1fr}}
  .statdash,.statdash>.card{min-width:0}
  #regHeat,#domCorr,#sidoDom{max-width:100%}
  /* 데스크톱 전용 도구(복사·CSV·인쇄·공유) — 모바일 숨김(간단 조회/열람만) */
@@ -1017,55 +1024,58 @@ function pickDiag(k){diagSel=k;if(!diagCmp.includes(k))diagCmp.push(k);renderDia
 function closeDiagStat(){document.getElementById('diagStatModal').style.display='none';}
 function openDiagStat(){
   const dd=diagData(),rows=dd.rows,nf=n=>(n||0).toLocaleString(),SD=s=>s.replace('특별자치도','').replace('특별자치시','').replace('광역시','').replace('특별시','').replace('자치도','');
-  const dcol=k=>k<4?CMPCOL[k]:'hsl('+((k*67)%360)+',52%,46%)';
+  const dcol=k=>k<4?CMPCOL[k]:'hsl('+((k*67)%360)+',55%,45%)';
   let keys=diagCmp.length?diagCmp.slice():(diagSel?[diagSel]:[]);
   const gs=keys.map(k=>rows.find(r=>r.key===k)).filter(Boolean);
   if(!gs.length){alert('표에서 지자체를 클릭해 담으세요.');return;}
   const natRank=[...rows].sort((a,b)=>a.nli-b.nli),rankOf=new Map();natRank.forEach((r,i)=>rankOf.set(r.key,i+1));
-  // 레이더(지자체 도메인 평균 오버레이)
-  const N=DOMS.length,cx=155,cy=150,R=106,ang=i=>(-90+i*360/N)*Math.PI/180,pt=(i,r)=>[cx+r*Math.cos(ang(i)),cy+r*Math.sin(ang(i))];
+  const single=gs.length===1;
+  // 레이더(채움 없이 선만 → 겹쳐도 읽힘, 단일은 옅은 채움)
+  const N=DOMS.length,cx=150,cy=148,R=104,ang=i=>(-90+i*360/N)*Math.PI/180,pt=(i,r)=>[cx+r*Math.cos(ang(i)),cy+r*Math.sin(ang(i))];
   let rg='';[0.25,0.5,0.75,1].forEach(t=>{rg+='<polygon points="'+DOMS.map((_,i)=>pt(i,R*t).map(v=>v.toFixed(1)).join(',')).join(' ')+'" fill="none" stroke="#e7e1d5" stroke-width="1"/>';});
-  DOMS.forEach((d,i)=>{const a=pt(i,R);rg+='<line x1="'+cx+'" y1="'+cy+'" x2="'+a[0].toFixed(1)+'" y2="'+a[1].toFixed(1)+'" stroke="#eee"/>';const l=pt(i,R+15);rg+='<text x="'+l[0].toFixed(1)+'" y="'+l[1].toFixed(1)+'" font-size="12" text-anchor="middle" dominant-baseline="middle">'+DOMINFO[d][0]+'</text>';});
-  gs.forEach((g,k)=>{const col=dcol(k),pts=DOMS.map((d,i)=>pt(i,R*((g.dom[d]||0)/100)).map(x=>x.toFixed(1)).join(',')).join(' ');rg+='<polygon points="'+pts+'" fill="'+col+'22" stroke="'+col+'" stroke-width="2"/>';});
-  const radar='<svg viewBox="0 0 310 300" style="width:100%;max-width:340px">'+rg+'</svg>';
-  const legend='<div style="display:flex;flex-direction:column;gap:5px;margin-top:6px;align-items:flex-start">'+gs.map((g,k)=>'<span style="font-size:12.5px;display:inline-flex;align-items:center;gap:6px"><i style="width:11px;height:11px;border-radius:3px;background:'+dcol(k)+';display:inline-block;flex-shrink:0"></i><b>'+g.sgg+'</b> <span class="muted">'+SD(g.sido)+'</span> <span style="color:'+color(g.nli)+';font-weight:800">'+g.nli.toFixed(1)+'</span></span>').join('')+'</div>';
+  DOMS.forEach((d,i)=>{const a=pt(i,R);rg+='<line x1="'+cx+'" y1="'+cy+'" x2="'+a[0].toFixed(1)+'" y2="'+a[1].toFixed(1)+'" stroke="#eee"/>';const l=pt(i,R+14);rg+='<text x="'+l[0].toFixed(1)+'" y="'+l[1].toFixed(1)+'" font-size="12" text-anchor="middle" dominant-baseline="middle">'+DOMINFO[d][0]+'</text>';});
+  gs.forEach((g,k)=>{const col=dcol(k),ptsA=DOMS.map((d,i)=>pt(i,R*((g.dom[d]||0)/100))),pts=ptsA.map(a=>a.map(x=>x.toFixed(1)).join(',')).join(' ');
+    rg+='<polygon points="'+pts+'" fill="'+(single?col+'22':'none')+'" stroke="'+col+'" stroke-width="2.2" stroke-linejoin="round"/>';
+    ptsA.forEach(a=>{rg+='<circle cx="'+a[0].toFixed(1)+'" cy="'+a[1].toFixed(1)+'" r="2.4" fill="'+col+'"/>';});});
+  const radar='<svg viewBox="0 0 300 296" style="width:100%;max-width:320px">'+rg+'</svg>';
+  const legend='<div style="display:flex;flex-direction:column;gap:5px;margin-top:8px;align-items:flex-start">'+gs.map((g,k)=>'<span style="font-size:12.5px;display:inline-flex;align-items:center;gap:6px"><i style="width:11px;height:11px;border-radius:3px;background:'+dcol(k)+';display:inline-block;flex-shrink:0"></i><b>'+g.sgg+'</b> <span class="muted">'+SD(g.sido)+'</span> <span style="color:'+color(g.nli)+';font-weight:800">'+g.nli.toFixed(1)+'</span></span>').join('')+'</div>';
   // 바
-  const bar=(g,val,w,col)=>'<div style="display:flex;align-items:center;gap:8px;margin:5px 0;font-size:12.5px"><span style="width:78px;text-align:right;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+g.sgg+'</span><div style="flex:1;background:var(--line2);border-radius:5px;height:15px"><div style="height:100%;border-radius:5px;background:'+col+';width:'+w+'%"></div></div><b style="width:34px;color:'+col+'">'+val+'</b></div>';
-  const nliBars='<div>'+gs.map(g=>bar(g,g.nli.toFixed(1),g.nli,color(g.nli))).join('')+'</div>';
+  const bar=(g,k,val,w,col)=>'<div style="display:flex;align-items:center;gap:8px;margin:5px 0;font-size:12.5px"><span style="width:70px;text-align:right;white-space:nowrap;overflow:hidden;text-overflow:ellipsis"><i style="width:8px;height:8px;border-radius:2px;background:'+dcol(k)+';display:inline-block;margin-right:4px"></i>'+g.sgg+'</span><div style="flex:1;background:var(--line2);border-radius:5px;height:15px"><div style="height:100%;border-radius:5px;background:'+col+';width:'+w+'%"></div></div><b style="width:34px;color:'+col+'">'+val+'</b></div>';
+  const nliBars=gs.map((g,k)=>bar(g,k,g.nli.toFixed(1),g.nli,color(g.nli))).join('');
   const maxBl=Math.max(1,Math.max.apply(null,gs.map(g=>g.blindN)));
-  const blBars='<div>'+gs.map(g=>bar(g,g.blindN,g.blindN/maxBl*100,'#b0603f')).join('')+'</div>';
-  // 히트맵(지자체 × 도메인 평균점수 · 칸차트)
+  const blBars=gs.map((g,k)=>bar(g,k,g.blindN,g.blindN/maxBl*100,'#b0603f')).join('');
+  // 히트맵
   let hm='<table class="heat" style="font-size:11px;width:auto"><tr><th></th>'+DKEYS.map(d=>'<th>'+DOMINFO[d][0]+'</th>').join('')+'<th>종합</th></tr>';
-  gs.forEach(g=>{hm+='<tr><td style="text-align:left;font-weight:700;white-space:nowrap;background:#f7f5f1">'+g.sgg+'</td>'+DKEYS.map(d=>{const v=g.dom[d];return '<td style="background:'+color(v)+';color:'+(v>=50?'#fff':'#1a2530')+'">'+Math.round(v)+'</td>';}).join('')+'<td style="background:'+color(g.nli)+';color:'+(g.nli>=50?'#fff':'#1a2530')+';font-weight:800">'+g.nli.toFixed(0)+'</td></tr>';});
+  gs.forEach(g=>{hm+='<tr><td style="text-align:left;font-weight:700;white-space:nowrap;background:#f2efe9">'+g.sgg+'</td>'+DKEYS.map(d=>{const v=g.dom[d];return '<td style="background:'+color(v)+';color:'+(v>=50?'#fff':'#1a2530')+'">'+Math.round(v)+'</td>';}).join('')+'<td style="background:'+color(g.nli)+';color:'+(g.nli>=50?'#fff':'#1a2530')+';font-weight:800">'+g.nli.toFixed(0)+'</td></tr>';});
   hm+='</table>';
-  // 산점도(관할 동: 인구밀도(로그) × 종합 살기지수 · 지자체별 색)
+  // 산점도
   const spts=[];gs.forEach((g,k)=>g.dongs.forEach(p=>{const x=p.dens!=null?Math.log10(1+p.dens):null,y=nliW(p);if(x!=null&&y!=null)spts.push([x,y,k]);}));
   let scatter='';
   if(spts.length>=2){const xs=spts.map(a=>a[0]),ys=spts.map(a=>a[1]),xmin=Math.min.apply(null,xs),xmax=Math.max.apply(null,xs),ymin=Math.min.apply(null,ys),ymax=Math.max.apply(null,ys);
-    const W=560,H=250,pd=38,sx=v=>pd+(v-xmin)/((xmax-xmin)||1)*(W-2*pd),sy=v=>H-pd-(v-ymin)/((ymax-ymin)||1)*(H-2*pd);
-    scatter='<svg viewBox="0 0 '+W+' '+H+'" style="width:100%;max-width:600px;background:#fdfcfa;border-radius:8px"><line x1="'+pd+'" y1="'+(H-pd)+'" x2="'+(W-pd)+'" y2="'+(H-pd)+'" stroke="#ddd"/><line x1="'+pd+'" y1="'+pd+'" x2="'+pd+'" y2="'+(H-pd)+'" stroke="#ddd"/>'
+    const W=620,H=250,pd=40,sx=v=>pd+(v-xmin)/((xmax-xmin)||1)*(W-2*pd),sy=v=>H-pd-(v-ymin)/((ymax-ymin)||1)*(H-2*pd);
+    scatter='<svg viewBox="0 0 '+W+' '+H+'" style="width:100%">' + '<line x1="'+pd+'" y1="'+(H-pd)+'" x2="'+(W-pd)+'" y2="'+(H-pd)+'" stroke="#ddd"/><line x1="'+pd+'" y1="'+pd+'" x2="'+pd+'" y2="'+(H-pd)+'" stroke="#ddd"/>'
       +spts.map(a=>'<circle cx="'+sx(a[0]).toFixed(1)+'" cy="'+sy(a[1]).toFixed(1)+'" r="3.2" fill="'+dcol(a[2])+'" opacity=".72"/>').join('')
-      +'<text x="'+(W/2)+'" y="'+(H-8)+'" font-size="11" text-anchor="middle" fill="#5b6b77">인구밀도(로그) →</text><text x="12" y="'+(H/2)+'" font-size="11" fill="#5b6b77" text-anchor="middle" transform="rotate(-90 12 '+(H/2)+')">↑ 종합 살기지수</text></svg>';
+      +'<text x="'+(W/2)+'" y="'+(H-6)+'" font-size="11" text-anchor="middle" fill="#5b6b77">인구밀도(로그) →</text><text x="12" y="'+(H/2)+'" font-size="11" fill="#5b6b77" text-anchor="middle" transform="rotate(-90 12 '+(H/2)+')">↑ 종합 살기지수</text></svg>';
   } else scatter='<div class="muted" style="font-size:12px">표시할 동 데이터가 부족합니다.</div>';
-  // 도메인 편차 표
+  // 편차 표
   const bestHi=d=>Math.max.apply(null,gs.map(g=>(g.rankDom.find(x=>x[0]===d)||[0,-99])[1]));
-  let t='<div style="overflow:auto"><table style="font-size:12.5px"><tr><th style="text-align:left"></th>'+gs.map(g=>'<th>'+g.sgg+'<br><span class="muted" style="font-weight:400">'+SD(g.sido)+'</span></th>').join('')+'</tr>';
+  let t='<div style="overflow:auto"><table style="font-size:12.5px"><tr><th style="text-align:left"></th>'+gs.map((g,k)=>'<th style="color:'+dcol(k)+'">'+g.sgg+'</th>').join('')+'</tr>';
+  t+='<tr><td style="text-align:left"><b>평균 종합지수</b></td>'+gs.map(g=>'<td class="n"><b style="color:'+color(g.nli)+'">'+g.nli.toFixed(1)+'</b></td>').join('')+'</tr>';
   t+='<tr><td style="text-align:left">전국 취약순위</td>'+gs.map(g=>'<td class="n">'+rankOf.get(g.key)+'/'+rows.length+'</td>').join('')+'</tr>';
   t+='<tr><td style="text-align:left">사각지대 / 관할동 / 인구</td>'+gs.map(g=>'<td class="n">'+g.blindN+' / '+g.dongs.length+' / '+nf(g.pop)+'</td>').join('')+'</tr>';
   DKEYS.forEach(function(d){const hi=Math.round(bestHi(d));t+='<tr><td style="text-align:left">'+DOMINFO[d][0]+' '+SHORT[d]+'</td>'+gs.map(function(g){const dv=Math.round((g.rankDom.find(x=>x[0]===d)||[0,0])[1]);return '<td class="n" style="color:'+(dv<0?'#b0603f':'#2f6b4e')+';'+(dv===hi?'background:#e4f0e8;font-weight:800':'')+'">'+(dv>=0?'+':'')+dv+'</td>';}).join('')+'</tr>';});
   t+='</table></div>';
-  let bl='';gs.filter(g=>g.blindN).forEach(function(g){bl+='<div style="margin-top:12px"><div class="fld" style="font-size:11.5px">🎯 '+g.sgg+' 사각지대 동 <span class="muted" style="font-weight:400;text-transform:none;letter-spacing:0">'+g.blindN+'건 · 상위 5</span></div><div style="overflow:auto"><table style="font-size:12px;margin-top:4px"><tr><th style="text-align:left">동</th><th>인구</th><th style="text-align:left">취약</th><th>점수</th></tr>'+g.blind.slice(0,5).map(b=>'<tr><td style="text-align:left">'+b.p.adm_nm+'</td><td class="n">'+nf(b.p.pop_total)+'</td><td style="text-align:left">'+METRICS[b.d]+'</td><td class="n" style="color:#b0603f;font-weight:700">'+Math.round(b.v)+'</td></tr>').join('')+'</table></div></div>';});
+  let bl='';gs.filter(g=>g.blindN).forEach(function(g){bl+='<div style="margin-top:10px"><div class="fld" style="font-size:11.5px">'+g.sgg+' <span class="muted" style="font-weight:400;text-transform:none;letter-spacing:0">'+g.blindN+'건 · 상위 5</span></div><div style="overflow:auto"><table style="font-size:12px;margin-top:4px"><tr><th style="text-align:left">동</th><th>인구</th><th style="text-align:left">취약</th><th>점수</th></tr>'+g.blind.slice(0,5).map(b=>'<tr><td style="text-align:left">'+b.p.adm_nm+'</td><td class="n">'+nf(b.p.pop_total)+'</td><td style="text-align:left">'+METRICS[b.d]+'</td><td class="n" style="color:#b0603f;font-weight:700">'+Math.round(b.v)+'</td></tr>').join('')+'</table></div></div>';});
   document.getElementById('diagStatBody').innerHTML=
-    '<div class="flex" style="justify-content:space-between;align-items:baseline;gap:10px"><h2 style="margin:0">'+(gs.length===1?gs[0].sido+' '+gs[0].sgg:gs.length+'개 지자체 비교 분석')+'</h2><div class="muted">지자체 평균 기준 · 표 편차는 전국 평균 대비</div></div>'
-    +'<div style="display:flex;gap:26px;flex-wrap:wrap;align-items:flex-start;margin-top:16px">'
-    +'<div style="flex:1;min-width:300px;text-align:center"><div class="fld" style="text-align:left;margin-bottom:2px">📊 도메인 프로파일 레이더 <span class="muted" style="font-weight:400;text-transform:none;letter-spacing:0">평균 점수</span></div>'+radar+legend+'</div>'
-    +'<div style="flex:1;min-width:300px"><div class="fld">🟢 평균 종합지수</div>'+nliBars+'<div class="fld" style="margin-top:16px">🔴 사각지대 (동×도메인)</div>'+blBars+'</div>'
-    +'</div>'
-    +'<h3 style="margin:22px 0 6px">도메인 히트맵 <span class="muted" style="font-weight:400;font-size:13px">지자체 평균 점수(백분위) · 초록 높음</span></h3><div style="overflow:auto">'+hm+'</div>'
-    +'<h3 style="margin:22px 0 6px">관할 동 산점도 <span class="muted" style="font-weight:400;font-size:13px">인구밀도 × 종합 살기지수 · 점=동, 색=지자체</span></h3><div style="text-align:center">'+scatter+'</div>'
-    +'<h3 style="margin:22px 0 6px">도메인 편차 표 <span class="muted" style="font-weight:400;font-size:13px">전국 지자체 평균 대비 · 행별 최고 초록</span></h3>'+t
-    +bl
-    +'<div class="muted" style="font-size:11px;margin-top:16px">점수는 전국 읍면동 상대평가(백분위). 레이더·히트맵=지자체 평균, 편차표=전국 지자체 평균 대비.</div>';
+    '<div class="flex" style="justify-content:space-between;align-items:baseline;gap:10px"><h2 style="margin:0">'+(single?gs[0].sido+' '+gs[0].sgg:gs.length+'개 지자체 비교 분석')+'</h2><div class="muted">지자체 평균 기준 · 표 편차=전국 평균 대비</div></div>'
+    +'<div class="statgrid">'
+    +'<div class="sc"><h4>📊 도메인 프로파일 <span>레이더 · 평균 점수(백분위)</span></h4><div style="text-align:center">'+radar+'</div>'+legend+'</div>'
+    +'<div class="sc"><h4>📈 종합지수 · 사각지대</h4><div class="fld" style="font-size:11px">🟢 평균 종합지수</div>'+nliBars+'<div class="fld" style="font-size:11px;margin-top:14px">🔴 사각지대(동×도메인)</div>'+blBars+'</div>'
+    +'<div class="sc span2"><h4>🟩 도메인 히트맵 <span>지자체 평균 점수 · 초록 높음</span></h4><div style="overflow:auto">'+hm+'</div></div>'
+    +'<div class="sc span2"><h4>⣿ 관할 동 산점도 <span>인구밀도 × 종합 살기지수 · 점=동, 색=지자체</span></h4>'+scatter+'</div>'
+    +'<div class="sc span2"><h4>📋 도메인 편차 표 <span>전국 지자체 평균 대비 · 행별 최고 초록</span></h4>'+t+'</div>'
+    +(bl?'<div class="sc span2"><h4>🎯 사각지대 동</h4>'+bl+'</div>':'')
+    +'</div>';
   document.getElementById('diagStatModal').style.display='flex';
 }
 function downloadDiagCSV(){
