@@ -208,13 +208,21 @@ TEMPLATE = r'''<!DOCTYPE html>
  .diagdash>.card{height:68vh;overflow:auto}
  @media(max-width:900px){.diagdash{grid-template-columns:1fr}.diagdash>.card{height:auto}.diagdash>.card:first-child{max-height:56vh}}
  /* 통계 모달 대시보드 그리드 */
- .statgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:14px;margin-top:16px;align-items:start}
- .statgrid .sc{background:#faf8f4;border:1px solid var(--line);border-radius:14px;padding:15px 16px;min-width:0;overflow:auto}
- .statgrid .sc.span2{grid-column:1/-1}
+ /* 고정 개수(선택 N지자체) 카드는 flex-grow로 각 행의 폭을 꽉 채운다(빈공간 방지) */
+ .statgrid{display:flex;flex-wrap:wrap;gap:14px;margin-top:16px;align-items:flex-start}
+ .statgrid .sc{flex:1 1 320px;background:#faf8f4;border:1px solid var(--line);border-radius:14px;padding:15px 16px;min-width:0;overflow:auto}
+ .statgrid .sc.wide{flex:2 1 520px}
+ .statgrid .sc.full,.statgrid .sc.span2{flex-basis:100%}
  .statgrid td[title],.statgrid circle[onclick]{cursor:pointer}
  .statgrid .sc h4{margin:0 0 10px;font-size:13.5px;color:var(--ink);font-weight:800;display:flex;align-items:baseline;gap:6px;flex-wrap:wrap}
  .statgrid .sc h4 span{font-weight:400;font-size:11.5px;color:var(--mid)}
- @media(max-width:760px){.statgrid{grid-template-columns:1fr}}
+ /* 늘어나는 대상(관할 동)은 세로 스크롤로 더 많은 대상을 본다 */
+ .scrollv{max-height:460px;overflow-y:auto;border:1px solid var(--line2);border-radius:10px}
+ .scrollv table{width:100%;border-collapse:collapse}
+ .scrollv th,.scrollv td{padding:6px 10px;border-bottom:1px solid var(--line2)}
+ .scrollv thead th{position:sticky;top:0;background:#f1ede6;z-index:1;font-size:11.5px}
+ .statgrid table.heat{width:100%}
+ @media(max-width:760px){.statgrid .sc{flex-basis:100%}}
  .statdash,.statdash>.card{min-width:0}
  #regHeat,#domCorr,#sidoDom{max-width:100%}
  /* 데스크톱 전용 도구(복사·CSV·인쇄·공유) — 모바일 숨김(간단 조회/열람만) */
@@ -1048,28 +1056,34 @@ function openDiagStat(){
   const maxBl=Math.max(1,Math.max.apply(null,gs.map(g=>g.blindN)));
   const blBars=gs.map((g,k)=>bar(g,k,g.blindN,g.blindN/maxBl*100,'#b0603f',g.sgg+' 사각지대 '+g.blindN+'건')).join('');
   // 지자체 × 도메인 히트맵(셀 툴팁)
-  let hm='<table class="heat" style="font-size:11px;width:auto"><tr><th></th>'+DKEYS.map(d=>'<th title="'+VARS[d]+'">'+DOMINFO[d][0]+'</th>').join('')+'<th>종합</th></tr>';
+  let hm='<table class="heat" style="font-size:11px"><tr><th></th>'+DKEYS.map(d=>'<th title="'+VARS[d]+'">'+DOMINFO[d][0]+'</th>').join('')+'<th>종합</th></tr>';
   gs.forEach(g=>{hm+='<tr><td style="text-align:left;font-weight:700;white-space:nowrap;background:#f2efe9">'+g.sgg+'</td>'+DKEYS.map(d=>{const v=g.dom[d];return '<td style="background:'+color(v)+';color:'+(v>=50?'#fff':'#1a2530')+'" title="'+g.sgg+' · '+VARS[d]+' '+Math.round(v)+'점">'+Math.round(v)+'</td>';}).join('')+'<td style="background:'+color(g.nli)+';color:'+(g.nli>=50?'#fff':'#1a2530')+';font-weight:800">'+g.nli.toFixed(0)+'</td></tr>';});
   hm+='</table>';
   // 도메인 간 상관 히트맵(선택 동 기준)
   const dv9=DKEYS.map(d=>dongs.map(o=>o.p['score_'+d]));
-  let dc='<table class="heat" style="font-size:10.5px;width:auto"><tr><th></th>'+DKEYS.map(d=>'<th title="'+VARS[d]+'">'+DOMINFO[d][0]+'</th>').join('')+'</tr>';
+  let dc='<table class="heat" style="font-size:10.5px"><tr><th></th>'+DKEYS.map(d=>'<th title="'+VARS[d]+'">'+DOMINFO[d][0]+'</th>').join('')+'</tr>';
   DKEYS.forEach((d,i)=>{dc+='<tr><td style="text-align:left;font-weight:700;white-space:nowrap;background:#f2efe9">'+DOMINFO[d][0]+' '+SHORT[d]+'</td>'+DKEYS.map((d2,j)=>{if(i===j)return '<td style="background:#f0ede7;color:#c9beac">·</td>';const r=pearson(dv9[i],dv9[j]);return '<td style="background:'+corrCol(r)+';color:'+(Math.abs(r)>=.5?'#fff':'#1a2530')+'" title="'+SHORT[d]+'↔'+SHORT[d2]+' r='+r.toFixed(2)+'">'+r.toFixed(2)+'</td>';}).join('')+'</tr>';});
   dc+='</table>';
   // 지역특성 × 도메인 상관
   const regV=REG.map(rr=>dongs.map(o=>sval(o.p,rr[0]))),dvA=[...DKEYS.map(d=>dongs.map(o=>o.p['score_'+d])),dongs.map(o=>nliW(o.p))],dkA=[...DKEYS,'NLI'];
-  let rh='<table class="heat" style="font-size:10.5px;width:auto"><tr><th></th>'+dkA.map(d=>'<th title="'+VARS[d]+'">'+(d==='NLI'?'종합':DOMINFO[d][0])+'</th>').join('')+'</tr>';
+  let rh='<table class="heat" style="font-size:10.5px"><tr><th></th>'+dkA.map(d=>'<th title="'+VARS[d]+'">'+(d==='NLI'?'종합':DOMINFO[d][0])+'</th>').join('')+'</tr>';
   REG.forEach((rr,ri)=>{rh+='<tr><td style="text-align:left;font-weight:700;white-space:nowrap;background:#f2efe9">'+rr[1]+'</td>'+dvA.map((dv,di)=>{const r=pearson(regV[ri],dv);return '<td style="background:'+corrCol(r)+';color:'+(Math.abs(r)>=.5?'#fff':'#1a2530')+'" title="'+rr[1]+'↔'+VARS[dkA[di]]+' r='+(isNaN(r)?'-':r.toFixed(2))+'">'+(isNaN(r)?'–':r.toFixed(2))+'</td>';}).join('')+'</tr>';});
   rh+='</table>';
   // 편차 표
   const bestHi=d=>Math.max.apply(null,gs.map(g=>(g.rankDom.find(x=>x[0]===d)||[0,-99])[1]));
-  let t='<div style="overflow:auto"><table style="font-size:12.5px"><tr><th style="text-align:left"></th>'+gs.map((g,k)=>'<th style="color:'+dcol(k)+'">'+g.sgg+'</th>').join('')+'</tr>';
+  let t='<div style="overflow:auto"><table style="font-size:12.5px;width:100%"><tr><th style="text-align:left"></th>'+gs.map((g,k)=>'<th style="color:'+dcol(k)+'">'+g.sgg+'</th>').join('')+'</tr>';
   t+='<tr><td style="text-align:left"><b>평균 종합지수</b></td>'+gs.map(g=>'<td class="n"><b style="color:'+color(g.nli)+'">'+g.nli.toFixed(1)+'</b></td>').join('')+'</tr>';
   t+='<tr><td style="text-align:left">전국 취약순위</td>'+gs.map(g=>'<td class="n">'+rankOf.get(g.key)+'/'+rows.length+'</td>').join('')+'</tr>';
   t+='<tr><td style="text-align:left">사각지대 / 관할동 / 인구</td>'+gs.map(g=>'<td class="n">'+g.blindN+' / '+g.dongs.length+' / '+nf(g.pop)+'</td>').join('')+'</tr>';
   DKEYS.forEach(function(d){const hi=Math.round(bestHi(d));t+='<tr><td style="text-align:left">'+DOMINFO[d][0]+' '+SHORT[d]+'</td>'+gs.map(function(g){const dv=Math.round((g.rankDom.find(x=>x[0]===d)||[0,0])[1]);return '<td class="n" style="color:'+(dv<0?'#b0603f':'#2f6b4e')+';'+(dv===hi?'background:#e4f0e8;font-weight:800':'')+'">'+(dv>=0?'+':'')+dv+'</td>';}).join('')+'</tr>';});
   t+='</table></div>';
-  let bl='';gs.filter(g=>g.blindN).forEach(function(g){bl+='<div style="margin-top:10px"><div class="fld" style="font-size:11.5px">'+g.sgg+' <span class="muted" style="font-weight:400;text-transform:none;letter-spacing:0">'+g.blindN+'건 · 상위 5</span></div><div style="overflow:auto"><table style="font-size:12px;margin-top:4px"><tr><th style="text-align:left">동</th><th>인구</th><th style="text-align:left">취약</th><th>점수</th></tr>'+g.blind.slice(0,5).map(b=>'<tr onclick="goDetail(\''+b.p.adm_nm+'\')" style="cursor:pointer"><td style="text-align:left">'+b.p.adm_nm+'</td><td class="n">'+nf(b.p.pop_total)+'</td><td style="text-align:left">'+METRICS[b.d]+'</td><td class="n" style="color:#b0603f;font-weight:700">'+Math.round(b.v)+'</td></tr>').join('')+'</table></div></div>';});
+  // 관할 동 전체(늘어나는 대상 → 세로 스크롤 · 종합지수 낮은순 · 사각지대 강조)
+  const blindSet=new Set();gs.forEach(g=>g.blind.forEach(b=>blindSet.add(b.p.adm_nm)));
+  const allD=dongs.slice().sort((a,b)=>(nliW(a.p)||0)-(nliW(b.p)||0));
+  const totalBl=gs.reduce((a,g)=>a+g.blindN,0);
+  let dt='<div class="scrollv"><table style="font-size:12px"><thead><tr><th style="text-align:left">동</th>'+(single?'':'<th style="text-align:left">지자체</th>')+'<th>인구</th><th>종합</th><th>등급</th><th style="text-align:left">최약 도메인</th></tr></thead><tbody>';
+  allD.forEach(function(o){var p=o.p,nv=nliW(p)||0,gr=gradeOf(p),bd=blindSet.has(p.adm_nm);var wd=DKEYS.map(function(d){return [d,p['score_'+d]];}).filter(function(x){return x[1]!=null;}).sort(function(a,b){return a[1]-b[1];})[0]||['D1',0];dt+='<tr onclick="goDetail(\''+p.adm_nm+'\')" style="cursor:pointer'+(bd?';background:#fbf1ec':'')+'"><td style="text-align:left"><i style="width:8px;height:8px;border-radius:2px;background:'+dcol(o.k)+';display:inline-block;margin-right:5px"></i>'+p.adm_nm+(bd?' <span style="color:#b0603f;font-size:10px;font-weight:700">●사각</span>':'')+'</td>'+(single?'':'<td style="text-align:left" class="muted">'+gs[o.k].sgg+'</td>')+'<td class="n">'+nf(p.pop_total)+'</td><td class="n"><b style="color:'+color(nv)+'">'+Math.round(nv)+'</b></td><td class="n"><span style="color:'+GC[gr]+';font-weight:800">'+gr+'</span></td><td style="text-align:left">'+DOMINFO[wd[0]][0]+SHORT[wd[0]]+' <b style="color:#b0603f">'+Math.round(wd[1])+'</b></td></tr>';});
+  dt+='</tbody></table></div>';
   // 산점도 축 옵션
   const xo=['dens','price','eld','yth','apt','old','pop'],yo=['NLI'].concat(DKEYS);
   const sel=(id,opts,def)=>'<select id="'+id+'" onchange="renderDStatScatter()" style="font-size:12px;padding:4px 8px">'+opts.map(k=>'<option value="'+k+'"'+(k===def?' selected':'')+'>'+VARS[k]+'</option>').join('')+'</select>';
@@ -1081,9 +1095,9 @@ function openDiagStat(){
     +'<div class="sc"><h4>함께 갖춰지는 도메인 <span>관할 동 기준 · 두 도메인이 같이 좋은 정도(초록=동반)</span></h4><div style="overflow:auto">'+dc+'</div></div>'
     +'<div class="sc"><h4>지역 특성 ↔ 생활여건 <span>인구밀도·고령 등이 도메인과 연관되는 정도(초록=정비례)</span></h4><div style="overflow:auto">'+rh+'</div></div>'
     +'<div class="sc"><h4>지자체 × 도메인 점수 <span>평균 점수 · 초록 높음</span></h4><div style="overflow:auto">'+hm+'</div></div>'
-    +'<div class="sc span2"><h4>⣿ 관할 동 산점도 <span>축 선택 · 점=동(호버·클릭) · 색=지자체</span></h4><div class="flex" style="gap:8px;margin-bottom:8px;font-size:12px">X '+sel('dsX',xo,'dens')+' Y '+sel('dsY',yo,'NLI')+' <span id="dsReg" class="muted"></span></div><div id="dsScatterBox"></div></div>'
+    +'<div class="sc wide"><h4>관할 동 산점도 <span>축 선택 · 점=동(호버·클릭) · 색=지자체</span></h4><div class="flex" style="gap:8px;margin-bottom:8px;font-size:12px">X '+sel('dsX',xo,'dens')+' Y '+sel('dsY',yo,'NLI')+' <span id="dsReg" class="muted"></span></div><div id="dsScatterBox"></div></div>'
     +'<div class="sc"><h4>도메인 편차 표 <span>전국 지자체 평균 대비 · 행별 최고 초록</span></h4>'+t+'</div>'
-    +(bl?'<div class="sc"><h4>사각지대 동 <span>클릭 → 지도 상세</span></h4>'+bl+'</div>':'')
+    +'<div class="sc full"><h4>관할 동 전체 <span>'+dongs.length+'개 · 종합지수 낮은 순 · <b style="color:#b0603f">●사각</b> 사각지대('+totalBl+'건) · 스크롤 · 클릭→지도</span></h4>'+dt+'</div>'
     +'</div>';
   document.getElementById('diagStatModal').style.display='flex';
   renderDStatScatter();
