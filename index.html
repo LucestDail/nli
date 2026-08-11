@@ -195,9 +195,9 @@
  .inswrap{max-width:1560px;padding-left:26px;padding-right:26px}
  .statwrap.inswrap{max-width:1560px}
  /* 진단 무스크롤 대시보드: 좌 리포트 · 우 순위표(각자 내부 스크롤) */
- .diagdash{display:grid;grid-template-columns:minmax(0,440px) 1fr;gap:16px;align-items:start}
+ .diagdash{display:grid;grid-template-columns:1fr minmax(0,440px);gap:16px;align-items:start}
  .diagdash>.card{max-height:76vh;overflow:auto}
- @media(max-width:900px){.diagdash{grid-template-columns:1fr}.diagdash>.card{max-height:none}.diagdash>.card:last-child{max-height:60vh}}
+ @media(max-width:900px){.diagdash{grid-template-columns:1fr}.diagdash>.card{max-height:none}.diagdash>.card:first-child{max-height:56vh}}
  .statdash,.statdash>.card{min-width:0}
  #regHeat,#domCorr,#sidoDom{max-width:100%}
  /* 데스크톱 전용 도구(복사·CSV·인쇄·공유) — 모바일 숨김(간단 조회/열람만) */
@@ -297,6 +297,11 @@
    <div id="cmpRadar"></div>
    <div id="cmpBody"></div>
  </div>
+
+ <div id="diagStatModal" class="rmodal" style="display:none" onclick="if(event.target===this)closeDiagStat()"><div class="rmbox" style="width:660px;max-width:100%;max-height:88vh">
+   <div class="rmhd"><b>📊 통계 분석</b><span class="rmclose" onclick="closeDiagStat()">✕</span></div>
+   <div id="diagStatBody"></div>
+ </div></div>
 
  <div class="view map" id="v-map" style="display:flex">
    <button class="asideToggle" id="asideToggle" aria-label="필터 열기">☰ 지표·필터</button>
@@ -422,15 +427,16 @@
 
  <div class="view" id="v-diag" style="display:none"><div class="wrap inswrap">
    <h2>지역 생활여건 진단 <span class="muted" style="font-size:14px;font-weight:400">— 지자체 229곳</span></h2>
-   <div class="sub" style="margin-bottom:12px">시군구 단위 <b>취약 도메인</b>·<b>사각지대 동</b>(인구 1만+ 하위 20%) 진단 · 우측 표에서 지자체를 고르면 좌측 리포트가 갱신됩니다.</div>
+   <div class="sub" style="margin-bottom:12px">시군구 단위 <b>취약 도메인</b>·<b>사각지대 동</b>(인구 1만+ 하위 20%) 진단 · <b>좌측 표에서 지자체를 고르면 우측 리포트가 갱신</b>됩니다. ⊕로 여러 곳을 담아 비교하거나 <b>통계 분석</b>을 보세요.</div>
    <div class="flex" style="margin-bottom:12px">
+     <input type="text" id="diagSearch" placeholder="🔎 지자체·동 검색 (예: 강남, 역삼)" style="width:230px" autocomplete="off">
      <select id="diagSido"></select>
      <div class="seg" id="diagSortSeg" style="width:280px"><button data-s="nli" class="on">취약(평균지수 낮은) 순</button><button data-s="blind">사각지대 많은 순</button></div>
      <span class="muted" id="diagCount"></span></div>
    <div id="diagCmp" style="display:none;margin-bottom:12px"></div>
    <div class="diagdash">
-     <div id="diagCard" class="card"></div>
      <div class="card" style="padding:0;overflow:auto"><table id="diagTable"></table></div>
+     <div id="diagCard" class="card"></div>
    </div>
  </div></div>
 
@@ -996,7 +1002,7 @@ function diagCardHTML(g,rankOf,total){
   return `<div class="flex" style="justify-content:space-between;align-items:flex-start;gap:12px">
     <div style="min-width:0"><h3 style="margin:0 0 4px">${g.sido} ${g.sgg}</h3>
       <div class="muted">전국 취약순위 <b style="color:var(--terra)">${rankOf.get(g.key)}</b>/${total} · 인구 ${g.pop.toLocaleString()}명 · ${g.dongs.length}개 동 · 등급 ${gdist||'—'}</div></div>
-    <div class="flex" style="gap:6px;flex-shrink:0;justify-content:flex-end"><button class="btn" onclick="diagToMap()">🗺 지도</button><span class="dltools flex" style="gap:6px"><button class="btn" onclick="copyDiagReport(this)">📋 복사</button><button class="btn" onclick="downloadDiagCSV()">⬇ CSV</button><button class="btn" onclick="printDiagReport()">🖨 인쇄</button></span></div></div>
+    <div class="flex" style="gap:6px;flex-shrink:0;justify-content:flex-end"><button class="btn" onclick="diagToMap()">🗺 지도</button><button class="btn on" onclick="openDiagStat()">📊 통계 분석</button><span class="dltools flex" style="gap:6px"><button class="btn" onclick="copyDiagReport(this)">📋 복사</button><button class="btn" onclick="downloadDiagCSV()">⬇ CSV</button><button class="btn" onclick="printDiagReport()">🖨 인쇄</button></span></div></div>
    <div class="dkpi">
      <div class="kpi"><b style="color:${color(g.nli)}">${g.nli.toFixed(1)}</b><span>평균 종합지수 · 전국 백분위</span></div>
      <div class="kpi"><b style="color:var(--terra)">${g.blindN}</b><span>사각지대 · 동 × 도메인</span></div></div>
@@ -1013,8 +1019,10 @@ function renderDiag(){
   const sf=document.getElementById('diagSido');
   if(!sf.options.length){sf.innerHTML='<option value="">전국</option>'+[...new Set(rows.map(r=>r.sido))].sort().map(s=>`<option>${s}</option>`).join('');sf.onchange=()=>{diagSel=null;renderDiag();};customSelect(sf);}
   document.querySelectorAll('#diagSortSeg button').forEach(b=>b.onclick=()=>{diagSort=b.dataset.s;document.querySelectorAll('#diagSortSeg button').forEach(x=>x.classList.toggle('on',x===b));renderDiag();});
+  const dsr=document.getElementById('diagSearch');if(dsr&&!dsr._w){dsr._w=1;dsr.oninput=()=>{diagSel=null;renderDiag();};}
   const natRank=[...rows].sort((a,b)=>a.nli-b.nli),rankOf=new Map();natRank.forEach((r,i)=>rankOf.set(r.key,i+1));
   const fsido=sf.value;let list=rows.filter(r=>!fsido||r.sido===fsido);
+  const dq=((document.getElementById('diagSearch')||{}).value||'').trim();if(dq)list=list.filter(r=>(r.sgg+' '+r.sido).includes(dq)||r.dongs.some(p=>(p.adm_nm||'').includes(dq)));
   list.sort(diagSort==='blind'?(a,b)=>b.blindN-a.blindN||a.nli-b.nli:(a,b)=>a.nli-b.nli);
   document.getElementById('diagCount').textContent=list.length+'개 지자체';
   if(!diagSel||!rows.find(r=>r.key===diagSel))diagSel=list[0]?list[0].key:null;
@@ -1035,6 +1043,24 @@ function renderDiag(){
   document.getElementById('diagTable').innerHTML=h;
 }
 function selectDiag(k){diagSel=k;renderDiag();}
+function closeDiagStat(){document.getElementById('diagStatModal').style.display='none';}
+function openDiagStat(){
+  if(!diagCur)return;const g=diagCur.g,P=diagReportParts(g),nf=n=>(n||0).toLocaleString();
+  const prof=DKEYS.map(function(dd){const dv=Math.round((g.rankDom.find(x=>x[0]===dd)||[0,0])[1]),w=Math.min(50,Math.abs(dv))/50*100;
+    return '<div style="display:flex;align-items:center;gap:8px;margin:5px 0;font-size:12.5px"><span style="width:92px;text-align:right;flex-shrink:0">'+DOMINFO[dd][0]+' '+SHORT[dd]+'</span>'
+     +'<div style="flex:1;display:flex;align-items:center"><div style="flex:1;text-align:right"><span style="display:inline-block;height:12px;border-radius:3px;background:#b0603f;width:'+(dv<0?w:0)+'%"></span></div><div style="width:1px;height:16px;background:#d8cdb8"></div><div style="flex:1"><span style="display:inline-block;height:12px;border-radius:3px;background:#2f6b4e;width:'+(dv>=0?w:0)+'%"></span></div></div>'
+     +'<span style="width:34px;font-weight:700;flex-shrink:0;color:'+(dv<0?'#b0603f':'#2f6b4e')+'">'+(dv>=0?'+':'')+dv+'</span></div>';}).join('');
+  const bl=g.blind.slice(0,10).map(function(b){return '<tr><td style="text-align:left">'+b.p.adm_nm+'</td><td class="n">'+nf(b.p.pop_total)+'명</td><td style="text-align:left">'+METRICS[b.d]+'</td><td class="n" style="color:#b0603f;font-weight:700">'+Math.round(b.v)+'</td></tr>';}).join('');
+  document.getElementById('diagStatBody').innerHTML=
+    '<div class="flex" style="justify-content:space-between;align-items:baseline;gap:10px"><h2 style="margin:0">'+g.sido+' '+g.sgg+'</h2><div class="muted">전국 취약순위 <b style="color:var(--terra)">'+diagCur.rank+'</b>/'+diagCur.total+'</div></div>'
+    +'<div class="dkpi" style="margin-top:12px"><div class="kpi"><b style="color:'+color(g.nli)+'">'+g.nli.toFixed(1)+'</b><span>평균 종합지수 · 백분위</span></div><div class="kpi"><b style="color:var(--terra)">'+g.blindN+'</b><span>사각지대 · 동×도메인</span></div><div class="kpi"><b>'+g.dongs.length+'</b><span>관할 동</span></div><div class="kpi"><b>'+nf(g.pop)+'</b><span>인구(명)</span></div></div>'
+    +'<h3 style="margin:18px 0 6px">도메인 프로파일 <span class="muted" style="font-weight:400;font-size:13px">전국 지자체 평균(중앙선) 대비 · 좌 취약 / 우 강점</span></h3>'+prof
+    +'<h3 style="margin:18px 0 6px">등급 분포 <span class="muted" style="font-weight:400;font-size:13px">관할 '+g.dongs.length+'개 동</span></h3><div style="font-size:14px">'+(P.gdist||'—')+'</div>'
+    +'<h3 style="margin:18px 0 6px">🎯 사각지대 동 <span class="muted" style="font-weight:400;font-size:13px">'+g.blindN+'건 · 인구 많은 순 상위 10</span></h3>'
+    +(g.blindN?'<div style="overflow:auto"><table style="font-size:12.5px"><tr><th style="text-align:left">동</th><th>인구</th><th style="text-align:left">취약 도메인</th><th>점수</th></tr>'+bl+'</table></div>':'<div class="muted">인구 1만+ 동에서 하위 20% 도메인 없음 — 사각지대 없음.</div>')
+    +'<div class="muted" style="font-size:11px;margin-top:14px">점수는 전국 읍면동 상대평가(백분위) 기준. 데이터: 공공데이터포털·SGIS·심평원 등.</div>';
+  document.getElementById('diagStatModal').style.display='flex';
+}
 function downloadDiagCSV(){
   if(!diagCur)return;const g=diagCur.g;
   if(!g.blindN){alert('사각지대 없음 — 다운로드할 데이터가 없습니다');return;}
