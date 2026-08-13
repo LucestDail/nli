@@ -198,22 +198,24 @@
  .diagdash{display:grid;grid-template-columns:1fr minmax(0,440px);gap:16px;align-items:stretch}
  .diagdash>.card{height:68vh;overflow:auto}
  @media(max-width:900px){.diagdash{grid-template-columns:1fr}.diagdash>.card{height:auto}.diagdash>.card:first-child{max-height:56vh}}
- /* 통계 모달 대시보드 그리드 */
- /* 고정 개수(선택 N지자체) 카드는 flex-grow로 각 행의 폭을 꽉 채운다(빈공간 방지) */
- .statgrid{display:flex;flex-wrap:wrap;gap:14px;margin-top:16px;align-items:flex-start}
- .statgrid .sc{flex:1 1 320px;background:#faf8f4;border:1px solid var(--line);border-radius:14px;padding:15px 16px;min-width:0;overflow:auto}
+ /* 통계 모달 대시보드 그리드 — 카드 세로 고정높이 + 내부 스크롤(내용 부족해도 배경 카드는 채움, 넘치면 카드 안에서 스크롤) */
+ .statgrid{display:flex;flex-wrap:wrap;gap:14px;margin-top:16px;align-items:stretch}
+ .statgrid .sc{flex:1 1 320px;display:flex;flex-direction:column;height:400px;background:#faf8f4;border:1px solid var(--line);border-radius:14px;padding:15px 16px;min-width:0;overflow:hidden}
  .statgrid .sc.wide{flex:2 1 520px}
  .statgrid .sc.full,.statgrid .sc.span2{flex-basis:100%}
- .statgrid td[title],.statgrid circle[onclick]{cursor:pointer}
- .statgrid .sc h4{margin:0 0 10px;font-size:13.5px;color:var(--ink);font-weight:800;display:flex;align-items:baseline;gap:6px;flex-wrap:wrap}
+ .scb{flex:1 1 auto;overflow:auto;min-height:0}
+ .statgrid td[title]{cursor:pointer}
+ #dsScatterBox{position:relative}#dsScatterBox circle{cursor:pointer}
+ .dstip{position:absolute;pointer-events:none;background:#132a36;color:#fff;font-size:11.5px;line-height:1.55;padding:7px 10px;border-radius:8px;z-index:5;white-space:nowrap;box-shadow:0 6px 18px rgba(0,0,0,.28)}
+ .statgrid .sc h4{margin:0 0 10px;font-size:13.5px;color:var(--ink);font-weight:800;display:flex;align-items:baseline;gap:6px;flex-wrap:wrap;flex-shrink:0}
  .statgrid .sc h4 span{font-weight:400;font-size:11.5px;color:var(--mid)}
- /* 늘어나는 대상(관할 동)은 세로 스크롤로 더 많은 대상을 본다 */
- .scrollv{max-height:460px;overflow-y:auto;border:1px solid var(--line2);border-radius:10px}
+ /* 관할 동 표: 카드 내부 .scb가 스크롤 · thead sticky */
+ .scrollv{border:1px solid var(--line2);border-radius:10px}
  .scrollv table{width:100%;border-collapse:collapse}
  .scrollv th,.scrollv td{padding:6px 10px;border-bottom:1px solid var(--line2)}
  .scrollv thead th{position:sticky;top:0;background:#f1ede6;z-index:1;font-size:11.5px}
  .statgrid table.heat{width:100%}
- @media(max-width:760px){.statgrid .sc{flex-basis:100%}}
+ @media(max-width:760px){.statgrid .sc{flex-basis:100%;height:auto;max-height:74vh}}
  .statdash,.statdash>.card{min-width:0}
  #regHeat,#domCorr,#sidoDom{max-width:100%}
  /* 데스크톱 전용 도구(복사·CSV·인쇄·공유) — 모바일 숨김(간단 조회/열람만) */
@@ -317,6 +319,11 @@
  <div id="diagStatModal" class="rmodal" style="display:none" onclick="if(event.target===this)closeDiagStat()"><div class="rmbox" style="width:97vw;max-width:1600px;max-height:94vh">
    <div class="rmhd"><b>통계 분석</b><span class="rmclose" onclick="closeDiagStat()">✕</span></div>
    <div id="diagStatBody"></div>
+ </div></div>
+
+ <div id="dongModal" class="rmodal" style="display:none" onclick="if(event.target===this)closeDongModal()"><div class="rmbox" style="width:540px;max-width:100%;max-height:90vh">
+   <div class="rmhd"><b>동네 상세 정보</b><span class="rmclose" onclick="closeDongModal()">✕</span></div>
+   <div id="dongModalBody"></div>
  </div></div>
 
  <div class="view map" id="v-map" style="display:flex">
@@ -662,7 +669,7 @@ function recCard(p,rank,score){
     +'<div class="flex" style="justify-content:space-between;align-items:baseline;gap:8px"><b style="font-size:13.5px">'+rank+'. '+fullN(p)+'</b><span style="color:'+color(score)+';font-weight:800;font-size:18px">'+score.toFixed(1)+'</span></div>'
     +'<div class="muted" style="margin:5px 0 9px;font-size:11.5px">'+(p.price!=null?'평당 '+Math.round(p.price*3.3058).toLocaleString()+'만':'가격정보 없음')+(p._km!=null?' · 🚇 '+p._km.toFixed(1)+'km(직선)':'')+'</div>'
     +'<div style="margin-bottom:10px">'+chips+'</div>'
-    +'<div class="flex" style="gap:6px"><button class="btn" onclick="goDetail(\''+p.adm_nm+'\')">상세</button><button class="btn" onclick="shareDong(\''+p.adm_nm+'\',this)">공유</button></div></div>';
+    +'<div class="flex" style="gap:6px"><button class="btn on" onclick="openDongModal(\''+p.adm_nm+'\')">상세</button><button class="btn" onclick="shareDong(\''+p.adm_nm+'\',this)">공유</button></div></div>';
 }
 // 가성비 동네(종합지수 백분위 − 가격 백분위) — 통계 탭에서 추천 탭으로 이동
 function renderValueRank(){
@@ -1022,6 +1029,13 @@ function renderDiag(){
 function selectDiag(k){diagSel=k;renderDiag();}
 function pickDiag(k){diagSel=k;if(!diagCmp.includes(k))diagCmp.push(k);renderDiag();}
 function closeDiagStat(){document.getElementById('diagStatModal').style.display='none';}
+function openDongModal(adm){const f=F.find(x=>x.properties.adm_nm===adm);if(!f)return;const p=f.properties;
+  let body=detailHTML(p).replace(/<span class="close"[\s\S]*?<\/span>/,'');
+  body+='<div class="flex" style="margin-top:14px"><button class="btn on" style="width:100%;padding:11px" onclick="closeDongModal();goDetail(\''+adm+'\')">지도에서 보기 →</button></div>';
+  document.getElementById('dongModalBody').innerHTML=body;
+  document.getElementById('dongModal').style.display='flex';
+  growBars();fillTransit(p);}
+function closeDongModal(){document.getElementById('dongModal').style.display='none';}
 let _dstat=null;
 function corrCol(r){if(r==null||isNaN(r))return '#f0ede7';const a=Math.min(1,Math.abs(r)),c=r>=0?[47,107,78]:[176,96,63];return 'rgba('+c[0]+','+c[1]+','+c[2]+','+(0.1+0.78*a).toFixed(2)+')';}
 function openDiagStat(){
@@ -1079,18 +1093,18 @@ function openDiagStat(){
   const xo=['dens','price','eld','yth','apt','old','pop'],yo=['NLI'].concat(DKEYS);
   const sel=(id,opts,def)=>'<select id="'+id+'" onchange="renderDStatScatter()" style="font-size:12px;padding:4px 8px">'+opts.map(k=>'<option value="'+k+'"'+(k===def?' selected':'')+'>'+VARS[k]+'</option>').join('')+'</select>';
   document.getElementById('diagStatBody').innerHTML=
-    '<div class="flex" style="justify-content:space-between;align-items:baseline;gap:10px;flex-wrap:wrap"><h2 style="margin:0">'+(single?gs[0].sido+' '+gs[0].sgg:gs.length+'개 지자체 비교 분석')+'</h2><div class="muted">관할 동 '+dongs.length+'개 · 표 편차=전국 지자체 평균 대비 · 셀·점 호버 시 상세, 동 클릭 시 지도</div></div>'
+    '<div class="flex" style="justify-content:space-between;align-items:baseline;gap:10px;flex-wrap:wrap"><h2 style="margin:0">'+(single?gs[0].sido+' '+gs[0].sgg:gs.length+'개 지자체 비교 분석')+'</h2><div class="muted">관할 동 '+dongs.length+'개 · 표 편차=전국 지자체 평균 대비 · 셀·점에 커서=상세 · 하단 관할 동 표에서 동 클릭=지도</div></div>'
     +'<div class="statgrid">'
-    +'<div class="sc"><h4>도메인 프로파일 <span>레이더 · 평균 점수(백분위)</span></h4><div style="text-align:center">'+radar+'</div>'+legend+'</div>'
-    +'<div class="sc"><h4>종합지수 · 사각지대</h4><div class="fld" style="font-size:11px">평균 종합지수</div>'+nliBars+'<div class="fld" style="font-size:11px;margin-top:12px">사각지대(동×도메인)</div>'+blBars+'</div>'
-    +'<div class="sc"><h4>함께 갖춰지는 도메인 <span>관할 동 기준 · 두 도메인이 같이 좋은 정도(초록=동반)</span></h4><div style="overflow:auto">'+dc+'</div></div>'
-    +'<div class="sc"><h4>지역 특성 ↔ 생활여건 <span>인구밀도·고령 등이 도메인과 연관되는 정도(초록=정비례)</span></h4><div style="overflow:auto">'+rh+'</div></div>'
-    +'<div class="sc"><h4>지자체 × 도메인 점수 <span>평균 점수 · 초록 높음</span></h4><div style="overflow:auto">'+hm+'</div></div>'
-    +'<div class="sc wide"><h4>관할 동 산점도 <span>축 선택 · 점=동(호버·클릭) · 색=지자체</span></h4><div class="flex" style="gap:8px;margin-bottom:8px;font-size:12px">X '+sel('dsX',xo,'dens')+' Y '+sel('dsY',yo,'NLI')+' <span id="dsReg" class="muted"></span></div><div id="dsScatterBox"></div></div>'
+    +'<div class="sc"><h4>도메인 프로파일 <span>레이더 · 평균 점수(백분위)</span></h4><div class="scb"><div style="text-align:center">'+radar+'</div>'+legend+'</div></div>'
+    +'<div class="sc"><h4>종합지수 · 사각지대</h4><div class="scb"><div class="fld" style="font-size:11px">평균 종합지수</div>'+nliBars+'<div class="fld" style="font-size:11px;margin-top:12px">사각지대(동×도메인)</div>'+blBars+'</div></div>'
+    +'<div class="sc"><h4>함께 갖춰지는 도메인 <span>관할 동 기준 · 두 도메인이 같이 좋은 정도(초록=동반)</span></h4><div class="scb">'+dc+'</div></div>'
+    +'<div class="sc"><h4>지역 특성 ↔ 생활여건 <span>인구밀도·고령 등이 도메인과 연관되는 정도(초록=정비례)</span></h4><div class="scb">'+rh+'</div></div>'
+    +'<div class="sc"><h4>지자체 × 도메인 점수 <span>평균 점수 · 초록 높음</span></h4><div class="scb">'+hm+'</div></div>'
+    +'<div class="sc wide"><h4>관할 동 산점도 <span>축 선택 · 점=동(커서 올리면 정보) · 색=지자체</span></h4><div class="flex" style="gap:8px;margin-bottom:8px;font-size:12px;flex-shrink:0">X '+sel('dsX',xo,'dens')+' Y '+sel('dsY',yo,'NLI')+' <span id="dsReg" class="muted"></span></div><div class="scb"><div id="dsScatterBox"></div></div></div>'
     +'</div>'
     +'<div class="statgrid">'
-    +'<div class="sc"><h4>도메인 편차 표 <span>선택 지자체 · 전국 지자체 평균 대비 · 행별 최고 초록</span></h4>'+t+'</div>'
-    +'<div class="sc wide"><h4>관할 동 전체 <span>'+dongs.length+'개 · 종합지수 낮은 순 · <b style="color:#b0603f">●사각</b> 사각지대('+totalBl+'건) · 스크롤 · 클릭→지도</span></h4>'+dt+'</div>'
+    +'<div class="sc"><h4>도메인 편차 표 <span>선택 지자체 · 전국 지자체 평균 대비 · 행별 최고 초록</span></h4><div class="scb">'+t+'</div></div>'
+    +'<div class="sc wide"><h4>관할 동 전체 <span>'+dongs.length+'개 · 종합지수 낮은 순 · <b style="color:#b0603f">●사각</b> 사각지대('+totalBl+'건) · 스크롤 · 클릭→지도</span></h4><div class="scb">'+dt+'</div></div>'
     +'</div>';
   document.getElementById('diagStatModal').style.display='flex';
   renderDStatScatter();
@@ -1102,13 +1116,17 @@ function renderDStatScatter(){
   if(pts.length<3){box.innerHTML='<div class="muted" style="font-size:12px">표시할 동 데이터가 부족합니다.</div>';document.getElementById('dsReg').textContent='';return;}
   const xs=pts.map(a=>a.x),ys=pts.map(a=>a.y),r=ols(xs,ys),xmin=Math.min.apply(null,xs),xmax=Math.max.apply(null,xs),ymin=Math.min.apply(null,ys),ymax=Math.max.apply(null,ys);
   const W=880,H=320,pd=44,sx=v=>pd+(v-xmin)/((xmax-xmin)||1)*(W-2*pd),sy=v=>H-pd-(v-ymin)/((ymax-ymin)||1)*(H-2*pd);
-  let g='<svg viewBox="0 0 '+W+' '+H+'" preserveAspectRatio="xMidYMid meet" style="width:100%;max-height:440px;display:block"><line x1="'+pd+'" y1="'+(H-pd)+'" x2="'+(W-pd)+'" y2="'+(H-pd)+'" stroke="#ddd"/><line x1="'+pd+'" y1="'+pd+'" x2="'+pd+'" y2="'+(H-pd)+'" stroke="#ddd"/>';
-  g+=pts.map(a=>'<circle cx="'+sx(a.x).toFixed(1)+'" cy="'+sy(a.y).toFixed(1)+'" r="3.6" fill="'+_dstat.dcol(a.k)+'" opacity=".72" style="cursor:pointer" onclick="goDetail(\''+a.adm+'\')"><title>'+a.nm+' · '+VARS[xk]+' '+a.x.toFixed(1)+' · '+VARS[yk]+' '+a.y.toFixed(1)+'</title></circle>').join('');
+  let g='<svg viewBox="0 0 '+W+' '+H+'" preserveAspectRatio="xMidYMid meet" style="width:100%;height:auto;max-height:320px;display:block"><line x1="'+pd+'" y1="'+(H-pd)+'" x2="'+(W-pd)+'" y2="'+(H-pd)+'" stroke="#ddd"/><line x1="'+pd+'" y1="'+pd+'" x2="'+pd+'" y2="'+(H-pd)+'" stroke="#ddd"/>';
+  window._dsScatter={pts:pts,xl:VARS[xk],yl:VARS[yk]};
+  g+=pts.map(function(a,i){return '<circle cx="'+sx(a.x).toFixed(1)+'" cy="'+sy(a.y).toFixed(1)+'" r="3.8" fill="'+_dstat.dcol(a.k)+'" opacity=".72" onmouseenter="dsTip(event,'+i+')" onmousemove="dsTipAt(event)" onmouseleave="dsTipOff()" onclick="dsTip(event,'+i+')"></circle>';}).join('');
   if(!isNaN(r.slope))g+='<line x1="'+sx(xmin).toFixed(1)+'" y1="'+sy(r.intercept+r.slope*xmin).toFixed(1)+'" x2="'+sx(xmax).toFixed(1)+'" y2="'+sy(r.intercept+r.slope*xmax).toFixed(1)+'" stroke="#c0392b" stroke-width="2"/>';
   g+='<text x="'+(W/2)+'" y="'+(H-8)+'" font-size="12" text-anchor="middle" fill="#5b6b77">'+VARS[xk]+' →</text><text x="14" y="'+(H/2)+'" font-size="12" fill="#5b6b77" text-anchor="middle" transform="rotate(-90 14 '+(H/2)+')">↑ '+VARS[yk]+'</text></svg>';
-  box.innerHTML=g;
+  box.innerHTML=g+'<div id="dsTip" class="dstip" style="display:none"></div>';
   const R=r.r||0;document.getElementById('dsReg').innerHTML='· <b>R² '+r.r2.toFixed(2)+'</b> · r '+R.toFixed(2)+' · n='+r.n;
 }
+function dsTip(e,i){var t=document.getElementById('dsTip'),S=window._dsScatter;if(!t||!S)return;var a=S.pts[i];t.innerHTML='<b>'+a.nm+'</b><br>'+S.xl+' <b>'+(+a.x).toFixed(1)+'</b> · '+S.yl+' <b>'+(+a.y).toFixed(1)+'</b>';t.style.display='block';dsTipAt(e);}
+function dsTipAt(e){var t=document.getElementById('dsTip');if(!t||t.style.display==='none')return;var box=document.getElementById('dsScatterBox');if(!box)return;var b=box.getBoundingClientRect();var x=e.clientX-b.left,y=e.clientY-b.top;if(x>b.width-150)x-=155;else x+=14;t.style.left=x+'px';t.style.top=(y+14)+'px';}
+function dsTipOff(){var t=document.getElementById('dsTip');if(t)t.style.display='none';}
 function toggleDiagCmp(k){const i=diagCmp.indexOf(k);if(i>=0)diagCmp.splice(i,1);else diagCmp.push(k);renderDiag();}
 function renderDiagCmp(){const el=document.getElementById('diagCmp');if(el){el.style.display='none';el.innerHTML='';}}
 function diagToMap(){
