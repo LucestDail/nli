@@ -535,7 +535,7 @@ function initMap(){
   document.getElementById('popmin').oninput=e=>{popmin=+e.target.value;document.getElementById('popval').textContent=popmin?popmin.toLocaleString()+'+':'전체';layer.setStyle(mStyle)};
   mRedraw();initPoints();
 }
-const PT_TYPES={em:['응급의료','#c0392b'],ph:['약국','#2f6b4e'],sc:['학교','#5b6bd0'],pk:['공원','#6f9e86'],ev:['전기차','#d4a056'],wf:['사회복지','#8e5db0']};
+const PT_TYPES={em:['응급의료','#c0392b'],ph:['약국','#2f6b4e'],cd:['어린이집','#e07a9c'],sc:['학교','#5b6bd0'],lb:['도서관','#4a7bd0'],pk:['공원','#6f9e86'],sp:['체육시설','#3aa88a'],pg:['주차장','#7a8290'],ev:['전기차','#d4a056'],wf:['사회복지','#8e5db0'],sr:['경로당','#c47c52']};
 let ptOn={},ptLayer;const MINZ=12;
 function initPoints(){
   ptLayer=L.layerGroup().addTo(map);
