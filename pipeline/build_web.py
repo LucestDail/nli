@@ -46,18 +46,6 @@ TEMPLATE = r'''<!DOCTYPE html>
  nav .tab{padding:8px 15px;border-radius:999px;cursor:pointer;font-size:13.5px;font-weight:500;color:#a9c0c8;transition:.18s}
  nav .tab:hover{background:rgba(255,255,255,.08);color:#fff}
  nav .tab.on{background:#fff;color:var(--ocean);font-weight:600}
- /* 여정 스트립 — 3탭을 하나의 시작→끝 여정으로 잇는 연결 조직(단색) */
- #journey{flex-shrink:0;display:flex;align-items:center;gap:8px;padding:8px 20px;background:#f3efe8;border-bottom:1px solid var(--line);font-size:12.5px;overflow-x:auto;white-space:nowrap;scrollbar-width:none}
- #journey::-webkit-scrollbar{display:none}
- #journey .jstep{display:inline-flex;align-items:center;gap:6px;padding:4px 11px;border-radius:999px;cursor:pointer;color:var(--mid);transition:.15s;flex-shrink:0}
- #journey .jstep b{display:inline-flex;align-items:center;justify-content:center;width:17px;height:17px;border-radius:50%;background:#ddd5c8;color:#6a6255;font-size:11px;font-weight:800;flex-shrink:0}
- #journey .jstep:hover{color:var(--ink)}
- #journey .jstep.on{background:#fff;color:var(--ink);font-weight:700;box-shadow:0 1px 4px rgba(0,0,0,.08)}
- #journey .jstep.on b{background:var(--ocean);color:#fff}
- #journey .jsep{color:var(--light);flex-shrink:0}
- #journey .jcta{margin-left:auto;flex-shrink:0;color:var(--ocean);font-weight:700;text-decoration:none;padding:4px 13px;border:1px solid #cfe0e5;border-radius:999px;background:#fff}
- #journey .jcta:hover{background:var(--ocean);color:#fff;border-color:var(--ocean)}
- @media(max-width:760px){#journey{padding:7px 10px;gap:5px;font-size:11px}#journey .jstep{padding:3px 8px}#journey .jcta{padding:3px 10px}}
  .tabs{display:flex;align-items:center;gap:2px}
  .iseg{display:flex;gap:6px;padding:9px 16px;background:#fff;border-bottom:1px solid var(--line);flex-shrink:0;z-index:90}
  .iseg button{padding:8px 16px;border:1px solid var(--line);background:#fff;border-radius:999px;cursor:pointer;font-size:13px;font-family:var(--sans);color:var(--mid);font-weight:600;transition:.15s}
@@ -321,14 +309,6 @@ TEMPLATE = r'''<!DOCTYPE html>
      <div class="tab" data-v="insight">인사이트</div>
    </div>
  </nav>
- <div id="journey" aria-label="이용 여정">
-   <span class="jstep on" data-v="map" onclick="showTab('map')"><b>1</b> 전국을 9도메인으로</span>
-   <span class="jsep">→</span>
-   <span class="jstep" data-v="find" onclick="showTab('find')"><b>2</b> 내 동네 찾기</span>
-   <span class="jsep">→</span>
-   <span class="jstep" data-v="insight" onclick="showTab('insight')"><b>3</b> 우리 지역 진단</span>
-   <a class="jcta" href="mailto:lucestdail@kakao.com?subject=%5B%EB%8F%99%EB%84%A4%EC%82%B4%EA%B8%B0%EC%A7%80%EC%88%98%5D%20%EB%8F%84%EC%9E%85%C2%B7%EC%A0%9C%ED%9C%B4%20%EB%AC%B8%EC%9D%98">도입·제휴 문의</a>
- </div>
  <div id="routeModal" class="rmodal" style="display:none" onclick="if(event.target===this)closeRoute()"><div class="rmbox">
    <div class="rmhd"><b id="rmTitle"></b><span class="rmclose" onclick="closeRoute()">✕</span></div>
    <div id="rmSummary" class="rmsum"></div>
@@ -532,7 +512,6 @@ function renderInsight(){renderDiag();}
 function showTab(v){
   if(!['map','find','insight'].includes(v))v='map';
   document.querySelectorAll('nav .tab').forEach(x=>x.classList.toggle('on',x.dataset.v===v));
-  document.querySelectorAll('#journey .jstep').forEach(x=>x.classList.toggle('on',x.dataset.v===v));
   const show = v==='map'?['map'] : v==='find'?['rec'] : ['diag'];
   document.getElementById('app').style.overflowY=(v==='map'?'hidden':'auto');
   ['map','rec','rank','compare','stats','diag'].forEach(x=>{const el=document.getElementById('v-'+x);if(!el)return;
@@ -672,6 +651,13 @@ function showDetail(p,focus){const d=document.getElementById('detail');d.innerHT
   // focus=true(검색·순위·딥링크로 진입)일 때만 지도 리프레이밍. 지도 직접클릭은 현재 위치 유지(확대상태 축소 방지)
   if(focus&&p._l&&map){map.invalidateSize();const b=p._l.getBounds();if(b&&b.isValid())map.fitBounds(b,{maxZoom:13,padding:[24,24]});}}
 function goDetail(adm){const f=F.find(x=>x.properties.adm_nm===adm);if(!f)return;document.querySelector('nav .tab[data-v=map]').click();showDetail(f.properties,true)}
+// 스토리 연결(기능 구성): 내 동네 상세 → 그 동네가 속한 지역(시군구) 진단으로 자연스럽게 이어짐
+function dongToDiag(adm){const f=F.find(x=>x.properties.adm_nm===adm);if(!f)return;
+  const ps=(f.properties.full_nm||'').split(' ');if(ps.length<2)return;const key=ps[0]+' '+ps[1];
+  try{closeDongModal();}catch(e){}
+  showTab('insight');
+  setTimeout(function(){const sb=document.getElementById('diagSearch');if(sb){sb.value=ps[1];}try{pickDiag(key);}catch(e){}
+    const el=document.getElementById('v-diag');if(el)el.scrollTop=0;},40);}
 // B2C 공유: 카톡 등에 바로 붙일 자동 문구 + 동네 딥링크 (모바일=네이티브 공유시트, 데스크톱=클립보드)
 function shareDong(adm,btn){
   const f=F.find(x=>x.properties.adm_nm===adm);if(!f)return;const p=f.properties;
@@ -741,13 +727,14 @@ function findDongHTML(p){const doms=DOMS.map(d=>[d,p['score_'+d]]).filter(x=>x[1
   const chip=(x,col)=>'<span class="dchip" style="border-color:'+col+'55;cursor:default"><b>'+DOMINFO[x[0]][0]+'</b>'+SHORT[x[0]]+' <i style="color:'+col+'">'+Math.round(x[1])+'</i></span>';
   const pr=p.price!=null?Math.round(p.price*3.3058).toLocaleString()+'만/평':'실거래 없음';
   const _r=nliRank.get(p.adm_nm),pct=_r==null?null:Math.max(1,Math.round((1-_r)*100));
+  const _sgg=(p.full_nm||'').split(' ')[1]||'';
   return '<div class="card"><div class="flex" style="justify-content:space-between;align-items:flex-start;gap:12px">'
     +'<div style="min-width:0"><h2 style="margin:0">'+fullN(p)+'</h2><div class="muted" style="margin-top:4px">'+(p.cohort||'')+' · 인구 '+(p.pop_total||0).toLocaleString()+'명 · 평당 '+pr+'</div>'
     +(pct?'<div style="margin-top:8px;display:inline-block;background:rgba(180,124,82,.12);color:var(--terra);font-weight:800;font-size:13px;border-radius:999px;padding:5px 14px">전국 상위 '+pct+'%</div>':'')+'</div>'
     +'<div style="text-align:right;flex-shrink:0"><span class="g" style="background:'+GC[gradeOf(p)]+';font-size:15px;padding:3px 10px">'+gradeOf(p)+'</span><div style="font-size:30px;font-weight:800;color:var(--ocean);line-height:1.15">'+nliW(p)+'</div><div class="muted" style="font-size:11px">종합 살기지수</div></div></div>'
     +'<div style="margin-top:16px"><div class="fld">강점 도메인</div><div style="margin-top:6px">'+strong.map(x=>chip(x,'#2f6b4e')).join('')+'</div></div>'
     +'<div style="margin-top:12px"><div class="fld">약한 도메인</div><div style="margin-top:6px">'+weak.map(x=>chip(x,'#b0603f')).join('')+'</div></div>'
-    +'<div class="flex" style="margin-top:18px;gap:8px"><button class="btn on" onclick="goDetail(\''+p.adm_nm+'\')">지도에서 자세히</button><button class="btn" onclick="addCmp(\''+p.adm_nm+'\')">⊕ 비교에 담기</button></div></div>';}
+    +(_sgg?'<div style="margin-top:14px;padding-top:13px;border-top:1px solid var(--line)"><a onclick="dongToDiag(\''+p.adm_nm+'\')" style="color:var(--ocean);cursor:pointer;font-weight:600;font-size:13px">이 동네가 속한 <b>'+_sgg+'</b> 생활여건 진단 보기 →</a></div>':'')+'<div class="flex" style="margin-top:14px;gap:8px"><button class="btn on" onclick="goDetail(\''+p.adm_nm+'\')">지도에서 자세히</button><button class="btn" onclick="addCmp(\''+p.adm_nm+'\')">⊕ 비교에 담기</button></div></div>';}
 function recRun(){
   const ww=PRESETS[REC_MAP[recHouse]]||PRESETS['균등'];
   let arr=SP.filter(p=>(p.pop_total||0)>0);
@@ -1061,7 +1048,8 @@ function pickDiag(k){diagSel=k;if(!diagCmp.includes(k))diagCmp.push(k);renderDia
 function closeDiagStat(){document.getElementById('diagStatModal').style.display='none';}
 function openDongModal(adm){const f=F.find(x=>x.properties.adm_nm===adm);if(!f)return;const p=f.properties;
   let body=detailHTML(p).replace(/<span class="close"[\s\S]*?<\/span>/,'');
-  body+='<div class="flex" style="margin-top:14px"><button class="btn on" style="width:100%;padding:11px" onclick="closeDongModal();goDetail(\''+adm+'\')">지도에서 보기 →</button></div>';
+  const _sgg=(p.full_nm||'').split(' ')[1]||'';
+  body+=(_sgg?'<div style="margin-top:14px;padding-top:12px;border-top:1px solid var(--line)"><a onclick="dongToDiag(\''+adm+'\')" style="color:var(--ocean);cursor:pointer;font-weight:600;font-size:13px">이 동네가 속한 <b>'+_sgg+'</b> 생활여건 진단 보기 →</a></div>':'')+'<div class="flex" style="margin-top:12px"><button class="btn on" style="width:100%;padding:11px" onclick="closeDongModal();goDetail(\''+adm+'\')">지도에서 보기 →</button></div>';
   document.getElementById('dongModalBody').innerHTML=body;
   document.getElementById('dongModal').style.display='flex';
   growBars();fillTransit(p);}
