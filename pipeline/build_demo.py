@@ -142,6 +142,7 @@ h2{font-size:clamp(23px,4.4vw,38px);font-weight:800;letter-spacing:-.02em}
 .lc{position:relative;display:block;text-decoration:none;text-align:left;background:rgba(255,255,255,.94);border:1px solid var(--line);border-radius:16px;padding:18px 20px;color:var(--ink);transition:.16s;box-shadow:0 2px 8px rgba(20,30,40,.05)}
 .lc:hover{border-color:var(--ocean);transform:translateY(-3px);box-shadow:0 8px 22px rgba(20,30,40,.1)}
 .lc .i{font-size:26px;display:block;margin-bottom:8px}.lc b{font-size:16px;display:block}.lc .d{font-size:12.5px;color:var(--mid);display:block;margin-top:3px}
+.lc .stepn{display:inline-flex;align-items:center;justify-content:center;width:23px;height:23px;border-radius:50%;background:var(--ocean);color:#fff;font-weight:800;font-size:12.5px;margin-bottom:9px}.lc.close{border-color:var(--ocean)}.lc.close .stepn{background:#2f6b4e}
 .lc .ar{position:absolute;top:18px;right:18px;color:var(--ocean);font-weight:800;font-size:18px}
 @media(max-width:640px){.links{grid-template-columns:1fr}}
 .note{color:var(--mid);font-size:12px;margin-top:14px}.hi{color:var(--terra);font-weight:800}.hg{color:var(--ocean);font-weight:800}
@@ -249,12 +250,12 @@ BODY = f"""
 
 <section class="s7" style="min-height:88vh"><div class="wrap rev">
   <h2>이제 직접 확인해보세요</h2>
-  <div class="sub">데모는 여기까지. 실제 데이터·수치는 도구에서.</div>
+  <div class="sub">3단계로 이어집니다 — <b>① 전국 조망</b> → <b>② 내 동네 찾기</b> → <b>③ 우리 지역 진단</b></div>
   <div class="links">
-    <a class="lc" href="index.html#v=find"><b>내 동네 찾기</b><span class="d">가구·예산·통근 맞춤 추천 + 가성비 + 순위</span><span class="ar">→</span></a>
-    <a class="lc" href="index.html#v=insight"><b>인사이트</b><span class="d">지역 비교 · 지자체 진단 · 통계 분석</span><span class="ar">→</span></a>
-    <a class="lc" href="index.html"><b>지도</b><span class="d">동별 색칠·시설 위치·클릭 상세</span><span class="ar">→</span></a>
-    <a class="lc" href="mailto:lucestdail@kakao.com?subject=%5B%EB%8F%99%EB%84%A4%EC%82%B4%EA%B8%B0%EC%A7%80%EC%88%98%5D%20%EB%8F%84%EC%9E%85%C2%B7%EC%A0%9C%ED%9C%B4%20%EB%AC%B8%EC%9D%98"><b>도입·제휴 문의</b><span class="d">지자체·기관·프롭테크</span><span class="ar">→</span></a>
+    <a class="lc" href="index.html"><span class="stepn">1</span><b>지도 — 전국을 9도메인으로</b><span class="d">동별 색칠 · 11종 시설 · 클릭 상세</span><span class="ar">→</span></a>
+    <a class="lc" href="index.html#v=find"><span class="stepn">2</span><b>내 동네 찾기</b><span class="d">가구·예산·통근 맞춤 추천 + 가성비 + 순위</span><span class="ar">→</span></a>
+    <a class="lc" href="index.html#v=insight"><span class="stepn">3</span><b>우리 지역 진단</b><span class="d">취약 도메인·사각지대 동 진단 + 통계 분석</span><span class="ar">→</span></a>
+    <a class="lc close" href="mailto:lucestdail@kakao.com?subject=%5B%EB%8F%99%EB%84%A4%EC%82%B4%EA%B8%B0%EC%A7%80%EC%88%98%5D%20%EB%8F%84%EC%9E%85%C2%B7%EC%A0%9C%ED%9C%B4%20%EB%AC%B8%EC%9D%98"><span class="stepn done">✓</span><b>도입·제휴 문의</b><span class="d">지자체·기관·프롭테크 — 마무리</span><span class="ar">→</span></a>
   </div>
   <div class="foot" style="margin-top:32px">동네살기지수(NLI) · 공공데이터 기반 생활입지 인텔리전스</div></div></section>
 """
