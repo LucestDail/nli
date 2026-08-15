@@ -72,6 +72,7 @@ def _dong_view(r):
     return {"adm_cd": r.get("adm_cd"), "full_nm": r.get("full_nm"), "adm_nm": r.get("adm_nm"),
             "cohort": r.get("cohort"), "pop_total": g("pop_total"),
             "NLI": g("NLI"), "grade": r.get("grade"),
+            "nli_cohort": g("nli_coh"),  # 동일 도농유형 내 백분위(밀도편향 보완)
             "domains": {d: g("score_" + d) for d in DOMS},
             "price_m2": g("price"),
             "price_pyeong": round(r["price"] * logic.PYEONG) if g("price") else None,
@@ -93,7 +94,7 @@ def meta():
     return {"domains": logic.DOM_NAMES, "indicators": len(ds),
             "sources": [{"key": d.get("key"), "name": d.get("name"), "domain": d.get("domain"),
                          "source": d.get("source"), "updated": d.get("updated"), "license": d.get("license")} for d in ds],
-            "note": "점수는 전국 읍면동 상대평가(백분위) 참고용. 복지 지오코딩 약 89% 커버."}
+            "note": "점수는 전국 읍면동 상대평가(백분위) 참고용(시설 밀도·근접 기반이라 도시성 일부 반영 → nli_cohort로 동일 도농유형 내 비교 권장). 복지 지오코딩 약 95% 커버."}
 
 
 @app.get("/api/dong/{adm_cd}")
