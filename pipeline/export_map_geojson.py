@@ -33,7 +33,7 @@ def score_props():
         con.execute("CREATE OR REPLACE TEMP TABLE price AS SELECT '' adm_cd, NULL::DOUBLE price_m2")
     cnt = ",".join(f"s.{k}_cnt AS {c}_c" + (f", round(s.{k}_nearest_m) AS {c}_n" if n else "") for k,c,n in FAC)
     rows = con.execute(f"""SELECT s.adm_cd, sd.SIDO_NM||' '||sg.SIGUNGU_NM||' '||s.adm_nm AS full_nm, s.adm_nm, s.cohort, s.cohort_d, s.cen_lon AS clon, s.cen_lat AS clat, s.pop_total,
-       s.NLI, s.grade, s.score_D1,s.score_D2,s.score_D3,s.score_D4,s.score_D5,s.score_D6,s.score_D7,s.score_D8,s.score_D9,
+       s.NLI, s.grade, round(s.NLI_cohort) AS nli_coh, s.score_D1,s.score_D2,s.score_D3,s.score_D4,s.score_D5,s.score_D6,s.score_D7,s.score_D8,s.score_D9,
        round(d.ratio_infant,3) AS r_inf, round(d.ratio_youth,3) AS r_yth, round(d.ratio_elderly,3) AS r_eld,
        round(d.pop_density,1) AS dens, round(d.ratio_apt,3) AS r_apt, round(d.ratio_oldhouse,3) AS r_old,
        round(pr.price_m2) AS price, {cnt}
