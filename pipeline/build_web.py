@@ -989,7 +989,8 @@ function diagData(){
     g.rankDom=DKEYS.map(d=>[d,g.dom[d]-nat[d]]).sort((a,b)=>a[1]-b[1]);
     g.blind=[];g.dongs.forEach(p=>DKEYS.forEach(d=>{if(isBlind(p,d))g.blind.push({p:p,d:d,v:p['score_'+d]})}));
     g.blind.sort((a,b)=>(b.p.pop_total||0)-(a.p.pop_total||0));g.blindN=g.blind.length;
-    g.pop=g.dongs.reduce((a,p)=>a+(p.pop_total||0),0);return g;});
+    g.pop=g.dongs.reduce((a,p)=>a+(p.pop_total||0),0);g.gtype=/구$/.test(g.sgg)?'자치구':/군$/.test(g.sgg)?'군':'시';return g;});
+  const _byT={};rows.forEach(r=>{(_byT[r.gtype]=_byT[r.gtype]||[]).push(r)});Object.values(_byT).forEach(arr=>{arr.sort((a,b)=>a.nli-b.nli);arr.forEach((r,i)=>{r.typeRank=i+1;r.typeTotal=arr.length})});
   return {rows:rows,nat:nat};
 }
 function diagCardHTML(g,rankOf,total){
@@ -1000,7 +1001,7 @@ function diagCardHTML(g,rankOf,total){
   const bl=g.blind.slice(0,9).map(b=>`<div class="valcell" onclick="goDetail('${b.p.adm_nm}')"><div class="valnm">${b.p.adm_nm}<span>${(b.p.pop_total||0).toLocaleString()}명</span></div><div class="valv"><span class="dchip" style="border-color:#b0603f55;margin:0"><b>${DOMINFO[b.d][0]}</b>${SHORT[b.d]}</span> <b style="color:#b0603f">${Math.round(b.v)}</b></div></div>`).join('');
   return `<div class="flex" style="justify-content:space-between;align-items:flex-start;gap:12px">
     <div style="min-width:0"><h3 style="margin:0 0 4px">${g.sido} ${g.sgg}</h3>
-      <div class="muted">전국 취약순위 <b style="color:var(--terra)">${rankOf.get(g.key)}</b>/${total} · 인구 ${g.pop.toLocaleString()}명 · ${g.dongs.length}개 동 · 등급 ${gdist||'—'}</div></div>
+      <div class="muted">전국 취약순위 <b style="color:var(--terra)">${rankOf.get(g.key)}</b>/${total}${g.typeRank?` · 동일 유형(${g.gtype}) 중 <b style="color:var(--ocean)">${g.typeRank}</b>/${g.typeTotal}`:''} · 인구 ${g.pop.toLocaleString()}명 · ${g.dongs.length}개 동 · 등급 ${gdist||'—'}</div></div>
     <div style="flex-shrink:0;display:flex;flex-direction:column;gap:5px;align-items:flex-end;margin-top:5px">
       <a href="javascript:void 0" onclick="printDiagReport();return false" style="font-size:13px;color:var(--ocean);white-space:nowrap;font-weight:700">진단 리포트(PDF) →</a>
       <a href="javascript:void 0" onclick="diagToMap();return false" style="font-size:12.5px;color:var(--mid);white-space:nowrap">지도에서 보기 →</a></div></div>
@@ -1190,7 +1191,7 @@ function printDiagReport(){
    +'<div class=hd><div class=brand>동네살기지수 <b>NLI</b></div><div class=date>생성일 '+date+'</div></div>'
    +'<h1>'+esc(g.sido+' '+g.sgg)+' 생활여건 진단 리포트</h1>'
    +'<p class=mut>시군구 단위 취약 도메인·사각지대 진단 · 전국 읍면동 9개 도메인 32개 지표 상대평가(백분위) 기준</p>'
-   +'<div class=stats><div class=stat><b>'+g.nli.toFixed(1)+'</b><span>평균 종합지수(백분위)</span></div><div class=stat><b>'+diagCur.rank+'/'+diagCur.total+'</b><span>전국 취약순위</span></div><div class=stat><b>'+g.dongs.length+'개</b><span>관할 동</span></div><div class=stat><b>'+nf(g.pop)+'</b><span>인구(명)</span></div></div>'
+   +'<div class=stats><div class=stat><b>'+g.nli.toFixed(1)+'</b><span>평균 종합지수(백분위)</span></div><div class=stat><b>'+diagCur.rank+'/'+diagCur.total+'</b><span>전국 취약순위'+(g.typeRank?' · 동일유형('+g.gtype+') '+g.typeRank+'/'+g.typeTotal:'')+'</span></div><div class=stat><b>'+g.dongs.length+'개</b><span>관할 동</span></div><div class=stat><b>'+nf(g.pop)+'</b><span>인구(명)</span></div></div>'
    +'<h2>도메인 프로파일 <span class=mut style="font-weight:400">— 전국 지자체 평균(중앙선) 대비 · 좌 취약 / 우 강점</span></h2><div class=prof>'+prof+'</div>'
    +'<h2>동 등급 분포</h2><div>'+(gbar||'—')+' <span class=mut>· 총 '+g.dongs.length+'개 동</span></div>'
    +'<h2>취약 도메인 (전국 지자체 평균 대비)</h2><table>'+wr+'</table><p class=hi>'+one+'</p>'
