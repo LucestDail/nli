@@ -365,7 +365,7 @@ TEMPLATE = r'''<!DOCTYPE html>
      <div class="sec"><h3>지표</h3>
        <select id="metric"></select>
        <div class="seg" id="modes" style="margin-top:8px">
-         <button data-m="basic" class="on">기본</button><button data-m="blind">사각지대</button><button data-m="pop">인구대비</button></div>
+         <button data-m="basic" class="on">기본</button><button data-m="blind">사각지대</button><button data-m="pop">인구대비</button><button data-m="coh">동일유형</button></div>
        <div class="muted" id="modeDesc" style="margin-top:7px"></div></div>
 
      <div class="sec"><h3>가중치 · 페르소나</h3>
@@ -604,6 +604,7 @@ function mStyle(f){const p=f.properties,sc=metricVal(p,mMetric);
   if(popmin>0&&(p.pop_total||0)<popmin)return{fillColor:'#e3dccb',weight:.15,color:'#ccc',fillOpacity:.06};
   if(mMode==='blind'){const b=isBlind(p,mMetric);return{fillColor:b?'#bb3a24':'#e8e0d0',weight:b?.6:.12,color:b?'#8a2a18':'#d8cdb8',fillOpacity:b?.72:.14}}
   if(mMode==='pop')return{fillColor:color(sc),weight:.2,color:'#c9bda3',fillOpacity:.06+.42*popPct(p.pop_total||0)};
+  if(mMode==='coh')return{fillColor:color(p.nli_coh),weight:.3,color:'#c3b79d',fillOpacity:p.nli_coh!=null?.34:.07};
   return{fillColor:color(sc),weight:.3,color:'#c3b79d',fillOpacity:.32};}
 const SHORT={D1:'의료',D2:'교육',D3:'생활편의',D4:'문화여가',D5:'교통',D6:'안전',D7:'환경',D8:'복지',D9:'반려'};
 function renderMapSliders(){const el=document.getElementById('mSliders');if(!el)return;
@@ -615,9 +616,9 @@ function onWeightChange(){   // 슬라이더 드래그 → 지도 실시간 재�
   recompRank(); if(layer)layer.setStyle(mStyle); mLegend(); writeHash();
 }
 function mRedraw(){if(!layer)return;layer.setStyle(mStyle);mLegend();
-  const t={basic:'선택 지표를 백분위 색으로 표시',blind:'인구 '+BS_POP.toLocaleString()+'명↑ 인데 「'+METRICS[mMetric]+'」 하위 '+BS_SCORE+'% → 빨강',pop:'인구 많을수록 진하게, 빈 지역은 흐리게'};
+  const t={basic:'선택 지표를 백분위 색으로 표시',blind:'인구 '+BS_POP.toLocaleString()+'명↑ 인데 「'+METRICS[mMetric]+'」 하위 '+BS_SCORE+'% → 빨강',pop:'인구 많을수록 진하게, 빈 지역은 흐리게',coh:'같은 도농유형(도시·도농·농촌) 내 상대점수 — 밀도 영향을 걷어낸 공정 비교'};
   document.getElementById('modeDesc').textContent=t[mMode];
-  const mt=document.getElementById('mapTitle');if(mt){const md={basic:'',blind:' · 사각지대',pop:' · 인구대비'};mt.textContent=METRICS[mMetric]+(md[mMode]||'');}
+  const mt=document.getElementById('mapTitle');if(mt){const md={basic:'',blind:' · 사각지대',pop:' · 인구대비',coh:' · 동일유형 내'};mt.textContent=(mMode==='coh'?'종합 살기지수':METRICS[mMetric])+(md[mMode]||'');}
   writeHash();}
 function mLegend(){const el=document.getElementById('legend');
   if(mMode==='blind'){el.innerHTML='<div><i style="background:#bb3a24"></i>사각지대</div><div><i style="background:#e8e0d0"></i>해당 없음</div>';return}
