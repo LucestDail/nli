@@ -225,6 +225,10 @@ TEMPLATE = r'''<!DOCTYPE html>
  .mapsum{position:absolute;left:14px;bottom:16px;z-index:600;background:rgba(255,255,255,.95);backdrop-filter:blur(6px);border:1px solid var(--line);border-radius:12px;box-shadow:0 6px 20px -8px rgba(20,30,40,.3);padding:10px 13px;font-size:12px;max-width:230px}
  .mapsum .mstop{font-weight:700;color:var(--ink);margin-bottom:4px;font-size:12.5px}
  .mapsum .msrow{font-size:11.5px;line-height:1.6}
+ .maphint{position:absolute;top:52px;left:50%;transform:translateX(-50%);z-index:550;background:rgba(19,42,54,.9);color:#fff;border-radius:999px;padding:7px 16px;font-size:12.5px;box-shadow:0 4px 14px rgba(20,30,40,.28);transition:opacity .5s,transform .5s;pointer-events:none;white-space:nowrap}
+ .maphint b{color:#8fd0b0}
+ .maphint.hide{opacity:0;transform:translateX(-50%) translateY(-6px)}
+ @media(max-width:760px){.maphint{font-size:11px;padding:6px 12px;top:auto;bottom:64px}}
  @media(max-width:760px){.mapsum{left:10px;bottom:10px;font-size:11px;padding:8px 10px}}
  .statgrid .sc h4{margin:0 0 10px;font-size:13.5px;color:var(--ink);font-weight:800;display:flex;align-items:baseline;gap:6px;flex-wrap:wrap;flex-shrink:0}
  .statgrid .sc h4 span{font-weight:400;font-size:11.5px;color:var(--mid)}
@@ -395,6 +399,7 @@ TEMPLATE = r'''<!DOCTYPE html>
    <div id="map"></div>
    <div id="mapTitle" class="maptitle"></div>
    <div id="mapSummary" class="mapsum" style="display:none"></div>
+   <div id="mapHint" class="maphint">동네에 <b>마우스</b>를 올리면 요약 · <b>클릭</b>하면 상세</div>
    <div class="detail" id="detail" style="display:none"></div>
  </div>
 
@@ -513,6 +518,7 @@ F.forEach(f=>{f.properties.sido=(f.properties.full_nm||'').split(' ')[0];});
 const pops=F.map(f=>f.properties.pop_total||0).sort((a,b)=>a-b);
 function popPct(v){let lo=0,hi=pops.length;while(lo<hi){let m=(lo+hi)>>1;if(pops[m]<v)lo=m+1;else hi=m}return lo/pops.length}
 function color(v){if(v==null||isNaN(v))return '#dcd2bf';return v>=80?'#2f6b4e':v>=65?'#6f9e86':v>=50?'#a9c3ad':v>=35?'#e6d3a0':v>=20?'#d59f72':'#b0603f';}
+function hideMapHint(){const h=document.getElementById('mapHint');if(h)h.classList.add('hide');}
 function updateViewSummary(){const el=document.getElementById('mapSummary');if(!el||!map)return;
   const b=map.getBounds();let n=0,sum=0,best=null,worst=null;
   for(const f of F){const p=f.properties;if(p.clat==null||(p.pop_total||0)<=0)continue;
@@ -584,7 +590,7 @@ let map,layer,mMetric='NLI',mMode='basic',popmin=0;
 function initMap(){
   map=L.map('map',{preferCanvas:true,zoomSnap:0.25}).setView([36.55,127.75],7.6);
   L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',{attribution:'&copy; OpenStreetMap &copy; CARTO',maxZoom:19}).addTo(map);
-  layer=L.geoJSON(DATA,{style:mStyle,onEachFeature:(f,l)=>{f.properties._l=l;l.bindTooltip(()=>dongTip(f.properties),{sticky:true,direction:'top',className:'dtip',opacity:1});l.on('mouseover',()=>l.setStyle({weight:1.6,color:'#16232e'}));l.on('mouseout',()=>{if(l!==selL)layer.resetStyle(l)});l.on('click',()=>showDetail(f.properties))}}).addTo(map);
+  layer=L.geoJSON(DATA,{style:mStyle,onEachFeature:(f,l)=>{f.properties._l=l;l.bindTooltip(()=>dongTip(f.properties),{sticky:true,direction:'top',className:'dtip',opacity:1});l.on('mouseover',()=>{l.setStyle({weight:1.6,color:'#16232e'});hideMapHint();});l.on('mouseout',()=>{if(l!==selL)layer.resetStyle(l)});l.on('click',()=>showDetail(f.properties))}}).addTo(map);
   const sel=document.getElementById('metric');for(const k in METRICS){let o=document.createElement('option');o.value=k;o.text=METRICS[k];sel.add(o)}
   sel.onchange=e=>{mMetric=e.target.value;mRedraw()};
   const mp=document.getElementById('mpersona');
@@ -604,6 +610,7 @@ function initPoints(){
   document.getElementById('ptToggles').innerHTML=Object.entries(PT_TYPES).map(([t,v])=>`<span class="ptchip" data-t="${t}"><span class="dot" style="background:${v[1]}"></span>${v[0]}</span>`).join('');
   document.querySelectorAll('.ptchip').forEach(c=>c.onclick=async()=>{const t=c.dataset.t;ptOn[t]=!ptOn[t];c.classList.toggle('on',ptOn[t]);if(ptOn[t])await ensurePoints();drawPoints()});
   map.on('moveend zoomend',()=>{drawPoints();updateViewSummary();});drawPoints();updateViewSummary();
+  setTimeout(hideMapHint,8000);
 }
 function ensurePoints(){   // 시설포인트 지연로딩(첫 토글 시 1회). 실패 시(로컬 file://) 안내.
   if(POINTS)return Promise.resolve(true);
@@ -992,7 +999,7 @@ function customSelect(sel){
 document.addEventListener('click',()=>document.querySelectorAll('.csel.open').forEach(x=>x.classList.remove('open')));
 /* 막대 성장 애니메이션: data-w(%너비)/data-h(%높이) → 다음 프레임에 목표값 적용 */
 function growBars(){requestAnimationFrame(()=>{document.querySelectorAll('[data-w]').forEach(e=>{e.style.width=e.dataset.w+'%';e.removeAttribute('data-w');});document.querySelectorAll('[data-h]').forEach(e=>{e.style.height=e.dataset.h+'%';e.removeAttribute('data-h');});});}
-document.getElementById('foot1').innerHTML='데이터 출처 · 공공데이터포털 표준데이터 · SGIS 경계·인구(2025 2분기) · 건강보험심사평가원(2026.6) · 소상공인시장진흥공단 · 국토교통부 아파트 실거래가 · safetydata.go.kr · VWorld 지오코딩   ·   방법 · 시설밀도(인구 1만명당·면적 ㎢당 혼합)와 근접성의 백분위 결합 → 도메인 가중평균, 도농 코호트·인구가중 중심점 보정   ·   9개 도메인 32개 지표 읍면동 정밀(복지는 지오코딩 약 96% 커버) · 점수는 전국 읍면동 상대평가(백분위)로 <b>참고용</b> — 시설 밀도·근접 기반이라 도시성(인구밀도)을 일부 반영하므로 <b>동일 도농유형 내 상대비교</b>를 함께 보세요 · <a onclick="openMethod()" style="cursor:pointer;color:var(--ocean);font-weight:700">방법론·한계 자세히 →</a><br><a href="mailto:lucestdail@kakao.com?subject=%5B%EB%8F%99%EB%84%A4%EC%82%B4%EA%B8%B0%EC%A7%80%EC%88%98%5D%20%EB%8F%84%EC%9E%85%C2%B7%EC%A0%9C%ED%9C%B4%20%EB%AC%B8%EC%9D%98&body=%EA%B8%B0%EA%B4%80/%EB%8B%B4%EB%8B%B9%EC%9E%90%3A%0A%EA%B4%80%EC%8B%AC%20%EC%A7%80%EC%97%AD/%EB%82%B4%EC%9A%A9%3A%0A%EC%97%B0%EB%9D%BD%EC%B2%98%3A%0A" style="display:inline-block;margin-top:9px;color:var(--ocean);font-weight:700;text-decoration:none">지자체·기관 도입·제휴 문의</a>';
+document.getElementById('foot1').innerHTML='데이터 출처 · 공공데이터포털 표준데이터 · SGIS 경계·인구(2025 2분기) · 건강보험심사평가원(2026.6) · 소상공인시장진흥공단 · 국토교통부 아파트 실거래가 · safetydata.go.kr · VWorld 지오코딩   ·   방법 · 시설밀도(인구 1만명당·면적 ㎢당 혼합)와 근접성의 백분위 결합 → 도메인 가중평균, 도농 코호트·인구가중 중심점 보정   ·   9개 도메인 32개 지표 읍면동 정밀(복지는 지오코딩 약 96% 커버) · 점수는 전국 읍면동 상대평가(백분위)로 <b>참고용</b> — 시설 밀도·근접 기반이라 도시성(인구밀도)을 일부 반영하므로 <b>동일 도농유형 내 상대비교</b>를 함께 보세요 · <a onclick="openMethod()" style="cursor:pointer;color:var(--ocean);font-weight:700">방법론·한계 자세히 →</a><br><a href="mailto:lucestdail@kakao.com?subject=%5B%EB%8F%99%EB%84%A4%EC%82%B4%EA%B8%B0%EC%A7%80%EC%88%98%5D%20%EB%AC%B8%EC%9D%98" style="display:inline-block;margin-top:9px;color:var(--ocean);font-weight:700;text-decoration:none">문의</a>';
 /* ---------- 공유 딥링크: 현재 상태 ↔ location.hash ---------- */
 function curTab(){const t=document.querySelector('nav .tab.on');return t?t.dataset.v:'map';}
 function writeHash(){if(applyingHash)return;

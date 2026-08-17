@@ -236,7 +236,7 @@ BODY = f"""
   <div class="sub"><span class="hg">살기지수는 높은데 아파트값은 낮은</span> 가성비 동네<br>비싼 동네가 꼭 살기 좋은 건 아닙니다.</div>
   {VVAL}</div></section>
 
-<section class="s5"><div class="wrap rev"><div class="kick">지자체·기관용</div>
+<section class="s5"><div class="wrap rev"><div class="kick">지역 진단</div>
   <h2>우리 지역, 뭐가 부족할까?</h2>
   <div class="sub">인구는 많은데 특정 생활 인프라가 하위 20%인<br><span class="hi">사각지대</span>를 찾아냅니다. 시설 입지·예산 배분의 근거.</div>
   <div class="bars"><div style="text-align:left;font-weight:800;margin-bottom:10px">가장 부족한 3개 영역 <span style="color:var(--mid);font-weight:500;font-size:12px">(전국 평균 대비 부족폭)</span></div>{DBARS}</div></div></section>
@@ -254,7 +254,7 @@ BODY = f"""
     <a class="lc" href="index.html"><b>지도</b><span class="d">전국을 9도메인으로 · 동별 색칠 · 11종 시설 · 클릭 상세</span><span class="ar">→</span></a>
     <a class="lc" href="index.html#v=find"><b>내 동네 찾기</b><span class="d">가구·예산·통근 맞춤 추천 + 가성비 + 순위</span><span class="ar">→</span></a>
     <a class="lc" href="index.html#v=insight"><b>우리 지역 진단</b><span class="d">취약 도메인·사각지대 동 진단 + 통계 분석</span><span class="ar">→</span></a>
-    <a class="lc" href="mailto:lucestdail@kakao.com?subject=%5B%EB%8F%99%EB%84%A4%EC%82%B4%EA%B8%B0%EC%A7%80%EC%88%98%5D%20%EB%8F%84%EC%9E%85%C2%B7%EC%A0%9C%ED%9C%B4%20%EB%AC%B8%EC%9D%98"><b>도입·제휴 문의</b><span class="d">지자체·기관·프롭테크</span><span class="ar">→</span></a>
+    <a class="lc" href="mailto:lucestdail@kakao.com?subject=%5B%EB%8F%99%EB%84%A4%EC%82%B4%EA%B8%B0%EC%A7%80%EC%88%98%5D%20%EB%AC%B8%EC%9D%98"><b>문의</b><span class="d">프로젝트 관련 연락</span><span class="ar">→</span></a>
   </div>
   <div class="foot" style="margin-top:32px">동네살기지수(NLI) · 공공데이터 기반 생활입지 인텔리전스</div></div></section>
 """
