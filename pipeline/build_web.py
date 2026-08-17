@@ -348,7 +348,7 @@ TEMPLATE = r'''<!DOCTYPE html>
        <li><b>도시성 반영</b> — 밀도·근접 기반이라 인구밀도(도시성)와 상관이 높습니다. 절대순위보다 <b>동일 도농유형 내 비교</b>와 <b>지역 내부 사각지대 진단</b>을 권합니다.</li>
        <li><b>개수 ≠ 용량</b> — 대형·소형 시설을 개수로 셉니다(병상·정원 미반영).</li>
        <li><b>공급측 관점</b> — 시설 존재·근접을 보며, 품질·이용·수요는 별도입니다.</li>
-       <li><b>복지·돌봄</b>은 지오코딩 약 95% 커버(일부 결측 하향 편향 가능).</li>
+       <li><b>복지·돌봄</b>은 지오코딩 약 96% 커버(일부 결측 하향 편향 가능).</li>
      </ul>
      <h4>그래서 어떻게 쓰면 되나</h4>
      <p><b>동일 유형 비교</b>(같은 도시/도농/농촌끼리)와 <b>지자체 내부 사각지대 진단</b>(인구 1만+ 인데 특정 도메인 전국 하위 20%)에 가장 신뢰도 높게 활용됩니다.</p>
@@ -622,6 +622,7 @@ function mRedraw(){if(!layer)return;layer.setStyle(mStyle);mLegend();
   writeHash();}
 function mLegend(){const el=document.getElementById('legend');
   if(mMode==='blind'){el.innerHTML='<div><i style="background:#bb3a24"></i>사각지대</div><div><i style="background:#e8e0d0"></i>해당 없음</div>';return}
+  if(mMode==='coh'){el.innerHTML='<div class="muted" style="margin-bottom:4px;font-size:11px">같은 도농유형(도시·도농·농촌) 내 백분위</div>'+[[80,'상위 80–100'],[65,'65–80'],[50,'50–65'],[35,'35–50'],[20,'20–35'],[0,'하위 0–20']].map(b=>`<div><i style="background:${color(b[0])}"></i>${b[1]}</div>`).join('');return}
   el.innerHTML=[[80,'상위 80–100'],[65,'65–80'],[50,'50–65'],[35,'35–50'],[20,'20–35'],[0,'하위 0–20']].map(b=>`<div><i style="background:${color(b[0])}"></i>${b[1]}</div>`).join('');}
 function detailHTML(p){
   const isf=fav.includes(p.adm_nm);
@@ -958,7 +959,7 @@ function customSelect(sel){
 document.addEventListener('click',()=>document.querySelectorAll('.csel.open').forEach(x=>x.classList.remove('open')));
 /* 막대 성장 애니메이션: data-w(%너비)/data-h(%높이) → 다음 프레임에 목표값 적용 */
 function growBars(){requestAnimationFrame(()=>{document.querySelectorAll('[data-w]').forEach(e=>{e.style.width=e.dataset.w+'%';e.removeAttribute('data-w');});document.querySelectorAll('[data-h]').forEach(e=>{e.style.height=e.dataset.h+'%';e.removeAttribute('data-h');});});}
-document.getElementById('foot1').innerHTML='데이터 출처 · 공공데이터포털 표준데이터 · SGIS 경계·인구(2025 2분기) · 건강보험심사평가원(2026.6) · 소상공인시장진흥공단 · 국토교통부 아파트 실거래가 · safetydata.go.kr · VWorld 지오코딩   ·   방법 · 시설밀도(인구 1만명당·면적 ㎢당 혼합)와 근접성의 백분위 결합 → 도메인 가중평균, 도농 코호트·인구가중 중심점 보정   ·   9개 도메인 32개 지표 읍면동 정밀(복지는 지오코딩 약 95% 커버) · 점수는 전국 읍면동 상대평가(백분위)로 <b>참고용</b> — 시설 밀도·근접 기반이라 도시성(인구밀도)을 일부 반영하므로 <b>동일 도농유형 내 상대비교</b>를 함께 보세요 · <a onclick="openMethod()" style="cursor:pointer;color:var(--ocean);font-weight:700">방법론·한계 자세히 →</a><br><a href="mailto:lucestdail@kakao.com?subject=%5B%EB%8F%99%EB%84%A4%EC%82%B4%EA%B8%B0%EC%A7%80%EC%88%98%5D%20%EB%8F%84%EC%9E%85%C2%B7%EC%A0%9C%ED%9C%B4%20%EB%AC%B8%EC%9D%98&body=%EA%B8%B0%EA%B4%80/%EB%8B%B4%EB%8B%B9%EC%9E%90%3A%0A%EA%B4%80%EC%8B%AC%20%EC%A7%80%EC%97%AD/%EB%82%B4%EC%9A%A9%3A%0A%EC%97%B0%EB%9D%BD%EC%B2%98%3A%0A" style="display:inline-block;margin-top:9px;color:var(--ocean);font-weight:700;text-decoration:none">지자체·기관 도입·제휴 문의</a>';
+document.getElementById('foot1').innerHTML='데이터 출처 · 공공데이터포털 표준데이터 · SGIS 경계·인구(2025 2분기) · 건강보험심사평가원(2026.6) · 소상공인시장진흥공단 · 국토교통부 아파트 실거래가 · safetydata.go.kr · VWorld 지오코딩   ·   방법 · 시설밀도(인구 1만명당·면적 ㎢당 혼합)와 근접성의 백분위 결합 → 도메인 가중평균, 도농 코호트·인구가중 중심점 보정   ·   9개 도메인 32개 지표 읍면동 정밀(복지는 지오코딩 약 96% 커버) · 점수는 전국 읍면동 상대평가(백분위)로 <b>참고용</b> — 시설 밀도·근접 기반이라 도시성(인구밀도)을 일부 반영하므로 <b>동일 도농유형 내 상대비교</b>를 함께 보세요 · <a onclick="openMethod()" style="cursor:pointer;color:var(--ocean);font-weight:700">방법론·한계 자세히 →</a><br><a href="mailto:lucestdail@kakao.com?subject=%5B%EB%8F%99%EB%84%A4%EC%82%B4%EA%B8%B0%EC%A7%80%EC%88%98%5D%20%EB%8F%84%EC%9E%85%C2%B7%EC%A0%9C%ED%9C%B4%20%EB%AC%B8%EC%9D%98&body=%EA%B8%B0%EA%B4%80/%EB%8B%B4%EB%8B%B9%EC%9E%90%3A%0A%EA%B4%80%EC%8B%AC%20%EC%A7%80%EC%97%AD/%EB%82%B4%EC%9A%A9%3A%0A%EC%97%B0%EB%9D%BD%EC%B2%98%3A%0A" style="display:inline-block;margin-top:9px;color:var(--ocean);font-weight:700;text-decoration:none">지자체·기관 도입·제휴 문의</a>';
 /* ---------- 공유 딥링크: 현재 상태 ↔ location.hash ---------- */
 function curTab(){const t=document.querySelector('nav .tab.on');return t?t.dataset.v:'map';}
 function writeHash(){if(applyingHash)return;
@@ -1222,7 +1223,7 @@ function printDiagReport(){
    +'<h2>취약 도메인 (전국 지자체 평균 대비)</h2><table>'+wr+'</table><p class=hi>'+one+'</p>'
    +'<h2>사각지대 동 <span class=mut style="font-weight:400">인구 1만+ 인데 특정 도메인 전국 하위 20% · 총 '+g.blindN+'건</span></h2>'+bl
    +'<h2>상대 강점 도메인</h2><ul class=sum>'+(st||'<li>—</li>')+'</ul>'
-   +'<div class=foot>방법론 · 각 지표를 시설밀도(인구 1만명당·면적 ㎢당 혼합)와 근접성의 백분위로 결합 → 도메인 가중평균 → 종합지수. 사각지대 = 인구 1만+ 인데 해당 도메인 전국 하위 20%. <b>점수는 전국 읍면동 상대평가(백분위)로 참고용</b>이며 절대 적정성이 아닙니다. 종합지수는 인구밀도와 상관이 높아 도시성을 일부 반영하므로 순위 비교보다 <b>지역 내부의 상대 취약(사각지대) 진단</b>에 활용을 권합니다. 복지·돌봄은 지오코딩 약 95% 커버. 데이터: 공공데이터포털·SGIS(2025 2Q)·심평원·소상공인·국토부 실거래가 · 데모 https://lucestdail.github.io/nli/</div>'
+   +'<div class=foot>방법론 · 각 지표를 시설밀도(인구 1만명당·면적 ㎢당 혼합)와 근접성의 백분위로 결합 → 도메인 가중평균 → 종합지수. 사각지대 = 인구 1만+ 인데 해당 도메인 전국 하위 20%. <b>점수는 전국 읍면동 상대평가(백분위)로 참고용</b>이며 절대 적정성이 아닙니다. 종합지수는 인구밀도와 상관이 높아 도시성을 일부 반영하므로 순위 비교보다 <b>지역 내부의 상대 취약(사각지대) 진단</b>에 활용을 권합니다. 복지·돌봄은 지오코딩 약 96% 커버. 데이터: 공공데이터포털·SGIS(2025 2Q)·심평원·소상공인·국토부 실거래가 · 데모 https://lucestdail.github.io/nli/</div>'
    +'</body></html>';
   var w=window.open('','_blank');if(w){w.document.write(html);w.document.close();}else alert('팝업이 차단되었습니다. 팝업 허용 후 다시 시도하세요.');
 }
