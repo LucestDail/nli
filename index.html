@@ -575,7 +575,7 @@ let map,layer,mMetric='NLI',mMode='basic',popmin=0;
 function initMap(){
   map=L.map('map',{preferCanvas:true,zoomSnap:0.25}).setView([36.55,127.75],7.6);
   L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',{attribution:'&copy; OpenStreetMap &copy; CARTO',maxZoom:19}).addTo(map);
-  layer=L.geoJSON(DATA,{style:mStyle,onEachFeature:(f,l)=>{f.properties._l=l;l.bindTooltip(()=>dongTip(f.properties),{sticky:true,direction:'top',className:'dtip',opacity:1});l.on('mouseover',()=>l.setStyle({weight:1.6,color:'#16232e'}));l.on('mouseout',()=>layer.resetStyle(l));l.on('click',()=>showDetail(f.properties))}}).addTo(map);
+  layer=L.geoJSON(DATA,{style:mStyle,onEachFeature:(f,l)=>{f.properties._l=l;l.bindTooltip(()=>dongTip(f.properties),{sticky:true,direction:'top',className:'dtip',opacity:1});l.on('mouseover',()=>l.setStyle({weight:1.6,color:'#16232e'}));l.on('mouseout',()=>{if(l!==selL)layer.resetStyle(l)});l.on('click',()=>showDetail(f.properties))}}).addTo(map);
   const sel=document.getElementById('metric');for(const k in METRICS){let o=document.createElement('option');o.value=k;o.text=METRICS[k];sel.add(o)}
   sel.onchange=e=>{mMetric=e.target.value;mRedraw()};
   const mp=document.getElementById('mpersona');
@@ -693,7 +693,9 @@ function openRoute(){const R=window._route;if(!R)return;const j=R.j;
     routeLayer.addTo(map);try{map.fitBounds(routeLayer.getBounds(),{padding:[50,50]});}catch(e){}}
 }
 function closeRoute(){document.getElementById('routeModal').style.display='none';}
+let selL=null;
 function showDetail(p,focus){const d=document.getElementById('detail');d.innerHTML=detailHTML(p);d.style.display='block';growBars();curDetail=p.adm_nm;writeHash();fillTransit(p);
+  if(selL&&selL!==p._l){try{layer.resetStyle(selL);}catch(e){}}selL=p._l;if(selL&&layer){selL.setStyle({weight:3,color:'#16232e',fillOpacity:Math.min(.85,(selL.options.fillOpacity||.32)+.2)});if(selL.bringToFront)selL.bringToFront();}
   // focus=true(검색·순위·딥링크로 진입)일 때만 지도 리프레이밍. 지도 직접클릭은 현재 위치 유지(확대상태 축소 방지)
   if(focus&&p._l&&map){map.invalidateSize();const b=p._l.getBounds();if(b&&b.isValid())map.fitBounds(b,{maxZoom:13,padding:[24,24]});}}
 function goDetail(adm){const f=F.find(x=>x.properties.adm_nm===adm);if(!f)return;document.querySelector('nav .tab[data-v=map]').click();showDetail(f.properties,true)}
