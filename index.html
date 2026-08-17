@@ -208,6 +208,11 @@
  .statgrid td[title]{cursor:pointer}
  #dsScatterBox{position:relative}#dsScatterBox circle{cursor:pointer}
  .dstip{position:absolute;pointer-events:none;background:#132a36;color:#fff;font-size:11.5px;line-height:1.55;padding:7px 10px;border-radius:8px;z-index:5;white-space:nowrap;box-shadow:0 6px 18px rgba(0,0,0,.28)}
+ .leaflet-tooltip.dtip{background:#fff;border:1px solid var(--line);border-radius:11px;box-shadow:0 8px 24px -8px rgba(20,30,40,.35);padding:9px 12px;font-size:12px;color:var(--ink);min-width:150px}
+ .leaflet-tooltip.dtip::before{border-top-color:#fff}
+ .dtip .dtiphd{font-weight:800;font-size:13px;margin-bottom:4px;display:flex;align-items:center;gap:6px}
+ .dtip .dtiprow{font-size:11.5px;color:var(--mid);line-height:1.5}
+ .dtip .dtipft{font-size:10.5px;color:var(--light);margin-top:4px}
  .statgrid .sc h4{margin:0 0 10px;font-size:13.5px;color:var(--ink);font-weight:800;display:flex;align-items:baseline;gap:6px;flex-wrap:wrap;flex-shrink:0}
  .statgrid .sc h4 span{font-weight:400;font-size:11.5px;color:var(--mid)}
  /* 관할 동 표: 카드 내부 .scb가 스크롤 · thead sticky */
@@ -494,6 +499,16 @@ F.forEach(f=>{f.properties.sido=(f.properties.full_nm||'').split(' ')[0];});
 const pops=F.map(f=>f.properties.pop_total||0).sort((a,b)=>a-b);
 function popPct(v){let lo=0,hi=pops.length;while(lo<hi){let m=(lo+hi)>>1;if(pops[m]<v)lo=m+1;else hi=m}return lo/pops.length}
 function color(v){if(v==null||isNaN(v))return '#dcd2bf';return v>=80?'#2f6b4e':v>=65?'#6f9e86':v>=50?'#a9c3ad':v>=35?'#e6d3a0':v>=20?'#d59f72':'#b0603f';}
+function dongTip(p){const g=gradeOf(p),nv=nliW(p);
+  const ds=DKEYS.map(d=>[d,p['score_'+d]]).filter(x=>x[1]!=null).sort((a,b)=>a[1]-b[1]);
+  const weak=ds.length?DOMINFO[ds[0][0]][0]+SHORT[ds[0][0]]:'',strong=ds.length?DOMINFO[ds[ds.length-1][0]][0]+SHORT[ds[ds.length-1][0]]:'';
+  const coh=p.nli_coh!=null?' · 유형내 상위 '+Math.max(1,Math.round(100-p.nli_coh))+'%':'';
+  const metric=(mMetric&&mMetric!=='NLI'&&p['score_'+mMetric]!=null)?'<div class="dtiprow">'+METRICS[mMetric]+' <b style="color:'+color(p['score_'+mMetric])+'">'+Math.round(p['score_'+mMetric])+'</b></div>':'';
+  return '<div class="dtiphd"><b>'+(p.adm_nm||'')+'</b> <span class="g" style="background:'+GC[g]+'">'+g+'</span></div>'
+    +'<div class="dtiprow">종합 <b style="color:'+color(nv)+'">'+nv+'</b>'+coh+'</div>'+metric
+    +(strong?'<div class="dtiprow" style="color:#2f6b4e">강점 '+strong+'</div>':'')
+    +(weak?'<div class="dtiprow" style="color:#b0603f">취약 '+weak+'</div>':'')
+    +'<div class="dtipft">클릭 → 상세</div>';}
 function nliW(p){let s=0,w=0;DOMS.forEach((d,i)=>{let v=p['score_'+d];if(v!=null&&!isNaN(v)){s+=W[i]*v;w+=W[i]}});return w?+(s/w).toFixed(1):null}
 function metricVal(p,m){return (m==='NLI'||m==='grade')?nliW(p):p['score_'+m]}
 let nliRank=new Map();
@@ -544,7 +559,7 @@ let map,layer,mMetric='NLI',mMode='basic',popmin=0;
 function initMap(){
   map=L.map('map',{preferCanvas:true,zoomSnap:0.25}).setView([36.55,127.75],7.6);
   L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',{attribution:'&copy; OpenStreetMap &copy; CARTO',maxZoom:19}).addTo(map);
-  layer=L.geoJSON(DATA,{style:mStyle,onEachFeature:(f,l)=>{f.properties._l=l;l.on('mouseover',()=>l.setStyle({weight:1.6,color:'#16232e'}));l.on('mouseout',()=>layer.resetStyle(l));l.on('click',()=>showDetail(f.properties))}}).addTo(map);
+  layer=L.geoJSON(DATA,{style:mStyle,onEachFeature:(f,l)=>{f.properties._l=l;l.bindTooltip(()=>dongTip(f.properties),{sticky:true,direction:'top',className:'dtip',opacity:1});l.on('mouseover',()=>l.setStyle({weight:1.6,color:'#16232e'}));l.on('mouseout',()=>layer.resetStyle(l));l.on('click',()=>showDetail(f.properties))}}).addTo(map);
   const sel=document.getElementById('metric');for(const k in METRICS){let o=document.createElement('option');o.value=k;o.text=METRICS[k];sel.add(o)}
   sel.onchange=e=>{mMetric=e.target.value;mRedraw()};
   const mp=document.getElementById('mpersona');
