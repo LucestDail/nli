@@ -64,10 +64,10 @@ TEMPLATE = r'''<!DOCTYPE html>
  .ac-item:hover{background:var(--line2)}
  .view{flex:1;overflow:auto;min-height:0}
  .view.map{overflow:hidden;position:relative;display:flex}
- .wrap{max-width:1220px;margin:0 auto;padding:34px 30px 60px}
+ .wrap{max-width:1220px;margin:0 auto;padding:22px 30px 40px}
  .hero-t{font-family:var(--serif);font-size:38px;font-weight:700;letter-spacing:-.5px;margin:0 0 6px;color:var(--ocean);line-height:1.1}
- h2{font-size:24px;font-weight:700;letter-spacing:-.03em;margin:0 0 5px;color:var(--ink)}
- .sub{color:var(--mid);font-size:14.5px;margin-bottom:26px;max-width:640px;word-break:keep-all}
+ h2{font-size:21px;font-weight:700;letter-spacing:-.03em;margin:0 0 4px;color:var(--ink)}
+ .sub{color:var(--mid);font-size:13.5px;margin-bottom:16px;max-width:640px;word-break:keep-all}
  .kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:30px}
  .kpi{background:var(--card);border:1px solid var(--line);border-radius:var(--r-lg);padding:20px;box-shadow:var(--sh);position:relative;overflow:hidden}
  .kpi::before{content:"";position:absolute;left:0;top:0;width:100%;height:3px;background:var(--grad);opacity:.85}
@@ -76,7 +76,7 @@ TEMPLATE = r'''<!DOCTYPE html>
  .dkpi{display:grid;grid-template-columns:repeat(2,1fr);gap:14px;margin-top:16px}
  .recgrid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:20px}
- .card{background:var(--card);border:1px solid var(--line);border-radius:var(--r-lg);padding:24px;box-shadow:var(--sh);transition:.2s}
+ .card{background:var(--card);border:1px solid var(--line);border-radius:var(--r-lg);padding:17px 18px;box-shadow:var(--sh);transition:.2s}
  .domcard{margin-bottom:0}
  .domgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
  .domcell{border:1px solid var(--line);border-radius:14px;padding:14px 15px;cursor:pointer;transition:.16s;background:linear-gradient(180deg,#fff,#fcfbf8)}
@@ -90,9 +90,9 @@ TEMPLATE = r'''<!DOCTYPE html>
  @media(max-width:820px){.domgrid{grid-template-columns:repeat(2,1fr)}}
  @media(max-width:560px){.domgrid{grid-template-columns:1fr}}
  .valgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:9px}
- .valcell{display:flex;justify-content:space-between;align-items:center;border:1px solid var(--line);border-radius:11px;padding:10px 12px;cursor:pointer;transition:.14s;background:linear-gradient(180deg,#fff,#fbfcfb)}
+ .valcell{display:flex;justify-content:space-between;align-items:center;border:1px solid var(--line);border-radius:10px;padding:7px 11px;cursor:pointer;transition:.14s;background:linear-gradient(180deg,#fff,#fbfcfb)}
  .valcell:hover{border-color:var(--sage);box-shadow:var(--sh2);transform:translateY(-2px)}
- .valnm{font-size:13px;color:var(--ink)}.valnm span{display:block;font-size:10.5px;color:var(--light);margin-top:1px}
+ .valnm{font-size:12.5px;color:var(--ink)}.valnm span{display:block;font-size:10px;color:var(--light);margin-top:0}
  .valv{text-align:right;font-size:13px;white-space:nowrap}.valv b{color:var(--ocean)}.valv i{display:block;font-style:normal;font-size:11px;color:var(--terra);font-weight:700;margin-top:1px}
  @media(max-width:820px){.valgrid{grid-template-columns:repeat(2,1fr)}}
  @media(max-width:560px){.valgrid,.recgrid{grid-template-columns:1fr}
@@ -167,7 +167,7 @@ TEMPLATE = r'''<!DOCTYPE html>
  .ptchip:hover{border-color:var(--sage);color:var(--sage)}
  .ptchip.on{background:var(--ocean);color:#fff;border-color:var(--ocean);font-weight:600}
  .ptchip .dot{width:10px;height:10px;border-radius:50%;display:inline-block;flex-shrink:0}
- .foot{color:var(--light);font-size:11px;padding:20px 30px;text-align:center;border-top:1px solid var(--line);line-height:1.8}
+ .foot{color:var(--light);font-size:10.5px;padding:9px 26px;text-align:center;border-top:1px solid var(--line);line-height:1.45;flex-shrink:0}
  .flex{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
  input[type=range]{accent-color:var(--ocean);height:4px}
  ::-webkit-scrollbar{width:10px;height:10px}::-webkit-scrollbar-thumb{background:#d9d1c3;border-radius:10px;border:2px solid var(--bg)}
@@ -258,7 +258,7 @@ TEMPLATE = r'''<!DOCTYPE html>
  .recgridfld input[type=number],.recgridfld input[type=text]{width:100%}
  @media(max-width:640px){.recgridfld{grid-template-columns:1fr}}
  /* 다이나믹 find: 둘러보기 리스트 + 검색/추천 */
- .findlist{display:flex;flex-direction:column;gap:6px;max-height:360px;overflow:auto}
+ .findlist{display:flex;flex-direction:column;gap:5px;max-height:290px;overflow:auto}
  .findlist .valcell{cursor:pointer}
  #findResult{animation:vin .3s cubic-bezier(.22,1,.36,1)}
  /* 지역 비교 슬라이드 패널(레이더 스탯 비교) */
