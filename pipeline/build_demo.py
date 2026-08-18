@@ -145,6 +145,7 @@ h2{font-size:clamp(23px,4.4vw,38px);font-weight:800;letter-spacing:-.02em}
 .lc .ar{position:absolute;top:18px;right:18px;color:var(--ocean);font-weight:800;font-size:18px}
 @media(max-width:640px){.links{grid-template-columns:1fr}}
 .note{color:var(--mid);font-size:12px;margin-top:14px}.hi{color:var(--terra);font-weight:800}.hg{color:var(--ocean);font-weight:800}
+.techgrid{display:grid;grid-template-columns:1fr 1fr;gap:12px;max-width:680px;margin:26px auto 0}.tc{background:rgba(255,255,255,.92);border:1px solid var(--line);border-radius:14px;padding:15px 18px;text-align:left;box-shadow:0 2px 8px rgba(20,30,40,.05)}.tc b{display:block;font-size:14px;color:var(--ink);margin-bottom:5px}.tc span{font-size:12.5px;color:var(--mid);line-height:1.55}@media(max-width:640px){.techgrid{grid-template-columns:1fr}}
 /* 데이터 마퀴 */
 .marq{margin-top:24px;width:100vw;overflow:hidden;-webkit-mask-image:linear-gradient(90deg,transparent,#000 8%,#000 92%,transparent);mask-image:linear-gradient(90deg,transparent,#000 8%,#000 92%,transparent)}
 .track{display:flex;gap:10px;width:max-content;animation:scrollx 40s linear infinite}
@@ -247,6 +248,18 @@ BODY = f"""
   <div class="marq"><div class="track">{row1}</div><div class="track r">{row2}</div></div>
   <div class="wrap rev"><div class="note">점수는 전국 읍면동 상대평가(백분위) 기반 참고용입니다.</div></div></section>
 
+<section class="s8"><div class="wrap rev">
+  <div class="kick">만든 과정</div>
+  <h2>1인이, 파이프라인부터 검증까지</h2>
+  <div class="sub">상용 서비스가 아니라 공공데이터를 <b class="hg">통합·현행화</b>한 civic-tech 프로토타입.<br>데이터·공간분석·풀스택·정직한 검증의 기록입니다.</div>
+  <div class="techgrid">
+    <div class="tc"><b>데이터 파이프라인</b><span>순수 Python(pandas·DuckDB spatial·mapshaper). 설정 파일 한 줄로 지표 추가, 41개 정합 체커로 매 빌드 검증.</span></div>
+    <div class="tc"><b>공간 분석</b><span>읍면동 경계 × 시설 32종 공간결합. 인구·면적 밀도 + 근접성 백분위, 인구가중 중심점 보정.</span></div>
+    <div class="tc"><b>온프렘 API</b><span>FastAPI + DuckDB. docker compose 한 줄로 API·데모 기동, OpenAPI 자동 문서.</span></div>
+    <div class="tc"><b>정직한 검증</b><span>점수가 인구밀도(도시성)를 반영함을 스스로 측정·공개하고 동일 유형 비교로 보완. 한계를 숨기지 않습니다.</span></div>
+  </div>
+  <div class="note">유사 공공 분석(통계청 SGIS · 국토연구원 생활SOC)이 이미 존재합니다. 이 프로젝트의 가치는 새 지수의 발명이 아니라 <b class="hg">통합 · 읍면동 해상도 · 정직 · UX</b>입니다.</div>
+</div></section>
 <section class="s7" style="min-height:88vh"><div class="wrap rev">
   <h2>이제 직접 확인해보세요</h2>
   <div class="sub">데모는 여기까지. 실제 데이터·수치는 도구에서 직접.</div>
@@ -293,6 +306,10 @@ HTML = ("<!doctype html><html lang=ko><head><meta charset=utf-8>"
         "<meta name=description content=\"공공데이터로 전국 읍면동을 9가지 생활 도메인으로 채점. 살기지수 × 아파트값 × 대중교통.\">"
         "<meta property=\"og:title\" content=\"동네살기지수 — 어디가 살기 좋을까?\">"
         "<meta property=\"og:description\" content=\"전국 읍면동을 9가지로 채점 · 살기지수 × 아파트값. 나에게 맞는 동네 찾기.\">"
+        "<meta property=\"og:image\" content=\"https://lucestdail.github.io/nli/assets/og.png\">"
+        "<meta property=\"og:image:width\" content=\"1200\"><meta property=\"og:image:height\" content=\"630\">"
+        "<meta property=\"og:type\" content=\"website\">"
+        "<meta name=\"twitter:card\" content=\"summary_large_image\"><meta name=\"twitter:image\" content=\"https://lucestdail.github.io/nli/assets/og.png\">"
         f"<style>{STYLE}</style></head><body>{BODY}{JS}</body></html>")
 
 open("demo.html", "w", encoding="utf-8").write(HTML)
