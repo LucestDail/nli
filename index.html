@@ -571,7 +571,7 @@ function showTab(v){
   ['map','rec','rank','compare','stats','diag'].forEach(x=>{const el=document.getElementById('v-'+x);if(!el)return;
     const on=show.includes(x);
     el.style.display=on?(x==='map'?'flex':'block'):'none';
-    if(on&&x!=='map'){el.style.flex='0 0 auto';el.style.overflow='visible';el.style.animation='none';void el.offsetWidth;el.style.animation='vin .3s cubic-bezier(.22,1,.36,1)';}});
+    if(on&&x!=='map'){el.style.flex='1 0 auto';el.style.overflow='visible';el.style.animation='none';void el.offsetWidth;el.style.animation='vin .3s cubic-bezier(.22,1,.36,1)';}});
   document.getElementById('foot1').style.display=(v==='map'?'none':'block');
   if(v==='map'&&map){setTimeout(()=>map.invalidateSize(),60);renderMapSliders();}
   else if(v==='find'){renderFind();}
