@@ -67,7 +67,7 @@
  .dkpi{display:grid;grid-template-columns:repeat(2,1fr);gap:14px;margin-top:16px}
  .recgrid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:20px}
- .card{background:var(--card);border:1px solid var(--line);border-radius:var(--r-lg);padding:15px 16px;box-shadow:var(--sh);transition:.2s}
+ .card{background:var(--card);border:1px solid var(--line);border-radius:var(--r-lg);padding:17px 18px;box-shadow:var(--sh);transition:.2s}
  .domcard{margin-bottom:0}
  .domgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
  .domcell{border:1px solid var(--line);border-radius:14px;padding:14px 15px;cursor:pointer;transition:.16s;background:linear-gradient(180deg,#fff,#fcfbf8)}
@@ -248,7 +248,7 @@
  .recgridfld input[type=number],.recgridfld input[type=text]{width:100%}
  @media(max-width:640px){.recgridfld{grid-template-columns:1fr}}
  /* 다이나믹 find: 둘러보기 리스트 + 검색/추천 */
- .findlist{display:flex;flex-direction:column;gap:5px;max-height:215px;overflow:auto}
+ .findlist{display:flex;flex-direction:column;gap:6px;max-height:255px;overflow:auto}
  .findlist .valcell{cursor:pointer}
  #findResult{animation:vin .3s cubic-bezier(.22,1,.36,1)}
  /* 지역 비교 슬라이드 패널(레이더 스탯 비교) */
@@ -361,7 +361,7 @@
      <h4>그래서 어떻게 쓰면 되나</h4>
      <p><b>동일 유형 비교</b>(같은 도시/도농/농촌끼리)와 <b>지자체 내부 사각지대 진단</b>(인구 1만+ 인데 특정 도메인 전국 하위 20%)에 가장 신뢰도 높게 활용됩니다.</p>
      <h4>데이터 · 재현</h4>
-     <p>100% 공공데이터·재현 가능(파이프라인 공개). 출처: 공공데이터포털·SGIS(2025 2Q)·심평원·소상공인·국토부 실거래가·safetydata·VWorld. 상세는 앱 하단 및 <code>/api/meta</code>.</p>
+     <p>100% 공공데이터·재현 가능(파이프라인 공개). <b>방법</b>: 시설밀도(인구 1만명당·면적 ㎢당 혼합)와 근접성의 백분위 결합 → 도메인 가중평균, 도농 코호트·인구가중 중심점 보정.</p><p><b>출처</b>: 공공데이터포털 표준데이터 · SGIS 경계·인구(2025 2분기) · 건강보험심사평가원(2026.6) · 소상공인시장진흥공단 · 국토교통부 아파트 실거래가 · safetydata.go.kr · VWorld 지오코딩. 상세 <code>/api/meta</code>.</p>
    </div>
  </div></div>
 
@@ -994,7 +994,7 @@ function customSelect(sel){
 document.addEventListener('click',()=>document.querySelectorAll('.csel.open').forEach(x=>x.classList.remove('open')));
 /* 막대 성장 애니메이션: data-w(%너비)/data-h(%높이) → 다음 프레임에 목표값 적용 */
 function growBars(){requestAnimationFrame(()=>{document.querySelectorAll('[data-w]').forEach(e=>{e.style.width=e.dataset.w+'%';e.removeAttribute('data-w');});document.querySelectorAll('[data-h]').forEach(e=>{e.style.height=e.dataset.h+'%';e.removeAttribute('data-h');});});}
-document.getElementById('foot1').innerHTML='데이터 출처 · 공공데이터포털 표준데이터 · SGIS 경계·인구(2025 2분기) · 건강보험심사평가원(2026.6) · 소상공인시장진흥공단 · 국토교통부 아파트 실거래가 · safetydata.go.kr · VWorld 지오코딩<br>방법 · 시설밀도(인구 1만명당·면적 ㎢당 혼합)와 근접성의 백분위 결합 → 도메인 가중평균, 도농 코호트·인구가중 중심점 보정<br>9개 도메인 32개 지표 읍면동 정밀(복지는 지오코딩 약 96% 커버) · 점수는 전국 읍면동 상대평가(백분위)로 <b>참고용</b> — 시설 밀도·근접 기반이라 도시성(인구밀도)을 일부 반영하므로 <b>동일 도농유형 내 상대비교</b>를 함께 보세요 · <a onclick="openMethod()" style="cursor:pointer;color:var(--ocean);font-weight:700">방법론·한계 자세히 →</a><br><a href="mailto:lucestdail@kakao.com?subject=%5B%EB%8F%99%EB%84%A4%EC%82%B4%EA%B8%B0%EC%A7%80%EC%88%98%5D%20%EB%AC%B8%EC%9D%98" style="display:inline-block;margin-top:9px;color:var(--ocean);font-weight:700;text-decoration:none">문의</a>';
+document.getElementById('foot1').innerHTML='전국 3,559개 읍면동을 9개 도메인·32개 공공데이터 지표로 본 생활여건 · 전국 상대평가(백분위) <b>참고용</b> · <a onclick="openMethod()" style="cursor:pointer;color:var(--ocean);font-weight:700">출처·방법론·한계 더 알아보기 →</a><br><a href="mailto:lucestdail@kakao.com?subject=%5B%EB%8F%99%EB%84%A4%EC%82%B4%EA%B8%B0%EC%A7%80%EC%88%98%5D%20%EB%AC%B8%EC%9D%98" style="display:inline-block;margin-top:8px;color:var(--ocean);font-weight:700;text-decoration:none">문의</a>';
 /* ---------- 공유 딥링크: 현재 상태 ↔ location.hash ---------- */
 function curTab(){const t=document.querySelector('nav .tab.on');return t?t.dataset.v:'map';}
 function writeHash(){if(applyingHash)return;
