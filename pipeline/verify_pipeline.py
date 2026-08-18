@@ -85,7 +85,7 @@ def check_index():
     n_old = len(re.findall(r'"r_old":', html))
     ck(n_old >= N_DONG - 10, "r_old 임베드", f"{n_old}개")
     for token in ("function applyHash", "정보량(엔트로피)", "통근 보정", "인구밀도",
-                  "지역 생활여건 진단", "내 동네 찾기", "이 동네 공유", "더 알아보기", "32개 지표"):
+                  "지역 생활여건 진단", "내 동네 찾기", "이 동네 공유", "데이터 출처", "32개 지표"):
         ck(token in html, f"기능 문자열 '{token[:18]}'", "임베드됨" if token in html else "없음")
     # 탭 구조 무결성(3탭 IA: 지도/내동네/인사이트)
     for t in ("map", "find", "insight"):

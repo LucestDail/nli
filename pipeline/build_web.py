@@ -2,7 +2,25 @@
 입력: data/processed/nli_map.geojson · 출력: nli_map.html(경계 인라인) + nli_points.json(옆 파일, 지연로딩)
 재생성: ./venv/bin/python build_web.py
 """
-import os, shutil
+import os, shutil, yaml
+from collections import defaultdict as _dd
+
+_DS = yaml.safe_load(open("data/datasets.yml", encoding="utf-8"))["datasets"]
+_DOMNAME = {"D1":"의료·건강","D2":"교육·보육","D3":"생활편의·상업","D4":"문화·여가·체육","D5":"교통·이동","D6":"안전","D7":"환경·기후","D8":"복지·돌봄","D9":"반려·동물"}
+_BASE = [("행정동 경계·인구·연령비중", "SGIS 통계지리정보(통계청)", "2025 2분기"),
+         ("주택 — 아파트비율·노후주택비율", "SGIS 통계지리정보(통계청)", "2025 2분기"),
+         ("아파트 실거래 평당가", "국토교통부 실거래가", "2026")]
+def _srow(nm, src, up):
+    return '<tr><td>%s</td><td>%s</td><td class="up">%s</td></tr>' % (nm, src, up or "\u2014")
+_rows = '<tr class="grp"><td colspan="3">\uae30\ubc18 \ub370\uc774\ud130</td></tr>' + "".join(_srow(*b) for b in _BASE)
+_byd = _dd(list)
+for _x in _DS: _byd[_x.get("domain")].append(_x)
+for _d in ["D1","D2","D3","D4","D5","D6","D7","D8","D9"]:
+    if _d not in _byd: continue
+    _rows += '<tr class="grp"><td colspan="3">%s %s</td></tr>' % (_d, _DOMNAME[_d])
+    for _x in _byd[_d]:
+        _rows += _srow(_x.get("name"), _x.get("source"), _x.get("updated"))
+sources_html = '<table class="srctbl"><thead><tr><th>\uc790\ub8cc</th><th>\ucd9c\ucc98</th><th>\uc2dc\uc810</th></tr></thead><tbody>' + _rows + '</tbody></table>'
 
 geojson = open("data/processed/nli_map.geojson", encoding="utf-8").read()
 # 시설포인트(11MB)는 인라인하지 않고 배포 산출물 옆에 두어 지연로딩(fetch). 초기 로딩 경량화.
@@ -104,6 +122,12 @@ TEMPLATE = r'''<!DOCTYPE html>
  .rmhd{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
  .rmhd b{font-size:16px;color:var(--ink)}.rmclose{cursor:pointer;color:var(--light);font-size:20px;line-height:1}
  .mbody{font-size:13px;line-height:1.72;color:var(--ink)}.mbody h4{margin:16px 0 5px;font-size:13.5px;color:var(--ocean)}.mbody h4:first-child{margin-top:2px}.mbody p{margin:0 0 4px;color:var(--mid)}.mbody ul{margin:4px 0;padding-left:18px}.mbody li{margin:4px 0;color:var(--mid)}.mbody b{color:var(--ink)}.mbody code{background:var(--line2);padding:1px 5px;border-radius:4px;font-size:12px}
+ .srcnote{font-size:12.5px;color:var(--mid);margin:0 0 12px}
+ .srctbl{width:100%;border-collapse:collapse;font-size:12px}
+ .srctbl th{text-align:left;background:#f3efe8;color:var(--mid);font-size:11px;padding:6px 9px;position:sticky;top:0;z-index:1}
+ .srctbl td{padding:6px 9px;border-bottom:1px solid var(--line2);vertical-align:top}
+ .srctbl td.up{color:var(--light);white-space:nowrap}
+ .srctbl tr.grp td{background:#faf6ee;font-weight:800;color:var(--ocean);font-size:11.5px;padding-top:9px}
  .rmsum{background:var(--line2);border-radius:11px;padding:11px 13px;font-size:13.5px;margin-bottom:14px}
  .rmsum b{color:var(--ocean);font-size:16px}
  .rmleg{display:flex;gap:11px;padding:9px 0;border-bottom:1px solid var(--line2)}
@@ -370,8 +394,14 @@ TEMPLATE = r'''<!DOCTYPE html>
      <h4>그래서 어떻게 쓰면 되나</h4>
      <p><b>동일 유형 비교</b>(같은 도시/도농/농촌끼리)와 <b>지자체 내부 사각지대 진단</b>(인구 1만+ 인데 특정 도메인 전국 하위 20%)에 가장 신뢰도 높게 활용됩니다.</p>
      <h4>데이터 · 재현</h4>
-     <p>100% 공공데이터·재현 가능(파이프라인 공개). <b>방법</b>: 시설밀도(인구 1만명당·면적 ㎢당 혼합)와 근접성의 백분위 결합 → 도메인 가중평균, 도농 코호트·인구가중 중심점 보정.</p><p><b>출처</b>: 공공데이터포털 표준데이터 · SGIS 경계·인구(2025 2분기) · 건강보험심사평가원(2026.6) · 소상공인시장진흥공단 · 국토교통부 아파트 실거래가 · safetydata.go.kr · VWorld 지오코딩. 상세 <code>/api/meta</code>.</p>
+     <p>100% 공공데이터로 만들었고 파이프라인이 공개되어 <b>재현 가능</b>합니다. 실제 사용한 자료(32개 지표 + 경계·인구·실거래가)는 <a onclick="closeMethod();openSrc()" style="cursor:pointer;color:var(--ocean);font-weight:700">데이터 출처</a>에서 표로 확인하세요.</p>
    </div>
+ </div></div>
+
+ <div id="srcModal" class="rmodal" style="display:none" onclick="if(event.target===this)closeSrc()"><div class="rmbox" style="width:640px;max-width:100%;max-height:88vh">
+   <div class="rmhd"><b>데이터 출처</b><span class="rmclose" onclick="closeSrc()">✕</span></div>
+   <p class="srcnote">전국 3,559개 읍면동을 아래 <b>공공데이터</b>로 융합했습니다 · 100% 공개 데이터 · 재현 가능.</p>
+   __SOURCES__
  </div></div>
 
  <div class="view map" id="v-map" style="display:flex">
@@ -1003,7 +1033,7 @@ function customSelect(sel){
 document.addEventListener('click',()=>document.querySelectorAll('.csel.open').forEach(x=>x.classList.remove('open')));
 /* 막대 성장 애니메이션: data-w(%너비)/data-h(%높이) → 다음 프레임에 목표값 적용 */
 function growBars(){requestAnimationFrame(()=>{document.querySelectorAll('[data-w]').forEach(e=>{e.style.width=e.dataset.w+'%';e.removeAttribute('data-w');});document.querySelectorAll('[data-h]').forEach(e=>{e.style.height=e.dataset.h+'%';e.removeAttribute('data-h');});});}
-document.getElementById('foot1').innerHTML='전국 3,559개 읍면동을 9개 도메인·32개 공공데이터 지표로 본 생활여건 · 전국 상대평가(백분위) <b>참고용</b> · <a onclick="openMethod()" style="cursor:pointer;color:var(--ocean);font-weight:700">출처·방법론·한계 더 알아보기 →</a><br><a href="mailto:lucestdail@kakao.com?subject=%5B%EB%8F%99%EB%84%A4%EC%82%B4%EA%B8%B0%EC%A7%80%EC%88%98%5D%20%EB%AC%B8%EC%9D%98" style="display:inline-block;margin-top:8px;color:var(--ocean);font-weight:700;text-decoration:none">문의</a>';
+document.getElementById('foot1').innerHTML='전국 3,559개 읍면동을 9개 도메인·32개 공공데이터 지표로 본 생활여건 · 전국 상대평가(백분위) <b>참고용</b> · <a onclick="openSrc()" style="cursor:pointer;color:var(--ocean);font-weight:700">출처 →</a> · <a onclick="openMethod()" style="cursor:pointer;color:var(--ocean);font-weight:700">방법론·한계 →</a><br><a href="mailto:lucestdail@kakao.com?subject=%5B%EB%8F%99%EB%84%A4%EC%82%B4%EA%B8%B0%EC%A7%80%EC%88%98%5D%20%EB%AC%B8%EC%9D%98" style="display:inline-block;margin-top:8px;color:var(--ocean);font-weight:700;text-decoration:none">문의</a>';
 /* ---------- 공유 딥링크: 현재 상태 ↔ location.hash ---------- */
 function curTab(){const t=document.querySelector('nav .tab.on');return t?t.dataset.v:'map';}
 function writeHash(){if(applyingHash)return;
@@ -1127,6 +1157,8 @@ function openDongModal(adm){const f=F.find(x=>x.properties.adm_nm===adm);if(!f)r
 function closeDongModal(){document.getElementById('dongModal').style.display='none';}
 function openMethod(){document.getElementById('methodModal').style.display='flex';}
 function closeMethod(){document.getElementById('methodModal').style.display='none';}
+function openSrc(){document.getElementById('srcModal').style.display='flex';}
+function closeSrc(){document.getElementById('srcModal').style.display='none';}
 let _dstat=null;
 function corrCol(r){if(r==null||isNaN(r))return '#f0ede7';const a=Math.min(1,Math.abs(r)),c=r>=0?[47,107,78]:[176,96,63];return 'rgba('+c[0]+','+c[1]+','+c[2]+','+(0.1+0.78*a).toFixed(2)+')';}
 function openDiagStat(){
@@ -1303,7 +1335,7 @@ growBars();
 setTimeout(()=>{if(map)map.invalidateSize();},120);
 </script></body></html>'''
 
-html = TEMPLATE.replace("__GEOJSON__", geojson)
+html = TEMPLATE.replace("__GEOJSON__", geojson).replace("__SOURCES__", sources_html)
 open("nli_map.html", "w", encoding="utf-8").write(html)
 # 시설포인트를 산출물 옆(리포 루트)에 복사 → index.html이 fetch('nli_points.json')로 지연로딩
 shutil.copy("data/processed/nli_points.json", "nli_points.json")
