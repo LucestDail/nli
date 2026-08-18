@@ -76,7 +76,7 @@ TEMPLATE = r'''<!DOCTYPE html>
  .dkpi{display:grid;grid-template-columns:repeat(2,1fr);gap:14px;margin-top:16px}
  .recgrid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:20px}
- .card{background:var(--card);border:1px solid var(--line);border-radius:var(--r-lg);padding:17px 18px;box-shadow:var(--sh);transition:.2s}
+ .card{background:var(--card);border:1px solid var(--line);border-radius:var(--r-lg);padding:15px 16px;box-shadow:var(--sh);transition:.2s}
  .domcard{margin-bottom:0}
  .domgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
  .domcell{border:1px solid var(--line);border-radius:14px;padding:14px 15px;cursor:pointer;transition:.16s;background:linear-gradient(180deg,#fff,#fcfbf8)}
@@ -209,9 +209,8 @@ TEMPLATE = r'''<!DOCTYPE html>
  .inswrap{max-width:1560px;padding-left:26px;padding-right:26px}
  .statwrap.inswrap{max-width:1560px}
  /* 진단 무스크롤 대시보드: 좌 리포트 · 우 순위표(각자 내부 스크롤) */
- #v-diag .inswrap{display:flex;flex-direction:column;height:100%;overflow:hidden}
- .diagdash{display:grid;grid-template-columns:1fr minmax(0,440px);gap:16px;align-items:stretch;flex:1 1 auto;min-height:0}
- .diagdash>.card{height:calc(100% - 8px);min-height:340px;overflow:auto}
+ .diagdash{display:grid;grid-template-columns:1fr minmax(0,440px);gap:16px;align-items:stretch}
+ .diagdash>.card{height:calc(100vh - 250px);min-height:380px;overflow:auto}
  @media(max-width:900px){.diagdash{grid-template-columns:1fr}.diagdash>.card{height:auto}.diagdash>.card:first-child{max-height:56vh}}
  /* 통계 모달 대시보드 그리드 — 카드 세로 고정높이 + 내부 스크롤(내용 부족해도 배경 카드는 채움, 넘치면 카드 안에서 스크롤) */
  .statgrid{display:flex;flex-wrap:wrap;gap:14px;margin-top:16px;align-items:stretch}
@@ -258,7 +257,7 @@ TEMPLATE = r'''<!DOCTYPE html>
  .recgridfld input[type=number],.recgridfld input[type=text]{width:100%}
  @media(max-width:640px){.recgridfld{grid-template-columns:1fr}}
  /* 다이나믹 find: 둘러보기 리스트 + 검색/추천 */
- .findlist{display:flex;flex-direction:column;gap:5px;max-height:290px;overflow:auto}
+ .findlist{display:flex;flex-direction:column;gap:4px;max-height:240px;overflow:auto}
  .findlist .valcell{cursor:pointer}
  #findResult{animation:vin .3s cubic-bezier(.22,1,.36,1)}
  /* 지역 비교 슬라이드 패널(레이더 스탯 비교) */
@@ -577,11 +576,11 @@ function showTab(v){
   if(!['map','find','insight'].includes(v))v='map';
   document.querySelectorAll('nav .tab').forEach(x=>x.classList.toggle('on',x.dataset.v===v));
   const show = v==='map'?['map'] : v==='find'?['rec'] : ['diag'];
-  document.getElementById('app').style.overflowY='hidden';
+  document.getElementById('app').style.overflowY=(v==='map'?'hidden':'auto');
   ['map','rec','rank','compare','stats','diag'].forEach(x=>{const el=document.getElementById('v-'+x);if(!el)return;
     const on=show.includes(x);
     el.style.display=on?(x==='map'?'flex':'block'):'none';
-    if(on&&x!=='map'){el.style.flex='';el.style.overflow='';el.style.animation='none';void el.offsetWidth;el.style.animation='vin .3s cubic-bezier(.22,1,.36,1)';}});
+    if(on&&x!=='map'){el.style.flex='0 0 auto';el.style.overflow='visible';el.style.animation='none';void el.offsetWidth;el.style.animation='vin .3s cubic-bezier(.22,1,.36,1)';}});
   document.getElementById('foot1').style.display=(v==='map'?'none':'block');
   if(v==='map'&&map){setTimeout(()=>map.invalidateSize(),60);renderMapSliders();}
   else if(v==='find'){renderFind();}
