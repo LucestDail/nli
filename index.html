@@ -200,15 +200,16 @@
  .inswrap{max-width:1560px;padding-left:26px;padding-right:26px}
  .statwrap.inswrap{max-width:1560px}
  /* 진단 무스크롤 대시보드: 좌 리포트 · 우 순위표(각자 내부 스크롤) */
- .diagdash{display:grid;grid-template-columns:1fr minmax(0,440px);gap:16px;align-items:stretch}
- .diagdash>.card{height:68vh;overflow:auto}
+ #v-diag .inswrap{display:flex;flex-direction:column;height:100%;overflow:hidden}
+ .diagdash{display:grid;grid-template-columns:1fr minmax(0,440px);gap:16px;align-items:stretch;flex:1 1 auto;min-height:0}
+ .diagdash>.card{height:calc(100% - 8px);min-height:340px;overflow:auto}
  @media(max-width:900px){.diagdash{grid-template-columns:1fr}.diagdash>.card{height:auto}.diagdash>.card:first-child{max-height:56vh}}
  /* 통계 모달 대시보드 그리드 — 카드 세로 고정높이 + 내부 스크롤(내용 부족해도 배경 카드는 채움, 넘치면 카드 안에서 스크롤) */
  .statgrid{display:flex;flex-wrap:wrap;gap:14px;margin-top:16px;align-items:stretch}
- .statgrid .sc{flex:1 1 320px;display:flex;flex-direction:column;height:400px;background:#faf8f4;border:1px solid var(--line);border-radius:14px;padding:15px 16px;min-width:0;overflow:hidden}
+ .statgrid .sc{flex:1 1 320px;display:flex;flex-direction:column;background:#faf8f4;border:1px solid var(--line);border-radius:14px;padding:15px 16px;min-width:0}
  .statgrid .sc.wide{flex:2 1 520px}
  .statgrid .sc.full,.statgrid .sc.span2{flex-basis:100%}
- .scb{flex:1 1 auto;overflow:auto;min-height:0}
+ .scb{flex:1 1 auto;min-width:0}
  .statgrid td[title]{cursor:pointer}
  #dsScatterBox{position:relative}#dsScatterBox circle{cursor:pointer}
  .dstip{position:absolute;pointer-events:none;background:#132a36;color:#fff;font-size:11.5px;line-height:1.55;padding:7px 10px;border-radius:8px;z-index:5;white-space:nowrap;box-shadow:0 6px 18px rgba(0,0,0,.28)}
@@ -228,12 +229,12 @@
  .statgrid .sc h4{margin:0 0 10px;font-size:13.5px;color:var(--ink);font-weight:800;display:flex;align-items:baseline;gap:6px;flex-wrap:wrap;flex-shrink:0}
  .statgrid .sc h4 span{font-weight:400;font-size:11.5px;color:var(--mid)}
  /* 관할 동 표: 카드 내부 .scb가 스크롤 · thead sticky */
- .scrollv{border:1px solid var(--line2);border-radius:10px}
+ .scrollv{max-height:440px;overflow-y:auto;border:1px solid var(--line2);border-radius:10px}
  .scrollv table{width:100%;border-collapse:collapse}
  .scrollv th,.scrollv td{padding:6px 10px;border-bottom:1px solid var(--line2)}
  .scrollv thead th{position:sticky;top:0;background:#f1ede6;z-index:1;font-size:11.5px}
- .statgrid table.heat{width:100%}
- @media(max-width:760px){.statgrid .sc{flex-basis:100%;height:auto;max-height:74vh}}
+ .statgrid table.heat{width:100%;table-layout:fixed}
+ @media(max-width:760px){.statgrid .sc{flex-basis:100%}}
  .statdash,.statdash>.card{min-width:0}
  #regHeat,#domCorr,#sidoDom{max-width:100%}
  /* 데스크톱 전용 도구(복사·CSV·인쇄·공유) — 모바일 숨김(간단 조회/열람만) */
@@ -567,11 +568,11 @@ function showTab(v){
   if(!['map','find','insight'].includes(v))v='map';
   document.querySelectorAll('nav .tab').forEach(x=>x.classList.toggle('on',x.dataset.v===v));
   const show = v==='map'?['map'] : v==='find'?['rec'] : ['diag'];
-  document.getElementById('app').style.overflowY=(v==='map'?'hidden':'auto');
+  document.getElementById('app').style.overflowY='hidden';
   ['map','rec','rank','compare','stats','diag'].forEach(x=>{const el=document.getElementById('v-'+x);if(!el)return;
     const on=show.includes(x);
     el.style.display=on?(x==='map'?'flex':'block'):'none';
-    if(on&&x!=='map'){el.style.flex='0 0 auto';el.style.overflow='visible';el.style.animation='none';void el.offsetWidth;el.style.animation='vin .3s cubic-bezier(.22,1,.36,1)';}});
+    if(on&&x!=='map'){el.style.flex='';el.style.overflow='';el.style.animation='none';void el.offsetWidth;el.style.animation='vin .3s cubic-bezier(.22,1,.36,1)';}});
   document.getElementById('foot1').style.display=(v==='map'?'none':'block');
   if(v==='map'&&map){setTimeout(()=>map.invalidateSize(),60);renderMapSliders();}
   else if(v==='find'){renderFind();}
