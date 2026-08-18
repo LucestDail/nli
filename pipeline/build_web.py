@@ -250,14 +250,15 @@ TEMPLATE = r'''<!DOCTYPE html>
  .dtip .dtiphd{font-weight:800;font-size:13px;margin-bottom:4px;display:flex;align-items:center;gap:6px}
  .dtip .dtiprow{font-size:11.5px;color:var(--mid);line-height:1.5}
  .dtip .dtipft{font-size:10.5px;color:var(--light);margin-top:4px}
- .mapsum{position:absolute;left:14px;bottom:16px;z-index:600;background:rgba(255,255,255,.95);backdrop-filter:blur(6px);border:1px solid var(--line);border-radius:12px;box-shadow:0 6px 20px -8px rgba(20,30,40,.3);padding:10px 13px;font-size:12px;max-width:230px}
+ .mapsum{position:absolute;left:276px;bottom:16px;z-index:600;background:rgba(255,255,255,.95);backdrop-filter:blur(6px);border:1px solid var(--line);border-radius:12px;box-shadow:0 6px 20px -8px rgba(20,30,40,.3);padding:10px 13px;font-size:12px;max-width:230px}
  .mapsum .mstop{font-weight:700;color:var(--ink);margin-bottom:4px;font-size:12.5px}
  .mapsum .msrow{font-size:11.5px;line-height:1.6}
  .maphint{position:absolute;top:52px;left:50%;transform:translateX(-50%);z-index:550;background:rgba(19,42,54,.9);color:#fff;border-radius:999px;padding:7px 16px;font-size:12.5px;box-shadow:0 4px 14px rgba(20,30,40,.28);transition:opacity .5s,transform .5s;pointer-events:none;white-space:nowrap}
  .maphint b{color:#8fd0b0}
  .maphint.hide{opacity:0;transform:translateX(-50%) translateY(-6px)}
  @media(max-width:760px){.maphint{font-size:11px;padding:6px 12px;top:auto;bottom:64px}}
- @media(max-width:760px){.mapsum{left:10px;bottom:10px;font-size:11px;padding:8px 10px}}
+ @media(max-width:820px){.mapsum{left:12px}}
+ @media(max-width:760px){.mapsum{left:12px;bottom:10px;font-size:11px;padding:8px 10px;max-width:190px}}
  .statgrid .sc h4{margin:0 0 10px;font-size:13.5px;color:var(--ink);font-weight:800;display:flex;align-items:baseline;gap:6px;flex-wrap:wrap;flex-shrink:0}
  .statgrid .sc h4 span{font-weight:400;font-size:11.5px;color:var(--mid)}
  /* 관할 동 표: 카드 내부 .scb가 스크롤 · thead sticky */
