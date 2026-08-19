@@ -38,7 +38,7 @@ def _read_csv_any(path, usecols=None):
             return pd.read_csv(path, encoding=enc, dtype=str, usecols=usecols)
         except (UnicodeDecodeError, LookupError):
             continue
-    return pd.read_csv(path, encoding="cp949", dtype=str, usecols=usecols, errors="replace")
+    return pd.read_csv(path, encoding="cp949", dtype=str, usecols=usecols, encoding_errors="replace")
 
 
 _ZIP_CACHE = {}   # 동일 zip(상가 2.7만건)을 업종 세분 데이터셋마다 재파싱하지 않도록 캐시

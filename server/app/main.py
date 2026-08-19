@@ -117,9 +117,13 @@ def score(lat: float = Query(...), lon: float = Query(...)):
 
 @app.get("/api/rank")
 def rank(sido: str = "", cohort: str = "", metric: str = "NLI", limit: int = Query(50, le=500)):
-    col = metric if (metric == "NLI" or metric in DOMS or metric.startswith("score_")) else "NLI"
-    if col in DOMS:
-        col = "score_" + col
+    # 화이트리스트 검증(SQL injection 방어): 실제 컬럼만 허용
+    if metric in DOMS:
+        col = "score_" + metric
+    elif metric == "NLI" or metric in {"score_" + d for d in DOMS}:
+        col = metric
+    else:
+        col = "NLI"
     where = ["pop_total > 0", f"{col} IS NOT NULL"]
     params = []
     if sido:

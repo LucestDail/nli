@@ -191,9 +191,6 @@
  .detail{animation:vin .22s cubic-bezier(.22,1,.36,1)}
  .kpi,.card{transition:box-shadow .2s,transform .2s}.card:hover{box-shadow:var(--sh2)}
  .place{transition:background .12s,transform .12s}.place:hover{transform:translateX(2px)}
- /* 통계 정렬(데스크탑 균형) */
- #scatter{text-align:center}
- #regHeat,#domCorr,#sidoDom{overflow-x:auto}
  .card>.flex{align-items:center}
  /* 분석(stats) 대시보드 — 2열 그리드로 스크롤 최소화 */
  .statwrap{max-width:1340px}
@@ -242,7 +239,6 @@
  .statgrid table.heat{width:100%;table-layout:fixed}
  @media(max-width:760px){.statgrid .sc{flex-basis:100%}}
  .statdash,.statdash>.card{min-width:0}
- #regHeat,#domCorr,#sidoDom{max-width:100%}
  /* 데스크톱 전용 도구(복사·CSV·인쇄·공유) — 모바일 숨김(간단 조회/열람만) */
  .mobile-only{display:none}
  @media(max-width:640px){
@@ -599,7 +595,7 @@ function initMap(){
   map=L.map('map',{preferCanvas:true,zoomSnap:0.25}).setView([36.55,127.75],7.6);
   L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',{attribution:'&copy; OpenStreetMap &copy; CARTO',maxZoom:19}).addTo(map);
   layer=L.geoJSON(DATA,{style:mStyle,onEachFeature:(f,l)=>{f.properties._l=l;l.bindTooltip(()=>dongTip(f.properties),{sticky:true,direction:'top',className:'dtip',opacity:1});l.on('mouseover',()=>{l.setStyle({weight:1.6,color:'#16232e'});hideMapHint();});l.on('mouseout',()=>{if(l!==selL)layer.resetStyle(l)});l.on('click',()=>showDetail(f.properties))}}).addTo(map);
-  const sel=document.getElementById('metric');for(const k in METRICS){let o=document.createElement('option');o.value=k;o.text=METRICS[k];sel.add(o)}
+  const sel=document.getElementById('metric');for(const k in METRICS){if(k==='grade')continue;let o=document.createElement('option');o.value=k;o.text=METRICS[k];sel.add(o)}
   sel.onchange=e=>{mMetric=e.target.value;mRedraw()};
   const mp=document.getElementById('mpersona');
   {let o=document.createElement('option');o.value='';o.text='직접 조정';mp.add(o);}
@@ -898,97 +894,6 @@ function sval(p,k){
 }
 function pearson(xs,ys){let n=0,sx=0,sy=0,sxx=0,syy=0,sxy=0;for(let i=0;i<xs.length;i++){const a=xs[i],b=ys[i];if(a==null||b==null||isNaN(a)||isNaN(b))continue;n++;sx+=a;sy+=b;sxx+=a*a;syy+=b*b;sxy+=a*b;}if(n<2)return NaN;const c=sxy-sx*sy/n;return c/Math.sqrt((sxx-sx*sx/n)*(syy-sy*sy/n));}
 function ols(xs,ys){const px=[],py=[];for(let i=0;i<xs.length;i++){const a=xs[i],b=ys[i];if(a!=null&&b!=null&&!isNaN(a)&&!isNaN(b)){px.push(a);py.push(b);}}const n=px.length,sx=px.reduce((s,v)=>s+v,0),sy=py.reduce((s,v)=>s+v,0),sxx=px.reduce((s,v)=>s+v*v,0),sxy=px.reduce((s,v,i)=>s+v*py[i],0);const sl=(n*sxy-sx*sy)/(n*sxx-sx*sx),ic=(sy-sl*sx)/n,r=pearson(px,py);return{slope:sl,intercept:ic,r2:r*r,r,n};}
-function corrColor(r){const a=Math.min(1,Math.abs(r)),c=r>=0?[47,107,78]:[176,96,63];return `rgba(${c[0]},${c[1]},${c[2]},${(.1+.85*a).toFixed(2)})`;}
-function renderStats(){
-  const cmean=(f,d)=>{const v=SP.filter(f).map(p=>p['score_'+d]).filter(x=>x!=null);return v.reduce((a,b)=>a+b,0)/(v.length||1)};
-  const avgNLI=SP.reduce((s,p)=>s+(nliW(p)||0),0)/SP.length;
-  const dkAll=[...DKEYS,'NLI'];
-  const dvAll=dkAll.map(d=>d==='NLI'?SP.map(p=>nliW(p)):SP.map(p=>p['score_'+d]));
-  const regV=REG.map(([rk])=>SP.map(p=>sval(p,rk)));
-  const eldMed=pearson(regV[2],dvAll[0]);       // 고령 ↔ 의료
-  const gap=cmean(p=>p.cohort==='도시','D1')/cmean(p=>p.cohort==='농촌','D1');
-  // 최강 지역특성×도메인 상관
-  let best=['',0];REG.forEach(([rk,rn],ri)=>dkAll.forEach((d,di)=>{const r=pearson(regV[ri],dvAll[di]);if(Math.abs(r)>Math.abs(best[1]))best=[rn+'↔'+VARS[d],r];}));
-  // 아파트값 ↔ 종합지수 상관
-  const prV=SP.map(p=>sval(p,'price')), priceNli=pearson(prV,SP.map(p=>nliW(p)));
-  // 서사: 계산된 상관을 평문 문장으로(핵심 인사이트를 앞세움)
-  const _sgn=v=>v>=0?'+':'', _strg=v=>{const a=Math.abs(v);return a<.15?'거의 무관':a<.3?'약한 관계':a<.5?'뚜렷한 관계':'강한 관계';};
-  const _sn=document.getElementById('statNarr');
-  if(_sn)_sn.innerHTML='<div class="card" style="background:linear-gradient(135deg,#eef4f1,#eaf1f4);border:0;margin-bottom:16px">'
-    +'<div style="font-size:12px;font-weight:800;color:var(--sky);letter-spacing:.08em">이 데이터가 말하는 것</div>'
-    +'<div style="font-size:14.5px;line-height:1.85;margin-top:6px;max-width:900px;word-break:keep-all">'
-    +'· <b>아파트값 ↔ 살기지수</b>는 '+_strg(priceNli)+'('+_sgn(priceNli)+priceNli.toFixed(2)+') — 비싼 동네가 꼭 살기 좋은 건 아닙니다.<br>'
-    +'· 가장 뚜렷한 관계는 <b>'+best[0]+'</b>('+_sgn(best[1])+best[1].toFixed(2)+') — 지역 특성이 생활여건을 크게 좌우합니다.<br>'
-    +'· <b>고령 비중 ↔ 의료</b>는 '+_strg(eldMed)+'('+_sgn(eldMed)+eldMed.toFixed(2)+'), <b>의료 접근성</b>은 도시가 농촌의 <b>'+gap.toFixed(1)+'배</b> — 정책이 필요한 지점입니다.'
-    +'</div></div>';
-  document.getElementById('statKpi').innerHTML=
-    `<div class="kpi"><b>${avgNLI.toFixed(1)}</b><span>평균 종합지수</span></div>
-     <div class="kpi"><b style="color:${priceNli>=0?'#2f6b4e':'#b0603f'}">${priceNli>=0?'+':''}${priceNli.toFixed(2)}</b><span>아파트값 ↔ 살기지수</span></div>
-     <div class="kpi"><b>${gap.toFixed(1)}배</b><span>의료 도농격차(도시/농촌)</span></div>
-     <div class="kpi"><b style="color:${best[1]>=0?'#2f6b4e':'#b0603f'}">${best[1]>=0?'+':''}${best[1].toFixed(2)}</b><span>최강 지역상관 · ${best[0]}</span></div>`;
-
-
-  // 지역 특성 × 도메인 상관 히트맵
-  let ht='<table class="heat"><tr><th></th>'+dkAll.map(d=>`<th title="${VARS[d]}">${d==='NLI'?'종합':DOMINFO[d][0]}</th>`).join('')+'</tr>';
-  REG.forEach(([rk,rn],ri)=>{ht+=`<tr><td style="font-weight:700;background:#f7f5f1;text-align:left;white-space:nowrap">${rn}</td>`+dvAll.map((dv,di)=>{const r=pearson(regV[ri],dv);return `<td style="background:${corrColor(r)};color:${Math.abs(r)>=.5?'#fff':'#1a2530'};${Math.abs(r)>=.3?'font-weight:700':''}">${r.toFixed(2)}</td>`}).join('')+'</tr>';});
-  document.getElementById('regHeat').innerHTML=ht+'</table>';
-
-  // 도메인 간 상관 (9×9): 어떤 인프라가 함께 몰리나
-  const dv9=DKEYS.map(d=>SP.map(p=>p['score_'+d]));
-  let hc='<table class="heat"><tr><th></th>'+DKEYS.map(d=>`<th>${DOMINFO[d][0]}</th>`).join('')+'</tr>';
-  DKEYS.forEach((d,i)=>{hc+=`<tr><td style="font-weight:700;background:#f7f5f1;text-align:left;white-space:nowrap">${DOMINFO[d][0]} ${SHORT[d]}</td>`+DKEYS.map((d2,j)=>{if(i===j)return '<td style="background:#f0ede7;color:#c9beac">·</td>';const r=pearson(dv9[i],dv9[j]);return `<td style="background:${corrColor(r)};color:${Math.abs(r)>=.5?'#fff':'#1a2530'};${Math.abs(r)>=.3?'font-weight:700':''}">${r.toFixed(2)}</td>`}).join('')+'</tr>';});
-  document.getElementById('domCorr').innerHTML=hc+'</table>';
-
-  // 시도 × 도메인 프로파일: 각 도메인 열에서 상대강점(열 정규화 색)
-  const sidos=[...new Set(SP.map(p=>p.sido))];
-  const sm={};sidos.forEach(s=>{sm[s]={};const sub=SP.filter(p=>p.sido===s);DKEYS.forEach(d=>{const v=sub.map(p=>p['score_'+d]).filter(x=>x!=null);sm[s][d]=v.reduce((a,b)=>a+b,0)/(v.length||1);});sm[s]._nli=sub.reduce((a,p)=>a+(nliW(p)||0),0)/(sub.length||1);});
-  sidos.sort((a,b)=>sm[b]._nli-sm[a]._nli);
-  const dmm={};DKEYS.forEach(d=>{const vs=sidos.map(s=>sm[s][d]);dmm[d]=[Math.min(...vs),Math.max(...vs)];});
-  let hsd='<table class="heat"><tr><th></th>'+DKEYS.map(d=>`<th>${DOMINFO[d][0]}<br><span style="font-weight:400;font-size:9px">${SHORT[d]}</span></th>`).join('')+'</tr>';
-  sidos.forEach(s=>{hsd+=`<tr><td style="font-weight:700;background:#f7f5f1;text-align:left;white-space:nowrap;font-size:10.5px">${s.replace('특별자치도','').replace('특별자치시','').replace('광역시','').replace('특별시','')}</td>`+DKEYS.map(d=>{const v=sm[s][d],[mn,mx]=dmm[d],t=(v-mn)/((mx-mn)||1);return `<td style="background:rgba(47,107,78,${(.08+.82*t).toFixed(2)});color:${t>.5?'#fff':'#1a2530'}">${Math.round(v)}</td>`}).join('')+'</tr>';});
-  document.getElementById('sidoDom').innerHTML=hsd+'</table>';
-
-  // 도농 유형별 도메인 점수 — 가로 그룹 막대(값 라벨). 코호트 기준 토글(행정동명/인구밀도, M6)
-  const coh=[['도시','#6f9e86'],['도농복합','#d4a056'],['농촌','#cf8a5c']];
-  const drawCohort=()=>{document.getElementById('cohortBars').innerHTML=DKEYS.map(d=>{
-    const rows=coh.map(([c,col])=>{const m=cmean(p=>p[cohortKey]===c,d);return `<div style="display:flex;align-items:center;gap:6px;margin:1px 0"><span style="width:52px;font-size:10px;color:var(--mid);text-align:right">${c}</span><div style="flex:1;background:var(--line2);border-radius:3px;height:11px"><div class="gbar" data-w="${m.toFixed(0)}" style="width:0;height:100%;background:${col};border-radius:3px"></div></div><span style="width:22px;font-size:10.5px;font-weight:700;text-align:right">${m.toFixed(0)}</span></div>`}).join('');
-    return `<div style="margin-bottom:10px"><div style="font-size:12px;font-weight:600;color:var(--ink);margin-bottom:3px">${VARS[d]}</div>${rows}</div>`;
-  }).join('');growBars();};
-  document.querySelectorAll('[data-ck]').forEach(b=>b.onclick=()=>{cohortKey=b.dataset.ck;document.querySelectorAll('[data-ck]').forEach(x=>x.classList.toggle('on',x===b));drawCohort();});
-  drawCohort();
-
-  // 시도별 종합지수 순위
-  const sd={};SP.forEach(p=>{(sd[p.sido]=sd[p.sido]||[]).push(nliW(p)||0)});
-  const sarr=Object.entries(sd).map(([k,v])=>[k,v.reduce((a,b)=>a+b,0)/v.length]).sort((a,b)=>b[1]-a[1]);
-  document.getElementById('sidoRank').innerHTML=sarr.map(([k,v])=>`<div style="display:flex;align-items:center;gap:8px;font-size:12px;margin:3px 0"><span style="width:100px;text-align:right;color:var(--mid);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${k}</span><div style="flex:1;background:var(--line2);border-radius:4px;height:13px"><div class="gbar" data-w="${v.toFixed(0)}" style="width:0;height:100%;background:${color(v)};border-radius:4px"></div></div><span style="width:28px;font-weight:700">${v.toFixed(0)}</span></div>`).join('');
-
-  const opts=['dens','pop','eld','yth','inf','apt','old','price','NLI',...DKEYS];
-  const sx=document.getElementById('sx'),sy=document.getElementById('sy');
-  if(!sx.options.length){opts.forEach(k=>{sx.add(new Option(VARS[k],k));sy.add(new Option(VARS[k],k));});sx.value='dens';sy.value='D1';sx.onchange=drawScatter;sy.onchange=drawScatter;}
-  drawScatter();growBars();
-}
-function drawScatter(){
-  const xk=document.getElementById('sx').value,yk=document.getElementById('sy').value;
-  const pts=SP.map(p=>[sval(p,xk),sval(p,yk)]).filter(a=>a[0]!=null&&a[1]!=null&&!isNaN(a[0])&&!isNaN(a[1]));
-  const xs=pts.map(a=>a[0]),ys=pts.map(a=>a[1]),r=ols(xs,ys);
-  const xmin=Math.min(...xs),xmax=Math.max(...xs),ymin=Math.min(...ys),ymax=Math.max(...ys);
-  const W=560,H=280,pad=36,sxp=v=>pad+(v-xmin)/(xmax-xmin||1)*(W-2*pad),syp=v=>H-pad-(v-ymin)/(ymax-ymin||1)*(H-2*pad);
-  const samp=pts.length>1500?pts.filter((_,i)=>i%Math.ceil(pts.length/1500)===0):pts;
-  let svg=`<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMidYMid meet" style="width:100%;max-width:760px;background:#fdfcfa;border-radius:8px">`;
-  svg+=`<line x1="${pad}" y1="${H-pad}" x2="${W-pad}" y2="${H-pad}" stroke="#ddd"/><line x1="${pad}" y1="${pad}" x2="${pad}" y2="${H-pad}" stroke="#ddd"/>`;
-  svg+=samp.map(a=>`<circle cx="${sxp(a[0]).toFixed(1)}" cy="${syp(a[1]).toFixed(1)}" r="1.7" fill="#2f6b4e" opacity=".3"/>`).join('');
-  svg+=`<line x1="${sxp(xmin).toFixed(1)}" y1="${syp(r.intercept+r.slope*xmin).toFixed(1)}" x2="${sxp(xmax).toFixed(1)}" y2="${syp(r.intercept+r.slope*xmax).toFixed(1)}" stroke="#c0392b" stroke-width="2.2"/>`;
-  svg+=`<text x="${W/2}" y="${H-9}" font-size="11" text-anchor="middle" fill="#5b6b77">${VARS[xk]} →</text>`;
-  svg+=`<text x="13" y="${H/2}" font-size="11" fill="#5b6b77" text-anchor="middle" transform="rotate(-90 13 ${H/2})">↑ ${VARS[yk]}</text>`;
-  document.getElementById('scatter').innerHTML=svg+'</svg>';
-  document.getElementById('regInfo').innerHTML=`&nbsp; <b>R² ${r.r2.toFixed(2)}</b> · n=${r.n.toLocaleString()}`;
-  const R=r.r||0,ar=Math.abs(R);
-  const mag=ar<0.1?'뚜렷한 관계가 거의 없':ar<0.3?'약한 관계가 있':ar<0.5?'뚜렷한 관계가 있':'강한 관계가 있';
-  const dir=R>=0?`높을수록 <b>${VARS[yk]}</b>도 높아지는`:`높을수록 <b>${VARS[yk]}</b>는 낮아지는`;
-  document.getElementById('scatterNote').innerHTML=`<b>${VARS[xk]}</b>가 ${dir} ${mag}습니다 &nbsp;(r=${R.toFixed(2)})`;
-  writeHash();
-}
-
 function toggleFav(adm,re){const i=fav.indexOf(adm);if(i<0)fav.push(adm);else fav.splice(i,1);localStorage.setItem('nli_fav',JSON.stringify(fav));
   if(document.getElementById('detail').style.display==='block'){const f=F.find(x=>x.properties.adm_nm===adm);if(f)document.getElementById('detail').innerHTML=detailHTML(f.properties)}if(re)renderRank();}
 /* 커스텀 셀렉트: 네이티브 select를 감싸 숨기고 스타일 드롭다운으로 대체(옵션은 실시간 반영) */
@@ -1017,8 +922,6 @@ function writeHash(){if(applyingHash)return;
   if(mMetric&&mMetric!=='NLI')q.push('m='+mMetric);
   if(mMode&&mMode!=='basic')q.push('md='+mMode);
   if(commuteBase){q.push('cb='+encodeURIComponent(commuteBase));q.push('ck='+commuteKm);}
-  const sx=document.getElementById('sx'),sy=document.getElementById('sy');
-  if(sx&&sy&&sx.value&&!(sx.value==='dens'&&sy.value==='D1')){q.push('sx='+sx.value);q.push('sy='+sy.value);}
   if(cmp.length)q.push('c='+cmp.map(encodeURIComponent).join('~'));
   const h=q.join('&');
   try{history.replaceState(null,'',h?('#'+h):(location.pathname+location.search));}catch(e){}
@@ -1040,7 +943,6 @@ function applyHash(){
     if(P.md)document.querySelectorAll('#modes button').forEach(x=>x.classList.toggle('on',x.dataset.m===P.md));
     const ms=document.getElementById('metric');if(ms){ms.value=mMetric;ms.dispatchEvent(new Event('change'));}
     if(P.cb){const ci=document.getElementById('commuteInfo');if(ci){ci.innerHTML='<b style="color:var(--ocean)">'+P.cb+'</b> 기준 ·';document.getElementById('commuteKmWrap').style.display='inline-flex';document.getElementById('commuteKm').value=commuteKm;document.getElementById('commuteKmV').textContent=commuteKm+'km';}if(v==='find')renderRank();}
-    if(P.sx){const sx=document.getElementById('sx'),sy=document.getElementById('sy');if(sx&&sx.onchange){sx.value=P.sx;if(P.sy&&sy)sy.value=P.sy;sx.dispatchEvent(new Event('change'));}}
     if(P.d){const f=F.find(x=>x.properties.adm_nm===P.d);if(f)showDetail(f.properties,true);}
     if(cmp.length){renderCmpPanel();openCmpPanel();}
   }catch(e){}

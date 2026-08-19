@@ -113,6 +113,6 @@ collect/*.py          data.go.kr API 수집 · VWorld 지오코딩
 
 ## 데이터 출처
 
-공공데이터포털 표준데이터 · SGIS(통계지리정보) 경계·인구(2025 2Q) · 건강보험심사평가원 · 소상공인시장진흥공단 · 국토교통부 아파트 실거래가 · safetydata.go.kr · VWorld 지오코딩. 출처·시점은 앱 하단 및 `/api/meta` 참조.
+공공데이터포털 표준데이터 · SGIS(통계지리정보) 경계·인구(2025 2Q) · 건강보험심사평가원 · 소상공인시장진흥공단 · 국토교통부 아파트 실거래가 · safetydata.go.kr · VWorld 지오코딩. 출처·시점은 **앱 하단 출처 표(모달)** 에서 자료별로 확인(온프렘 API는 `/api/meta`).
 
 **라이브**: [lucestdail.github.io/nli](https://lucestdail.github.io/nli/)
