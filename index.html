@@ -459,12 +459,13 @@
  </div></div>
 
  <div class="view" id="v-diag" style="display:none"><div class="wrap inswrap">
-   <h2>지역 생활여건 진단 <span class="muted" style="font-size:14px;font-weight:400">— 지자체 229곳</span></h2>
-   <div class="sub" style="margin-bottom:12px">시군구 단위 <b>취약 도메인</b>·<b>사각지대 동</b>(인구 1만+ 하위 20%) 진단 · <b>좌측 표에서 지자체를 클릭하면 우측 리포트가 갱신</b>되고 선택에 담깁니다. 여러 곳을 담고 <b>통계 분석</b>으로 한눈에 비교하세요.</div>
+   <h2>지역 생활여건 진단 <span class="muted" id="diagUnitLabel" style="font-size:14px;font-weight:400">— 전국 읍면동</span></h2>
+   <div class="sub" id="diagSub" style="margin-bottom:12px">읍면동별 <b>취약·강점 도메인</b>과 <b>사각지대</b>(인구 1만+ 인데 전국 하위 20%) 진단 · <b>좌측 표에서 동을 클릭하면 우측 리포트가 갱신</b>됩니다. 상단에서 <b>시군구</b> 단위(지자체 229곳 집계)로 전환할 수 있습니다.</div>
    <div class="flex" style="margin-bottom:12px">
-     <input type="text" id="diagSearch" placeholder="지자체·동 검색 (예: 강남, 역삼)" style="width:230px" autocomplete="off">
+     <span id="diagUnitSeg" style="display:inline-flex;gap:4px;margin-right:2px"><button class="btn on" data-u="dong" onclick="setDiagUnit('dong')">동</button><button class="btn" data-u="sgg" onclick="setDiagUnit('sgg')">시군구</button></span>
+     <input type="text" id="diagSearch" placeholder="동·지자체 검색 (예: 동춘3동, 강남구)" style="width:220px" autocomplete="off">
      <select id="diagSido"></select>
-     <select id="diagSort"><option value="nli">취약(평균지수 낮은) 순</option><option value="nli_desc">우수(평균지수 높은) 순</option><option value="blind">사각지대 많은 순</option><option value="blind_asc">사각지대 적은 순</option><option value="pop">인구 많은 순</option><option value="dongs">관할 동 많은 순</option></select><button class="btn on" onclick="openDiagStat()">통계 분석</button><span id="diagSelInfo" class="muted"></span>
+     <select id="diagSort"></select><button class="btn on" id="diagStatBtn" onclick="openDiagStat()" style="display:none">통계 분석</button><span id="diagSelInfo" class="muted"></span>
      <span class="muted" id="diagCount"></span></div>
    <div class="diagdash">
      <div class="card" style="padding:0;overflow:auto"><table id="diagTable"></table></div>
@@ -570,7 +571,7 @@ function attachAC(input,box,onPick){
 }
 
 // 3탭 IA: map / find(추천+순위) / insight(비교·진단·분석 한 페이지)
-function renderInsight(){renderDiag();}
+function renderInsight(){var so=document.getElementById('diagSort');if(so&&!so.options.length){setDiagUnit(diagUnit);}else{renderDiag();}}
 function showTab(v){
   if(!['map','find','insight'].includes(v))v='map';
   document.querySelectorAll('nav .tab').forEach(x=>x.classList.toggle('on',x.dataset.v===v));
@@ -723,7 +724,7 @@ function dongToDiag(adm){const f=F.find(x=>x.properties.adm_nm===adm);if(!f)retu
   const ps=(f.properties.full_nm||'').split(' ');if(ps.length<2)return;const key=ps[0]+' '+ps[1];
   try{closeDongModal();}catch(e){}
   showTab('insight');
-  setTimeout(function(){const sb=document.getElementById('diagSearch');if(sb){sb.value=ps[1];}try{pickDiag(key);}catch(e){}
+  setTimeout(function(){try{setDiagUnit('sgg');}catch(e){}const sb=document.getElementById('diagSearch');if(sb){sb.value=ps[1];}try{pickDiag(key);}catch(e){}
     const el=document.getElementById('v-diag');if(el)el.scrollTop=0;},40);}
 // B2C 공유: 카톡 등에 바로 붙일 자동 문구 + 동네 딥링크 (모바일=네이티브 공유시트, 데스크톱=클립보드)
 function shareDong(adm,btn){
@@ -950,7 +951,7 @@ function applyHash(){
   writeHash();
 }
 /* ── 지역 생활여건 진단 (B2G) ── 지자체=full_nm.split[1] (자치구 분리·일반구는 시로 병합) */
-let diagSel=null,diagSort='nli',diagCur=null,diagCmp=[];
+let diagSel=null,diagSort='nli',diagCur=null,diagCmp=[],diagUnit='dong';
 function diagData(){
   const G={};
   SP.forEach(p=>{if((p.pop_total||0)<=0)return;const ps=(p.full_nm||'').split(' ');if(ps.length<2)return;
@@ -989,11 +990,75 @@ function diagCardHTML(g,rankOf,total){
    <div style="margin-top:18px"><div class="fld" style="font-size:11.5px">사각지대 동 <span class="muted" style="font-weight:400;text-transform:none;letter-spacing:0">인구 많은 순 · 클릭 → 지도 상세</span></div>
      ${g.blindN?`<div class="valgrid" style="margin-top:8px">${bl}</div>`+(g.blindN>9?`<div class="muted" style="margin-top:8px">외 ${g.blindN-9}건</div>`:''):'<div class="muted" style="margin-top:8px">사각지대 없음 — 인구 1만+ 동에서 하위 20% 도메인 없음</div>'}</div>`;
 }
-function renderDiag(){
+function renderDiag(){return diagUnit==='dong'?renderDiagDong():renderDiagSgg();}
+function setDiagUnit(u){
+  diagUnit=u;diagSel=null;diagCmp=[];
+  var seg=document.getElementById('diagUnitSeg');if(seg)seg.querySelectorAll('[data-u]').forEach(function(b){b.classList.toggle('on',b.dataset.u===u);});
+  var so=document.getElementById('diagSort');
+  so.innerHTML=(u==='dong'
+    ?'<option value="nli">취약(종합 낮은) 순</option><option value="nli_desc">우수(종합 높은) 순</option><option value="blind">사각지대 도메인 많은 순</option><option value="coh">동일유형 하위 순</option><option value="pop">인구 많은 순</option>'
+    :'<option value="nli">취약(평균지수 낮은) 순</option><option value="nli_desc">우수(평균지수 높은) 순</option><option value="blind">사각지대 많은 순</option><option value="blind_asc">사각지대 적은 순</option><option value="pop">인구 많은 순</option><option value="dongs">관할 동 많은 순</option>');
+  diagSort='nli';so.value='nli';
+  if(!so._w){so._w=1;so.onchange=function(){diagSort=so.value;renderDiag();};customSelect(so);}
+  var sb=document.getElementById('diagStatBtn');if(sb)sb.style.display=(u==='sgg'?'inline-block':'none');
+  var lb=document.getElementById('diagUnitLabel');if(lb)lb.textContent=(u==='dong'?'— 전국 읍면동':'— 지자체 229곳');
+  renderDiag();
+}
+function pickDiagDong(adm){diagSel=adm;renderDiag();}
+function diagDongCardHTML(p,nat,rank,total){
+  var nv=nliW(p)||0,gr=gradeOf(p);
+  var rankDom=DKEYS.map(function(d){return [d,(p['score_'+d]||0)-nat[d]];}).sort(function(a,b){return a[1]-b[1];});
+  var weak=rankDom.slice(0,3),strong=rankDom.slice(-2).reverse();
+  var blind=DKEYS.filter(function(d){return isBlind(p,d);});
+  var coh=p.nli_coh!=null?Math.max(1,Math.round(100-p.nli_coh)):null;
+  var chip=function(d,dv,neg){return '<span class="dchip" style="border-color:'+(neg?'#b0603f':'#2f6b4e')+'55" onclick="showDom(\''+d+'\')"><b>'+DOMINFO[d][0]+'</b>'+SHORT[d]+' <i style="color:'+(dv>=0?'#2f6b4e':'#b0603f')+'">'+(dv>=0?'+':'')+Math.round(dv)+'</i></span>';};
+  var bl=blind.length?blind.map(function(d){return '<span class="dchip" style="border-color:#b0603f55"><b>'+DOMINFO[d][0]+'</b>'+SHORT[d]+' <b style="color:#b0603f">'+Math.round(p['score_'+d]||0)+'</b></span>';}).join(''):'<span class="muted">없음 — 인구 1만+ 인데 전국 하위 20%인 도메인 없음</span>';
+  return '<div class="flex" style="justify-content:space-between;align-items:flex-start;gap:12px"><div style="min-width:0"><h3 style="margin:0 0 4px">'+(p.full_nm||p.adm_nm)+'</h3>'
+    +'<div class="muted">전국 취약순위 <b style="color:var(--terra)">'+rank+'</b>/'+total.toLocaleString()+' · '+(p.cohort||'')+(coh!=null?' · 동일 유형 내 <b style="color:var(--ocean)">상위 '+coh+'%</b>':'')+' · 인구 '+(p.pop_total||0).toLocaleString()+'명</div></div>'
+    +'<div style="flex-shrink:0;display:flex;flex-direction:column;gap:5px;align-items:flex-end;margin-top:5px">'
+    +'<a href="javascript:void 0" onclick="goDetail(\''+p.adm_nm+'\');return false" style="font-size:13px;color:var(--ocean);white-space:nowrap;font-weight:700">지도에서 자세히 →</a>'
+    +'<a href="javascript:void 0" onclick="addCmp(\''+p.adm_nm+'\');return false" style="font-size:12.5px;color:var(--mid);white-space:nowrap">⊕ 비교에 담기</a></div></div>'
+    +'<div class="dkpi"><div class="kpi"><b style="color:'+color(nv)+'">'+nv.toFixed(1)+'</b><span>종합 지수 · 전국 백분위</span></div>'
+    +'<div class="kpi"><b style="color:'+GC[gr]+'">'+gr+'</b><span>등급</span></div>'
+    +'<div class="kpi"><b style="color:var(--terra)">'+blind.length+'</b><span>사각지대 도메인</span></div></div>'
+    +'<div class="grid2" style="margin-top:16px;gap:16px"><div><div class="fld" style="color:#b0603f;font-size:11.5px">취약 도메인 <span class="muted" style="font-weight:400;text-transform:none;letter-spacing:0">전국 평균 대비</span></div><div style="margin-top:8px">'+weak.map(function(w){return chip(w[0],w[1],true);}).join('')+'</div></div>'
+    +'<div><div class="fld" style="color:#2f6b4e;font-size:11.5px">상대 강점 <span class="muted" style="font-weight:400;text-transform:none;letter-spacing:0">전국 평균 대비</span></div><div style="margin-top:8px">'+strong.map(function(w){return chip(w[0],w[1],false);}).join('')+'</div></div></div>'
+    +'<div style="margin-top:18px"><div class="fld" style="font-size:11.5px">사각지대 도메인 <span class="muted" style="font-weight:400;text-transform:none;letter-spacing:0">인구 1만+ 인데 전국 하위 20%</span></div><div style="margin-top:8px">'+bl+'</div></div>';
+}
+function renderDiagDong(){
+  var sf=document.getElementById('diagSido');
+  if(!sf.options.length){sf.innerHTML='<option value="">전국</option>'+[...new Set(SP.map(function(p){return p.sido;}))].filter(Boolean).sort().map(function(s){return '<option>'+s+'</option>';}).join('');sf.onchange=function(){diagSel=null;renderDiag();};customSelect(sf);}
+  var dsr=document.getElementById('diagSearch');if(dsr&&!dsr._w){dsr._w=1;dsr.oninput=function(){diagSel=null;renderDiag();};}
+  var nat={};DKEYS.forEach(function(d){var vs=SP.filter(function(p){return (p.pop_total||0)>0&&p['score_'+d]!=null;}).map(function(p){return p['score_'+d];});nat[d]=vs.reduce(function(a,b){return a+b;},0)/(vs.length||1);});
+  var all=SP.filter(function(p){return (p.pop_total||0)>0;});
+  var natRank=all.slice().sort(function(a,b){return (nliW(a)||0)-(nliW(b)||0);}),rankOf=new Map();natRank.forEach(function(p,i){rankOf.set(p.adm_nm,i+1);});
+  var fsido=sf.value;var list=all.filter(function(p){return !fsido||p.sido===fsido;});
+  var dq=((document.getElementById('diagSearch')||{}).value||'').trim();if(dq)list=list.filter(function(p){return (p.full_nm||'').includes(dq)||(p.adm_nm||'').includes(dq);});
+  var bc=function(p){return DKEYS.reduce(function(n,d){return n+(isBlind(p,d)?1:0);},0);};
+  var S={nli:function(a,b){return (nliW(a)||0)-(nliW(b)||0);},nli_desc:function(a,b){return (nliW(b)||0)-(nliW(a)||0);},blind:function(a,b){return bc(b)-bc(a)||(nliW(a)||0)-(nliW(b)||0);},coh:function(a,b){return (a.nli_coh==null?101:a.nli_coh)-(b.nli_coh==null?101:b.nli_coh);},pop:function(a,b){return (b.pop_total||0)-(a.pop_total||0);}};
+  list.sort(S[diagSort]||S.nli);
+  document.getElementById('diagCount').textContent=list.length.toLocaleString()+'개 동';
+  var dsi2=document.getElementById('diagSelInfo');if(dsi2)dsi2.innerHTML='';
+  if(!diagSel||!all.find(function(p){return p.adm_nm===diagSel;}))diagSel=list[0]?list[0].adm_nm:null;
+  var sel=all.find(function(p){return p.adm_nm===diagSel;});
+  document.getElementById('diagCard').innerHTML=sel?diagDongCardHTML(sel,nat,rankOf.get(sel.adm_nm),all.length):'';
+  var CAP=300,shown=list.slice(0,CAP);
+  var h='<tr><th>취약<br>순위</th><th>동</th><th>등급</th><th>종합</th><th style="text-align:left">최약 도메인</th><th>동일<br>유형%</th><th>사각</th></tr>';
+  shown.forEach(function(p){var nv=nliW(p)||0,gr=gradeOf(p),wd=DKEYS.map(function(d){return [d,(p['score_'+d]||0)-nat[d]];}).sort(function(a,b){return a[1]-b[1];})[0],nb=bc(p),coh=p.nli_coh!=null?Math.max(1,Math.round(100-p.nli_coh)):null,sd=(p.full_nm||'').split(' ')[1]||'';
+    h+='<tr onclick="pickDiagDong(\''+p.adm_nm+'\')" style="cursor:pointer'+(p.adm_nm===diagSel?';background:#e4f0e8;box-shadow:inset 3px 0 0 var(--ocean)':'')+'">'
+      +'<td style="text-align:center;color:var(--mid)">'+rankOf.get(p.adm_nm)+'</td>'
+      +'<td style="text-align:left"><b>'+p.adm_nm+'</b> <span class="muted" style="font-size:11px">'+sd+'</span></td>'
+      +'<td style="text-align:center"><span style="color:'+GC[gr]+';font-weight:800">'+gr+'</span></td>'
+      +'<td style="text-align:center"><b style="color:'+color(nv)+'">'+Math.round(nv)+'</b></td>'
+      +'<td style="text-align:left"><span style="color:#b0603f">'+DOMINFO[wd[0]][0]+' '+SHORT[wd[0]]+'</span> <span class="muted">'+(wd[1]>=0?'+':'')+Math.round(wd[1])+'</span></td>'
+      +'<td style="text-align:center;color:var(--ocean)">'+(coh!=null?'상위 '+coh+'%':'—')+'</td>'
+      +'<td style="text-align:center;color:var(--terra);font-weight:700">'+(nb||'')+'</td></tr>';});
+  document.getElementById('diagTable').innerHTML=h+(list.length>CAP?'<tr><td colspan="7" class="muted" style="text-align:center;padding:8px">상위 '+CAP+'개 표시 · 검색으로 좁히세요 (전체 '+list.length.toLocaleString()+')</td></tr>':'');
+}
+function renderDiagSgg(){
   const dd=diagData(),rows=dd.rows;
   const sf=document.getElementById('diagSido');
   if(!sf.options.length){sf.innerHTML='<option value="">전국</option>'+[...new Set(rows.map(r=>r.sido))].sort().map(s=>`<option>${s}</option>`).join('');sf.onchange=()=>{diagSel=null;renderDiag();};customSelect(sf);}
-  const dso=document.getElementById('diagSort');if(dso){if(!dso._w){dso._w=1;dso.value=diagSort;dso.onchange=()=>{diagSort=dso.value;renderDiag();};customSelect(dso);}}
   const dsr=document.getElementById('diagSearch');if(dsr&&!dsr._w){dsr._w=1;dsr.oninput=()=>{diagSel=null;renderDiag();};}
   const natRank=[...rows].sort((a,b)=>a.nli-b.nli),rankOf=new Map();natRank.forEach((r,i)=>rankOf.set(r.key,i+1));
   const fsido=sf.value;let list=rows.filter(r=>!fsido||r.sido===fsido);
