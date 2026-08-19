@@ -23,7 +23,7 @@ for _d in ["D1","D2","D3","D4","D5","D6","D7","D8","D9"]:
 sources_html = '<table class="srctbl"><thead><tr><th>\uc790\ub8cc</th><th>\ucd9c\ucc98</th><th>\uc2dc\uc810</th></tr></thead><tbody>' + _rows + '</tbody></table>'
 
 geojson = open("data/processed/nli_map.geojson", encoding="utf-8").read()
-# 시설포인트(11MB)는 인라인하지 않고 배포 산출물 옆에 두어 지연로딩(fetch). 초기 로딩 경량화.
+# 시설포인트(약 25MB)는 인라인하지 않고 배포 산출물 옆에 두어 지연로딩(fetch). 초기 로딩 경량화.
 
 TEMPLATE = r'''<!DOCTYPE html>
 <html lang="ko"><head>
@@ -505,19 +505,19 @@ TEMPLATE = r'''<!DOCTYPE html>
 <script>
 let _boot=(location.hash||'');   // 최초 딥링크 해시 캡처(showTab('map')의 writeHash가 지우기 전에)
 const DATA=__GEOJSON__;
-let POINTS=null;   // 시설포인트(11MB)는 첫 토글 시 nli_points.json 지연로딩(초기 로딩 경량화)
+let POINTS=null;   // 시설포인트(약 25MB)는 첫 토글 시 nli_points.json 지연로딩(초기 로딩 경량화)
 const F=DATA.features;
 const DOMS=['D1','D2','D3','D4','D5','D6','D7','D8','D9'];
 const METRICS={NLI:'종합 지수',D1:'의료·건강',D2:'교육·보육',D3:'생활편의·상업',D4:'문화·여가·체육',D5:'교통·이동',D6:'안전',D7:'환경·기후',D8:'복지·돌봄',D9:'반려·동물',grade:'등급'};
 const DOMFAC={D1:[['ph','약국',1],['cl','의료기관',1],['em','응급의료기관',1]],D2:[['sc','학교',1],['cd','어린이집',1],['lb','도서관',1]],D3:[['st','상가',0],['bg','대규모점포',1],['gs','주유소',1],['wi','무료와이파이',1]],D4:[['pk','공원',1],['sp','체육시설',1],['mu','박물관·미술관',1],['th','공연장',1],['cn','영화상영관',1]],D5:[['bs','버스정류장',1],['pg','주차장',1],['bk','자전거보관소',1],['sw','지하철역',1],['br','자전거대여소',1]],D6:[['cc','CCTV',1],['cz','어린이보호구역',1],['sb','안전비상벨',1],['cs','민방위대피',1]],D7:[['ev','전기차충전소',1],['ht','무더위쉼터',1],['tr','보호수',1]],D8:[['wf','사회복지시설',1],['sr','경로당·마을회관',1]],D9:[['vh','동물병원',1]]};
 const GC={S:'#2f6b4e',A:'#6f9e86',B:'#d4a056',C:'#cf8a5c',D:'#b0603f'};
-// 홈 도메인 쇼케이스 (아이콘·지표 목록, DATASETS 기준 실제 30지표)
+// 홈 도메인 쇼케이스 (아이콘·지표 목록, DATASETS 기준 실제 32지표)
 const DOMINFO={
  D1:['🏥','의료·건강',['약국','의료기관','응급의료'],'#c0392b'],
  D2:['🎓','교육·보육',['초중등학교','학원','어린이집','도서관'],'#5b6bd0'],
  D3:['🛒','생활편의·상업',['생활편의상가','대규모점포','주유소','무료와이파이'],'#d4a056'],
  D4:['🎭','문화·여가·체육',['여가상가','도시공원','체육시설','박물관·미술관','공연장','영화상영관'],'#8e5db0'],
- D5:['🚌','교통·이동',['버스정류소','주차장','자전거보관소'],'#3f8fa8'],
+ D5:['🚌','교통·이동',['버스정류소','지하철역','주차장','자전거보관소','자전거대여소'],'#3f8fa8'],
  D6:['🛡️','안전',['CCTV','어린이보호구역','안전비상벨','민방위대피'],'#6f9e86'],
  D7:['🌿','환경·기후',['전기차충전소','무더위쉼터','보호수'],'#2f6b4e'],
  D8:['🤝','복지·돌봄',['사회복지시설','경로당·마을회관'],'#c47c52'],
@@ -640,7 +640,7 @@ function initPoints(){
   ptLayer=L.layerGroup().addTo(map);
   document.getElementById('ptToggles').innerHTML=Object.entries(PT_TYPES).map(([t,v])=>`<span class="ptchip" data-t="${t}"><span class="dot" style="background:${v[1]}"></span>${v[0]}</span>`).join('');
   document.querySelectorAll('.ptchip').forEach(c=>c.onclick=async()=>{const t=c.dataset.t;ptOn[t]=!ptOn[t];c.classList.toggle('on',ptOn[t]);if(ptOn[t])await ensurePoints();drawPoints()});
-  map.on('moveend zoomend',()=>{drawPoints();updateViewSummary();});drawPoints();updateViewSummary();
+  let _mvT;map.on('moveend zoomend',()=>{clearTimeout(_mvT);_mvT=setTimeout(()=>{drawPoints();updateViewSummary();},120);});drawPoints();updateViewSummary();
   setTimeout(hideMapHint,8000);
 }
 function ensurePoints(){   // 시설포인트 지연로딩(첫 토글 시 1회). 실패 시(로컬 file://) 안내.
@@ -739,7 +739,7 @@ function openRoute(){const R=window._route;if(!R)return;const j=R.j;
     (j.legs||[]).forEach(l=>{if(l.path&&l.path.length>1){const w=l.mode==='WALK';L.polyline(l.path,{color:w?'#8a94a0':'#2f6b8f',weight:w?3:5,opacity:.9,dashArray:w?'3 6':null}).addTo(routeLayer);}});
     routeLayer.addTo(map);try{map.fitBounds(routeLayer.getBounds(),{padding:[50,50]});}catch(e){}}
 }
-function closeRoute(){document.getElementById('routeModal').style.display='none';}
+function closeRoute(){document.getElementById('routeModal').style.display='none';if(routeLayer){try{routeLayer.remove();}catch(e){}routeLayer=null;}}
 let selL=null;
 function showDetail(p,focus){const d=document.getElementById('detail');d.innerHTML=detailHTML(p);d.style.display='block';growBars();curDetail=p.adm_nm;writeHash();fillTransit(p);
   if(selL&&selL!==p._l){try{layer.resetStyle(selL);}catch(e){}}selL=p._l;if(selL&&layer){selL.setStyle({weight:3,color:'#16232e',fillOpacity:Math.min(.85,(selL.options.fillOpacity||.32)+.2)});if(selL.bringToFront)selL.bringToFront();}

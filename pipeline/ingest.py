@@ -59,6 +59,7 @@ def main():
             print(f"  ❌ {e}")
         raise SystemExit("datasets.yml 오류 — 중단")
     print("  ✅ yml 검증 통과")
+    print("  (경계·인구·주택 변경 시 build_geoframe.py 선행 — ingest는 기존 nli.duckdb 프레임 사용)")
     if "--validate-only" in args:
         return
 

@@ -116,7 +116,7 @@ def write_report(df, blind, defi):
     pc = df["profile"].value_counts()
     L.append(md_table([{"유형": k, "동네 수": int(pc.get(k, 0))} for k in ["올라운드", "보통", "특화/편중"]],
                       ["유형", "동네 수"]))
-    L.append("\n---\n*점수는 전국 상대평가(백분위)로 참고용. D8 복지는 지오코딩 85% 커버.*\n")
+    L.append("\n---\n*점수는 전국 상대평가(백분위)로 참고용. D8 복지는 지오코딩 약 96% 커버.*\n")
     open("data/processed/nli_report.md", "w", encoding="utf-8").write("\n".join(L))
 
 

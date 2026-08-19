@@ -2,6 +2,10 @@
 
 공공데이터 표준데이터를 **읍면동(행정동) 단위**로 융합해 지역 생활여건을 9개 도메인으로 정량화한 지수 + 정적 웹 대시보드 + 온프렘 API.
 
+[![동네살기지수](https://lucestdail.github.io/nli/assets/og.png)](https://lucestdail.github.io/nli/)
+
+**▶ [라이브 대시보드](https://lucestdail.github.io/nli/)** · **[스크롤 소개(데모)](https://lucestdail.github.io/nli/demo.html)**
+
 - **분석 단위**: 전국 행정동 3,559개 (SGIS 2025 2분기 경계) · 총인구 정합 51.8M
 - **스택**: 순수 Python (pandas · DuckDB spatial · mapshaper) 데이터/지오 파이프라인 → 자체완결 단일 `index.html` (Leaflet SPA) + FastAPI 온프렘 패키지(`server/`)
 - **빌드 프레임워크 없음**: 검증은 "스크립트 실행 + 실측 수치·상식 확인" (`verify_pipeline.py`, 41개 assert)
