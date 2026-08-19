@@ -157,7 +157,7 @@ datasets:
   source: 공공데이터포털(어린이집)
   updated: '2026'
   license: 공공누리1형
-  export_points: false
+  export_points: true
 - key: library
   name: 도서관
   domain: D2
@@ -168,7 +168,7 @@ datasets:
   source: 공공데이터포털 표준(도서관)
   updated: '2026'
   license: 공공누리1형
-  export_points: false
+  export_points: true
 - key: parking
   name: 주차장
   domain: D5
@@ -179,7 +179,7 @@ datasets:
   source: 공공데이터포털 표준(주차장)
   updated: '2026'
   license: 공공누리1형
-  export_points: false
+  export_points: true
 - key: childzone
   name: 어린이보호구역
   domain: D6
@@ -201,7 +201,7 @@ datasets:
   source: 공공데이터포털(공공체육시설)
   updated: '2026'
   license: 공공누리1형
-  export_points: false
+  export_points: true
 - key: shelter
   name: 무더위쉼터
   domain: D7
@@ -345,7 +345,7 @@ datasets:
   source: 공공데이터포털 표준(경로당)
   updated: '2026'
   license: 공공누리1형
-  export_points: false
+  export_points: true
 - key: subway
   name: 지하철역
   domain: D5

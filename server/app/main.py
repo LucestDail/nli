@@ -85,7 +85,9 @@ def _dong_view(r):
 @app.get("/api/health")
 def health():
     n = snapshot.ready()
-    return {"status": "ok" if n else "degraded", "snapshot": bool(n), "dong": n, "version": config.VERSION}
+    mt = snapshot.snap_mtime()
+    return {"status": "ok" if n else "degraded", "snapshot": bool(n), "dong": n, "version": config.VERSION,
+            "snapshot_mtime": round(mt) if mt else None}
 
 
 @app.get("/api/meta")

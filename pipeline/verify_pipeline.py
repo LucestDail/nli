@@ -52,6 +52,11 @@ def check_db():
     st, ac, le = con.execute("SELECT sum(store_cnt),sum(academy_cnt),sum(leisure_cnt) FROM nli_scores").fetchone()
     ck(st > 0 and ac > 0 and le > 0, "상가 세분 카운트", f"생활편의 {int(st):,}·학원 {int(ac):,}·여가 {int(le):,}")
     ck(st > ac > le, "세분 크기 관계", "생활편의 > 학원 > 여가")
+    # NLI 분포 sanity — 전부 상수/NaN이면 스코어링 붕괴(M10)
+    std, lo, hi = con.execute("SELECT stddev_pop(NLI), min(NLI), max(NLI) FROM nli_scores").fetchone()
+    ck(std and std > 5 and (hi - lo) > 20, "NLI 분포 sanity", f"std {std:.1f} · range {lo:.0f}~{hi:.0f}")
+    worst = min(con.execute(f"SELECT count(score_D{d})*1.0/count(*) FROM nli_scores").fetchone()[0] for d in range(1, 10))
+    ck(worst > 0.95, "도메인 점수 비결측(최소)", f"{worst*100:.1f}%")
     con.close()
 
 
@@ -66,12 +71,43 @@ def check_geojson():
         ck(key in p, f"프로퍼티 '{key}'", "존재" if key in p else "누락")
     sz = os.path.getsize(GEOJSON)/1e6
     ck(sz < 25, "파일 크기", f"{sz:.1f}MB", warn=True)
+    # 실거래가 조인율(M10) — 아파트 있는 동만 값 보유(농촌 없음) → 조인 자체 동작만 확인
+    npr = sum(1 for f in feats if f["properties"].get("price") not in (None, ""))
+    ck(npr > 500, "실거래가 조인", f"{npr:,}개 동 가격 보유", warn=(npr <= 500))
 
 
 def check_points():
     print("\n[3] 시설 포인트")
     ck(os.path.exists(POINTS), "nli_points.json 존재",
        f"{os.path.getsize(POINTS)/1e6:.1f}MB" if os.path.exists(POINTS) else "누락")
+    if not os.path.exists(POINTS):
+        return
+    # SETS/FAC(하드코딩) ↔ datasets.yml 정합 — 이중 하드코딩 드리프트 감지(M3)
+    import yaml
+    sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+    from generate_points import SETS
+    from export_map_geojson import FAC
+    pts = json.load(open(POINTS))
+    ds = yaml.safe_load(open("data/datasets.yml", encoding="utf-8"))["datasets"]
+    n2c = {name: code for name, code, _ in FAC}     # yml key(long) → 단축코드
+    yml_keys = set(d["key"] for d in ds)
+    fac_names = set(name for name, _, _ in FAC)
+    want = {n2c[d["key"]] for d in ds if d.get("export_points") and d["key"] in n2c}
+    ck(want == set(SETS) == set(pts),
+       "SETS↔yml export_points 정합", f"yml {len(want)} = SETS {len(SETS)} = points {len(pts)} (차 {want ^ set(SETS)})")
+    ck(fac_names <= yml_keys and (yml_keys - fac_names) == {"academy", "leisure"},
+       "FAC↔yml keys 정합", f"FAC {len(fac_names)} ⊂ yml {len(yml_keys)} (store세분 제외 {yml_keys - fac_names})")
+    # 각 세트 좌표 유효율(한반도 범위) + 비어있지 않음(M10)
+    badtot = 0
+    for k in SETS:
+        coords = pts.get(k, {}).get("p", [])
+        bad = sum(1 for c in coords if not (124 <= c[0] <= 132 and 33 <= c[1] <= 39))
+        badtot += bad
+        if len(coords) == 0:
+            ck(False, f"포인트 '{k}' 비어있음", "0점")
+    ck(badtot == 0, "시설포인트 좌표 유효율", f"범위밖 {badtot}점")
+    ck(len(pts.get("wf", {}).get("p", [])) > 30000, "복지 지오코딩 커버(포인트수)",
+       f"{len(pts.get('wf', {}).get('p', [])):,}점 (≈96% 커버 회귀 감지)")
 
 
 def check_index():
