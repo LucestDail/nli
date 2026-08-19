@@ -253,7 +253,7 @@ TEMPLATE = r'''<!DOCTYPE html>
  .maphint{position:absolute;top:52px;left:50%;transform:translateX(-50%);z-index:550;background:rgba(19,42,54,.9);color:#fff;border-radius:999px;padding:7px 16px;font-size:12.5px;box-shadow:0 4px 14px rgba(20,30,40,.28);transition:opacity .5s,transform .5s;pointer-events:none;white-space:nowrap}
  .maphint b{color:#8fd0b0}
  .maphint.hide{opacity:0;transform:translateX(-50%) translateY(-6px)}
- @media(max-width:760px){.maphint{font-size:11px;padding:6px 12px;top:auto;bottom:64px}}
+ @media(max-width:760px){.maphint{font-size:11px;padding:6px 12px;top:56px;bottom:auto;max-width:86%;white-space:normal;text-align:center;line-height:1.4}}
  @media(max-width:820px){.mapsum{left:12px}}
  @media(max-width:760px){.mapsum{left:12px;bottom:10px;font-size:11px;padding:8px 10px;max-width:190px}}
  .statgrid .sc h4{margin:0 0 10px;font-size:13.5px;color:var(--ink);font-weight:800;display:flex;align-items:baseline;gap:6px;flex-wrap:wrap;flex-shrink:0}
@@ -507,6 +507,7 @@ let _boot=(location.hash||'');   // 최초 딥링크 해시 캡처(showTab('map'
 const DATA=__GEOJSON__;
 let POINTS=null;   // 시설포인트(약 25MB)는 첫 토글 시 nli_points.json 지연로딩(초기 로딩 경량화)
 const F=DATA.features;
+const IS_TOUCH=(window.matchMedia&&window.matchMedia('(hover:none),(pointer:coarse)').matches)||('ontouchstart' in window);
 const DOMS=['D1','D2','D3','D4','D5','D6','D7','D8','D9'];
 const METRICS={NLI:'종합 지수',D1:'의료·건강',D2:'교육·보육',D3:'생활편의·상업',D4:'문화·여가·체육',D5:'교통·이동',D6:'안전',D7:'환경·기후',D8:'복지·돌봄',D9:'반려·동물',grade:'등급'};
 const DOMFAC={D1:[['ph','약국',1],['cl','의료기관',1],['em','응급의료기관',1]],D2:[['sc','학교',1],['cd','어린이집',1],['lb','도서관',1]],D3:[['st','상가',0],['bg','대규모점포',1],['gs','주유소',1],['wi','무료와이파이',1]],D4:[['pk','공원',1],['sp','체육시설',1],['mu','박물관·미술관',1],['th','공연장',1],['cn','영화상영관',1]],D5:[['bs','버스정류장',1],['pg','주차장',1],['bk','자전거보관소',1],['sw','지하철역',1],['br','자전거대여소',1]],D6:[['cc','CCTV',1],['cz','어린이보호구역',1],['sb','안전비상벨',1],['cs','민방위대피',1]],D7:[['ev','전기차충전소',1],['ht','무더위쉼터',1],['tr','보호수',1]],D8:[['wf','사회복지시설',1],['sr','경로당·마을회관',1]],D9:[['vh','동물병원',1]]};
@@ -621,7 +622,7 @@ let map,layer,mMetric='NLI',mMode='basic',popmin=0;
 function initMap(){
   map=L.map('map',{preferCanvas:true,zoomSnap:0.25}).setView([36.55,127.75],7.6);
   L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',{attribution:'&copy; OpenStreetMap &copy; CARTO',maxZoom:19}).addTo(map);
-  layer=L.geoJSON(DATA,{style:mStyle,onEachFeature:(f,l)=>{f.properties._l=l;l.bindTooltip(()=>dongTip(f.properties),{sticky:true,direction:'top',className:'dtip',opacity:1});l.on('mouseover',()=>{l.setStyle({weight:1.6,color:'#16232e'});hideMapHint();});l.on('mouseout',()=>{if(l!==selL)layer.resetStyle(l)});l.on('click',()=>showDetail(f.properties))}}).addTo(map);
+  layer=L.geoJSON(DATA,{style:mStyle,onEachFeature:(f,l)=>{f.properties._l=l;if(!IS_TOUCH){l.bindTooltip(()=>dongTip(f.properties),{sticky:true,direction:'top',className:'dtip',opacity:1});l.on('mouseover',()=>{l.setStyle({weight:1.6,color:'#16232e'});hideMapHint();});l.on('mouseout',()=>{if(l!==selL)layer.resetStyle(l)});}l.on('click',()=>showDetail(f.properties))}}).addTo(map);
   const sel=document.getElementById('metric');for(const k in METRICS){if(k==='grade')continue;let o=document.createElement('option');o.value=k;o.text=METRICS[k];sel.add(o)}
   sel.onchange=e=>{mMetric=e.target.value;mRedraw()};
   const mp=document.getElementById('mpersona');
@@ -641,6 +642,7 @@ function initPoints(){
   document.getElementById('ptToggles').innerHTML=Object.entries(PT_TYPES).map(([t,v])=>`<span class="ptchip" data-t="${t}"><span class="dot" style="background:${v[1]}"></span>${v[0]}</span>`).join('');
   document.querySelectorAll('.ptchip').forEach(c=>c.onclick=async()=>{const t=c.dataset.t;ptOn[t]=!ptOn[t];c.classList.toggle('on',ptOn[t]);if(ptOn[t])await ensurePoints();drawPoints()});
   let _mvT;map.on('moveend zoomend',()=>{clearTimeout(_mvT);_mvT=setTimeout(()=>{drawPoints();updateViewSummary();},120);});drawPoints();updateViewSummary();
+  if(IS_TOUCH){var _mh=document.getElementById('mapHint');if(_mh)_mh.innerHTML='동네를 <b>탭</b>하면 상세 · 지도를 움직이면 요약 갱신';}
   setTimeout(hideMapHint,8000);
 }
 function ensurePoints(){   // 시설포인트 지연로딩(첫 토글 시 1회). 실패 시(로컬 file://) 안내.
@@ -741,11 +743,13 @@ function openRoute(){const R=window._route;if(!R)return;const j=R.j;
 }
 function closeRoute(){document.getElementById('routeModal').style.display='none';if(routeLayer){try{routeLayer.remove();}catch(e){}routeLayer=null;}}
 let selL=null;
-function showDetail(p,focus){const d=document.getElementById('detail');d.innerHTML=detailHTML(p);d.style.display='block';growBars();curDetail=p.adm_nm;writeHash();fillTransit(p);
-  if(selL&&selL!==p._l){try{layer.resetStyle(selL);}catch(e){}}selL=p._l;if(selL&&layer){selL.setStyle({weight:3,color:'#16232e',fillOpacity:Math.min(.85,(selL.options.fillOpacity||.32)+.2)});if(selL.bringToFront)selL.bringToFront();}
-  // focus=true(검색·순위·딥링크로 진입)일 때만 지도 리프레이밍. 지도 직접클릭은 현재 위치 유지(확대상태 축소 방지)
+function selDong(p){if(selL&&selL!==p._l){try{layer.resetStyle(selL);}catch(e){}}selL=p._l;if(selL&&layer){selL.setStyle({weight:3,color:'#16232e',fillOpacity:Math.min(.85,(selL.options.fillOpacity||.32)+.2)});if(selL.bringToFront)selL.bringToFront();}}
+function showDetail(p,focus){curDetail=p.adm_nm;writeHash();selDong(p);
+  if(IS_TOUCH){openDongModal(p.adm_nm);}   // 모바일: 호버 없이 클릭→상세 모달(한 화면)
+  else{const d=document.getElementById('detail');d.innerHTML=detailHTML(p);d.style.display='block';growBars();fillTransit(p);}
+  // focus=true(검색·순위·딥링크)일 때만 지도 리프레이밍. 직접클릭은 현재 위치 유지
   if(focus&&p._l&&map){map.invalidateSize();const b=p._l.getBounds();if(b&&b.isValid())map.fitBounds(b,{maxZoom:13,padding:[24,24]});}}
-function goDetail(adm){const f=F.find(x=>x.properties.adm_nm===adm);if(!f)return;document.querySelector('nav .tab[data-v=map]').click();showDetail(f.properties,true)}
+function goDetail(adm){const f=F.find(x=>x.properties.adm_nm===adm);if(!f)return;try{closeDongModal();}catch(e){}document.querySelector('nav .tab[data-v=map]').click();if(IS_TOUCH){var p=f.properties;selDong(p);if(p._l&&map){map.invalidateSize();var b=p._l.getBounds();if(b&&b.isValid())map.fitBounds(b,{maxZoom:13,padding:[24,24]});}}else showDetail(f.properties,true);}
 // 스토리 연결(기능 구성): 내 동네 상세 → 그 동네가 속한 지역(시군구) 진단으로 자연스럽게 이어짐
 function dongToDiag(adm){const f=F.find(x=>x.properties.adm_nm===adm);if(!f)return;
   const ps=(f.properties.full_nm||'').split(' ');if(ps.length<2)return;const key=ps[0]+' '+ps[1];
@@ -1031,7 +1035,8 @@ function setDiagUnit(u){
   var lb=document.getElementById('diagUnitLabel');if(lb)lb.textContent=(u==='dong'?'— 전국 읍면동':'— 지자체 229곳');
   renderDiag();
 }
-function pickDiagDong(adm){diagSel=adm;renderDiag();}
+function pickDiagDong(adm){diagSel=adm;renderDiag();if(IS_TOUCH)showDiagCardModal();}
+function showDiagCardModal(){var c=document.getElementById('diagCard');if(!c||!c.innerHTML.trim())return;document.getElementById('dongModalBody').innerHTML=c.innerHTML;document.getElementById('dongModal').style.display='flex';growBars();}
 function diagDongCardHTML(p,nat,rank,total){
   var nv=nliW(p)||0,gr=gradeOf(p);
   var rankDom=DKEYS.map(function(d){return [d,(p['score_'+d]||0)-nat[d]];}).sort(function(a,b){return a[1]-b[1];});
@@ -1148,7 +1153,7 @@ function renderDiagSgg(){
       <td style="text-align:center;color:var(--mid)">${r.dongs.length}</td></tr>`;});
   document.getElementById('diagTable').innerHTML=h;
 }
-function pickDiag(k){diagSel=k;if(!diagCmp.includes(k))diagCmp.push(k);renderDiag();}
+function pickDiag(k){diagSel=k;if(!diagCmp.includes(k))diagCmp.push(k);renderDiag();if(IS_TOUCH)showDiagCardModal();}
 function closeDiagStat(){document.getElementById('diagStatModal').style.display='none';}
 function openDongModal(adm){const f=F.find(x=>x.properties.adm_nm===adm);if(!f)return;const p=f.properties;
   let body=detailHTML(p).replace(/<span class="close"[\s\S]*?<\/span>/,'');
