@@ -978,7 +978,7 @@ function applyHash(){
   writeHash();
 }
 /* ── 지역 생활여건 진단 (B2G) ── 지자체=full_nm.split[1] (자치구 분리·일반구는 시로 병합) */
-let diagSel=null,diagSort='nli',diagCur=null,diagCmp=[],diagUnit='dong';
+let diagSel=null,diagSort='nli',diagCur=null,diagCmp=[],diagUnit='dong',_diagDong=null;
 function diagData(){
   const G={};
   SP.forEach(p=>{if((p.pop_total||0)<=0)return;const ps=(p.full_nm||'').split(' ');if(ps.length<2)return;
@@ -1040,17 +1040,54 @@ function diagDongCardHTML(p,nat,rank,total){
   var coh=p.nli_coh!=null?Math.max(1,Math.round(100-p.nli_coh)):null;
   var chip=function(d,dv,neg){return '<span class="dchip" style="border-color:'+(neg?'#b0603f':'#2f6b4e')+'55" onclick="showDom(\''+d+'\')"><b>'+DOMINFO[d][0]+'</b>'+SHORT[d]+' <i style="color:'+(dv>=0?'#2f6b4e':'#b0603f')+'">'+(dv>=0?'+':'')+Math.round(dv)+'</i></span>';};
   var bl=blind.length?blind.map(function(d){return '<span class="dchip" style="border-color:#b0603f55"><b>'+DOMINFO[d][0]+'</b>'+SHORT[d]+' <b style="color:#b0603f">'+Math.round(p['score_'+d]||0)+'</b></span>';}).join(''):'<span class="muted">없음 — 인구 1만+ 인데 전국 하위 20%인 도메인 없음</span>';
+  var facCells=DKEYS.map(function(d){var tot=(DOMFAC[d]||[]).reduce(function(a,fc){var c=p[fc[0]+'_c'];return a+(c||0);},0);var m0=(DOMFAC[d]||[])[0],mn=m0?p[m0[0]+'_n']:null;return '<div class="valcell" onclick="showDom(\''+d+'\')"><div class="valnm">'+DOMINFO[d][0]+' '+SHORT[d]+'</div><div class="valv"><b>'+tot+'</b>개'+(mn!=null&&m0&&m0[2]&&tot>0?' <span class="muted" style="font-weight:400">최근접 '+Math.round(mn)+'m</span>':'')+'</div></div>';}).join('');
   return '<div class="flex" style="justify-content:space-between;align-items:flex-start;gap:12px"><div style="min-width:0"><h3 style="margin:0 0 4px">'+(p.full_nm||p.adm_nm)+'</h3>'
-    +'<div class="muted">전국 취약순위 <b style="color:var(--terra)">'+rank+'</b>/'+total.toLocaleString()+' · '+(p.cohort||'')+(coh!=null?' · 동일 유형 내 <b style="color:var(--ocean)">상위 '+coh+'%</b>':'')+' · 인구 '+(p.pop_total||0).toLocaleString()+'명</div></div>'
+    +'<div class="muted">전국 취약순위 <b style="color:var(--terra)">'+rank+'</b>/'+total.toLocaleString()+(coh!=null?' · 동일 유형('+(p.cohort||'')+') 중 <b style="color:var(--ocean)">상위 '+coh+'%</b>':'')+' · 인구 '+(p.pop_total||0).toLocaleString()+'명 · 등급 <span style="color:'+GC[gr]+';font-weight:800">'+gr+'</span></div></div>'
     +'<div style="flex-shrink:0;display:flex;flex-direction:column;gap:5px;align-items:flex-end;margin-top:5px">'
-    +'<a href="javascript:void 0" onclick="goDetail(\''+p.adm_nm+'\');return false" style="font-size:13px;color:var(--ocean);white-space:nowrap;font-weight:700">지도에서 자세히 →</a>'
-    +'<a href="javascript:void 0" onclick="addCmp(\''+p.adm_nm+'\');return false" style="font-size:12.5px;color:var(--mid);white-space:nowrap">⊕ 비교에 담기</a></div></div>'
+    +'<a href="javascript:void 0" onclick="printDongReport();return false" style="font-size:13px;color:var(--ocean);white-space:nowrap;font-weight:700">진단 리포트(PDF) →</a>'
+    +'<a href="javascript:void 0" onclick="goDetail(\''+p.adm_nm+'\');return false" style="font-size:12.5px;color:var(--mid);white-space:nowrap">지도에서 자세히 →</a></div></div>'
     +'<div class="dkpi"><div class="kpi"><b style="color:'+color(nv)+'">'+nv.toFixed(1)+'</b><span>종합 지수 · 전국 백분위</span></div>'
-    +'<div class="kpi"><b style="color:'+GC[gr]+'">'+gr+'</b><span>등급</span></div>'
-    +'<div class="kpi"><b style="color:var(--terra)">'+blind.length+'</b><span>사각지대 도메인</span></div></div>'
+    +'<div class="kpi"><b style="color:var(--terra)">'+blind.length+'</b><span>사각지대 · 하위20% 도메인</span></div></div>'
     +'<div class="grid2" style="margin-top:16px;gap:16px"><div><div class="fld" style="color:#b0603f;font-size:11.5px">취약 도메인 <span class="muted" style="font-weight:400;text-transform:none;letter-spacing:0">전국 평균 대비</span></div><div style="margin-top:8px">'+weak.map(function(w){return chip(w[0],w[1],true);}).join('')+'</div></div>'
     +'<div><div class="fld" style="color:#2f6b4e;font-size:11.5px">상대 강점 <span class="muted" style="font-weight:400;text-transform:none;letter-spacing:0">전국 평균 대비</span></div><div style="margin-top:8px">'+strong.map(function(w){return chip(w[0],w[1],false);}).join('')+'</div></div></div>'
-    +'<div style="margin-top:18px"><div class="fld" style="font-size:11.5px">사각지대 도메인 <span class="muted" style="font-weight:400;text-transform:none;letter-spacing:0">인구 1만+ 인데 전국 하위 20%</span></div><div style="margin-top:8px">'+bl+'</div></div>';
+    +'<div style="margin-top:16px"><div class="fld" style="font-size:11.5px">사각지대 도메인 <span class="muted" style="font-weight:400;text-transform:none;letter-spacing:0">인구 1만+ 인데 전국 하위 20%</span></div><div style="margin-top:8px">'+bl+'</div></div>'
+    +'<div style="margin-top:16px"><div class="fld" style="font-size:11.5px">시설 현황 <span class="muted" style="font-weight:400;text-transform:none;letter-spacing:0">도메인별 개수 · 최근접 · 클릭 → 지도</span></div><div class="valgrid" style="margin-top:8px">'+facCells+'</div></div>';
+}
+function printDongReport(){
+  if(!_diagDong){alert('먼저 표에서 동을 선택하세요.');return;}
+  var p=_diagDong.p,nat=_diagDong.nat,rank=_diagDong.rank,total=_diagDong.total;
+  var nf=function(n){return (n||0).toLocaleString();};
+  var date='';try{date=new Date().toLocaleDateString('ko-KR');}catch(e){}
+  var esc=function(x){return String(x).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');};
+  var nv=nliW(p)||0,gr=gradeOf(p),coh=p.nli_coh!=null?Math.max(1,Math.round(100-p.nli_coh)):null;
+  var rankDom=DKEYS.map(function(d){return [d,(p['score_'+d]||0)-nat[d]];}).sort(function(a,b){return a[1]-b[1];});
+  var dev={};rankDom.forEach(function(x){dev[x[0]]=x[1];});
+  var maxAbs=Math.max.apply(null,[1].concat(rankDom.map(function(x){return Math.abs(x[1]);})));
+  var prof=DKEYS.map(function(d){var v=dev[d]||0,w=(Math.abs(v)/maxAbs*50).toFixed(1);
+    var seg=v<0?'<span class=pseg style="right:50%;width:'+w+'%;background:#b0603f"></span>':'<span class=pseg style="left:50%;width:'+w+'%;background:#2f6b4e"></span>';
+    return '<div class=prow><span class=plabel>'+DOMINFO[d][0]+' '+SHORT[d]+'</span><span class=pbar>'+seg+'</span><span class=pval style="color:'+(v<0?'#b0603f':'#2f6b4e')+'">'+(v>=0?'+':'')+Math.round(v)+'</span></div>';}).join('');
+  var weak=rankDom.slice(0,3),strong=rankDom.slice(-2).reverse();
+  var wr='<tr><th>도메인</th><th>전국 읍면동 평균 대비</th></tr>'+weak.map(function(w){return '<tr><td>'+METRICS[w[0]]+'</td><td style="color:#b0603f;font-weight:700">'+(w[1]>=0?'+':'')+Math.round(w[1])+'</td></tr>';}).join('');
+  var blind=DKEYS.filter(function(d){return isBlind(p,d);});
+  var bl=blind.length?('<table><tr><th>도메인</th><th>점수(백분위)</th></tr>'+blind.map(function(d){return '<tr><td>'+METRICS[d]+'</td><td style="color:#b0603f;font-weight:700">'+Math.round(p['score_'+d]||0)+'</td></tr>';}).join('')+'</table><p class=hi>&rarr; 이 동은 인구 1만+ 인데 위 도메인이 전국 하위 20% — 우선 보강 대상입니다.</p>'):'<p>인구 1만+ 사각지대 도메인 없음(또는 인구 1만 미만).</p>';
+  var facRows=DKEYS.map(function(d){var items=(DOMFAC[d]||[]).map(function(fc){var c=p[fc[0]+'_c'];if(c==null)return null;var n=p[fc[0]+'_n'];return fc[1]+' <b>'+c+'</b>개'+(fc[2]&&n!=null&&c>0?' ('+Math.round(n)+'m)':'');}).filter(Boolean).join(' · ');return '<tr><td style="white-space:nowrap">'+DOMINFO[d][0]+' '+METRICS[d]+'</td><td>'+(items||'—')+'</td></tr>';}).join('');
+  var st=strong.map(function(w){return '<li>'+METRICS[w[0]]+' <b style="color:#2f6b4e">+'+Math.round(w[1])+'</b></li>';}).join('');
+  var one=weak[0][1]<0?('<b>1순위 보강 대상: '+METRICS[weak[0][0]]+'</b> — 전국 읍면동 평균보다 <b>'+Math.abs(Math.round(weak[0][1]))+'p</b> 낮습니다.'):'모든 도메인이 전국 읍면동 평균 이상입니다.';
+  var html='<!doctype html><html lang=ko><head><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1"><title>'+esc(p.full_nm||p.adm_nm)+' 생활여건 진단 리포트</title>'
+   +RPT_CSS
+   +'<button onclick="print()">인쇄 / PDF 저장</button>'
+   +'<div class=hd><div class=brand>동네살기지수 <b>NLI</b></div><div class=date>생성일 '+date+'</div></div>'
+   +'<h1>'+esc(p.full_nm||p.adm_nm)+' 생활여건 진단 리포트</h1>'
+   +'<p class=mut>읍면동 단위 · 전국 3,559개 읍면동 9개 도메인 32개 지표 상대평가(백분위) 기준</p>'
+   +'<div class=stats><div class=stat><b>'+nv.toFixed(1)+'</b><span>종합 지수(백분위)</span></div><div class=stat><b>'+rank+'/'+total.toLocaleString()+'</b><span>전국 취약순위'+(coh!=null?' · 동일유형 상위 '+coh+'%':'')+'</span></div><div class=stat><b>'+gr+'</b><span>등급</span></div><div class=stat><b>'+nf(p.pop_total)+'</b><span>인구(명)</span></div></div>'
+   +'<h2>도메인 프로파일 <span class=mut style="font-weight:400">— 전국 읍면동 평균(중앙선) 대비 · 좌 취약 / 우 강점</span></h2><div class=prof>'+prof+'</div>'
+   +'<h2>취약 도메인 (전국 읍면동 평균 대비)</h2><table>'+wr+'</table><p class=hi>'+one+'</p>'
+   +'<h2>사각지대 도메인 <span class=mut style="font-weight:400">인구 1만+ 인데 전국 하위 20%</span></h2>'+bl
+   +'<h2>시설 현황 <span class=mut style="font-weight:400">도메인별 개수 · (최근접 거리)</span></h2><table>'+facRows+'</table>'
+   +'<h2>상대 강점 도메인</h2><ul class=sum>'+(st||'<li>—</li>')+'</ul>'
+   +'<div class=foot>방법론 · 각 지표를 시설밀도(인구 1만명당·면적 ㎢당 혼합)와 근접성의 백분위로 결합 → 도메인 가중평균 → 종합지수. 사각지대 = 인구 1만+ 인데 해당 도메인 전국 하위 20%. <b>점수는 전국 읍면동 상대평가(백분위)로 참고용</b>이며 절대 적정성이 아닙니다. 종합지수는 인구밀도와 상관이 높아 도시성을 일부 반영하므로 순위 비교보다 <b>동일 도농유형 내 비교와 강·약 도메인 진단</b>에 활용을 권합니다. 복지·돌봄은 지오코딩 약 96% 커버. 데이터: 공공데이터포털·SGIS(2025 2Q)·심평원·소상공인·국토부 실거래가 · 데모 https://lucestdail.github.io/nli/</div>'
+   +'</body></html>';
+  var w=window.open('','_blank');if(w){w.document.write(html);w.document.close();}else alert('팝업이 차단되었습니다. 팝업 허용 후 다시 시도하세요.');
 }
 function renderDiagDong(){
   var sf=document.getElementById('diagSido');
@@ -1068,6 +1105,7 @@ function renderDiagDong(){
   var dsi2=document.getElementById('diagSelInfo');if(dsi2)dsi2.innerHTML='';
   if(!diagSel||!all.find(function(p){return p.adm_nm===diagSel;}))diagSel=list[0]?list[0].adm_nm:null;
   var sel=all.find(function(p){return p.adm_nm===diagSel;});
+  _diagDong=sel?{p:sel,nat:nat,rank:rankOf.get(sel.adm_nm),total:all.length}:null;
   document.getElementById('diagCard').innerHTML=sel?diagDongCardHTML(sel,nat,rankOf.get(sel.adm_nm),all.length):'';
   var CAP=300,shown=list.slice(0,CAP);
   var h='<tr><th>취약<br>순위</th><th>동</th><th>등급</th><th>종합</th><th style="text-align:left">최약 도메인</th><th>동일<br>유형%</th><th>사각</th></tr>';
@@ -1218,6 +1256,23 @@ function dsTip(e,i){var t=document.getElementById('dsTip'),S=window._dsScatter;i
 function dsTipAt(e){var t=document.getElementById('dsTip');if(!t||t.style.display==='none')return;var box=document.getElementById('dsScatterBox');if(!box)return;var b=box.getBoundingClientRect();var x=e.clientX-b.left,y=e.clientY-b.top;if(x>b.width-150)x-=155;else x+=14;t.style.left=x+'px';t.style.top=(y+14)+'px';}
 function dsTipOff(){var t=document.getElementById('dsTip');if(t)t.style.display='none';}
 function toggleDiagCmp(k){const i=diagCmp.indexOf(k);if(i>=0)diagCmp.splice(i,1);else diagCmp.push(k);renderDiag();}
+var RPT_CSS='<style>*{box-sizing:border-box}body{font:14px/1.7 -apple-system,\'Malgun Gothic\',sans-serif;color:#1a2530;max-width:820px;margin:0 auto;padding:28px 26px 60px;background:#fff}'
+   +'.hd{display:flex;justify-content:space-between;align-items:center;border-bottom:3px solid #2f6b4e;padding-bottom:10px}'
+   +'.brand{font-weight:800;color:#2f6b4e;font-size:15px;letter-spacing:-.02em}.brand b{color:#3f8fa8}.date{color:#7a7367;font-size:12px}'
+   +'h1{font-size:24px;margin:16px 0 4px}h2{font-size:15px;margin:26px 0 8px;color:#2f6b4e}.mut{color:#7a7367;font-size:12.5px;margin:0}'
+   +'.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:18px 0 6px}'
+   +'.stat{border:1px solid #e2ddd0;border-radius:10px;padding:13px 14px;background:#faf8f4}.stat b{display:block;font-size:22px;font-weight:800;color:#132a36;line-height:1.1}.stat span{font-size:11.5px;color:#7a7367}'
+   +'.prof{border:1px solid #e2ddd0;border-radius:10px;padding:14px 16px}'
+   +'.prow{display:flex;align-items:center;gap:10px;margin:5px 0}.plabel{width:104px;font-size:12.5px;flex-shrink:0}'
+   +'.pbar{position:relative;flex:1;height:15px;background:#f0ede7;border-radius:4px}.pbar::before{content:"";position:absolute;left:50%;top:-2px;bottom:-2px;width:1px;background:#c2b8a5}'
+   +'.pseg{position:absolute;top:2px;bottom:2px;border-radius:3px}.pval{width:34px;text-align:right;font-weight:800;font-size:12.5px;flex-shrink:0}'
+   +'.gchip{display:inline-block;padding:3px 10px;border-radius:5px;font-weight:700;font-size:12px;margin:0 6px 4px 0}'
+   +'table{border-collapse:collapse;width:100%;margin:8px 0;font-size:13px}th,td{border:1px solid #d8d2c4;padding:7px 10px;text-align:left}th{background:#f7f5f1;font-size:12px}'
+   +'tr{page-break-inside:avoid}.sum{margin:6px 0;padding-left:18px}.sum li{margin:3px 0}'
+   +'.hi{background:#fbf3ee;border-left:3px solid #b0603f;padding:8px 12px;border-radius:4px;font-size:13px}'
+   +'.foot{margin-top:30px;border-top:1px solid #d8d2c4;padding-top:12px;color:#7a7367;font-size:11px;line-height:1.6}'
+   +'button{float:right;padding:8px 14px;cursor:pointer;border:1px solid #2f6b4e;background:#2f6b4e;color:#fff;border-radius:8px;font-size:13px}'
+   +'@media print{button{display:none}body{padding:0}h2{page-break-after:avoid}}</style></head><body>';
 function printDiagReport(){
   if(!diagCur){alert('먼저 표에서 지자체를 선택하세요.');return;}
   var g=diagCur.g,nf=function(n){return (n||0).toLocaleString();};
@@ -1238,23 +1293,7 @@ function printDiagReport(){
   var st=strong.map(function(w){return '<li>'+METRICS[w[0]]+' <b style="color:#2f6b4e">+'+Math.round(w[1])+'</b></li>';}).join('');
   var one=weak[0][1]<0?('<b>1순위 보강 대상: '+METRICS[weak[0][0]]+'</b> — 전국 지자체 평균보다 <b>'+Math.abs(Math.round(weak[0][1]))+'p</b> 낮습니다. 사각지대 우선 배치·예산 편성의 근거로 활용하세요.'):'모든 도메인이 전국 지자체 평균 이상입니다.';
   var html='<!doctype html><html lang=ko><head><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1"><title>'+esc(g.sido+' '+g.sgg)+' 생활여건 진단 리포트</title>'
-   +'<style>*{box-sizing:border-box}body{font:14px/1.7 -apple-system,\'Malgun Gothic\',sans-serif;color:#1a2530;max-width:820px;margin:0 auto;padding:28px 26px 60px;background:#fff}'
-   +'.hd{display:flex;justify-content:space-between;align-items:center;border-bottom:3px solid #2f6b4e;padding-bottom:10px}'
-   +'.brand{font-weight:800;color:#2f6b4e;font-size:15px;letter-spacing:-.02em}.brand b{color:#3f8fa8}.date{color:#7a7367;font-size:12px}'
-   +'h1{font-size:24px;margin:16px 0 4px}h2{font-size:15px;margin:26px 0 8px;color:#2f6b4e}.mut{color:#7a7367;font-size:12.5px;margin:0}'
-   +'.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:18px 0 6px}'
-   +'.stat{border:1px solid #e2ddd0;border-radius:10px;padding:13px 14px;background:#faf8f4}.stat b{display:block;font-size:22px;font-weight:800;color:#132a36;line-height:1.1}.stat span{font-size:11.5px;color:#7a7367}'
-   +'.prof{border:1px solid #e2ddd0;border-radius:10px;padding:14px 16px}'
-   +'.prow{display:flex;align-items:center;gap:10px;margin:5px 0}.plabel{width:104px;font-size:12.5px;flex-shrink:0}'
-   +'.pbar{position:relative;flex:1;height:15px;background:#f0ede7;border-radius:4px}.pbar::before{content:"";position:absolute;left:50%;top:-2px;bottom:-2px;width:1px;background:#c2b8a5}'
-   +'.pseg{position:absolute;top:2px;bottom:2px;border-radius:3px}.pval{width:34px;text-align:right;font-weight:800;font-size:12.5px;flex-shrink:0}'
-   +'.gchip{display:inline-block;padding:3px 10px;border-radius:5px;font-weight:700;font-size:12px;margin:0 6px 4px 0}'
-   +'table{border-collapse:collapse;width:100%;margin:8px 0;font-size:13px}th,td{border:1px solid #d8d2c4;padding:7px 10px;text-align:left}th{background:#f7f5f1;font-size:12px}'
-   +'tr{page-break-inside:avoid}.sum{margin:6px 0;padding-left:18px}.sum li{margin:3px 0}'
-   +'.hi{background:#fbf3ee;border-left:3px solid #b0603f;padding:8px 12px;border-radius:4px;font-size:13px}'
-   +'.foot{margin-top:30px;border-top:1px solid #d8d2c4;padding-top:12px;color:#7a7367;font-size:11px;line-height:1.6}'
-   +'button{float:right;padding:8px 14px;cursor:pointer;border:1px solid #2f6b4e;background:#2f6b4e;color:#fff;border-radius:8px;font-size:13px}'
-   +'@media print{button{display:none}body{padding:0}h2{page-break-after:avoid}}</style></head><body>'
+   +RPT_CSS
    +'<button onclick="print()">인쇄 / PDF 저장</button>'
    +'<div class=hd><div class=brand>동네살기지수 <b>NLI</b></div><div class=date>생성일 '+date+'</div></div>'
    +'<h1>'+esc(g.sido+' '+g.sgg)+' 생활여건 진단 리포트</h1>'
