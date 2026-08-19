@@ -45,6 +45,10 @@ async def _guard(request: Request, call_next):
                 tok, last = _buckets.get(ip, (config.RL_CAPACITY, now))
                 tok = min(config.RL_CAPACITY, tok + (now - last) * config.RL_REFILL) - 1
                 _buckets[ip] = (tok, now)
+                if len(_buckets) > 4096:   # 오래된 IP 버킷 정리(누수 방지)
+                    stale = config.RL_CAPACITY / max(config.RL_REFILL, 0.01) + 60
+                    for k in [k for k, (_, l) in _buckets.items() if now - l > stale]:
+                        _buckets.pop(k, None)
                 if tok < 0:
                     return JSONResponse({"error": "rate_limited", "message": "요청이 많습니다"},
                                         status_code=429, headers={"Retry-After": "1"})

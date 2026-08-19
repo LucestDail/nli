@@ -39,7 +39,7 @@ Thumbs.db
 *.xls
 *.geojson
 nli_points.json
-# 스크래핑 캐시 HTML (지도 앱 nli_map.html·index.html 은 커밋)
+# 스크래핑 캐시 HTML (지도 앱 nli_map.html·index.html·demo.html 은 커밋)
 current_page.html
 emergency_list.html
 localdata_home.html

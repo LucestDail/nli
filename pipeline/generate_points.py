@@ -25,9 +25,12 @@ def read(path, kind, lon, lat, nm, addrs, tel, cats):
     if kind == "xlsx":
         df = pd.read_excel(path, dtype=str)
     else:
+        df = None
         for enc in ("cp949", "utf-8-sig", "utf-8"):
             try: df = pd.read_csv(path, encoding=enc, dtype=str); break
-            except Exception: df = None
+            except Exception: continue
+        if df is None:
+            raise RuntimeError(f"CSV 읽기 실패(인코딩 cp949/utf-8): {path}")
     x = pd.to_numeric(df[lon], errors="coerce"); y = pd.to_numeric(df[lat], errors="coerce")
     def col(c): return df[c].fillna("") if c in df.columns else pd.Series([""] * len(df))
     names = col(nm)

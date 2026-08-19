@@ -1,6 +1,6 @@
 """
 국토부 아파트 매매 실거래가 수집 (상품가치 격상: '살기지수 × 가격')
-API: apis.data.go.kr/1613000/RTMSDataSvcAptTradeDev (data.go.kr, 국토부)
+API: apis.data.go.kr/1613000/RTMSDataSvcAptTrade (data.go.kr, 국토부)
 파라미터: serviceKey, LAWD_CD(법정동 시군구 5자리), DEAL_YMD(YYYYMM)
 
 ⚠️ 두 가지 선행 필요:
