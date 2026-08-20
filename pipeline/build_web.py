@@ -233,6 +233,7 @@ TEMPLATE = r'''<!DOCTYPE html>
  .diagdash{display:grid;grid-template-columns:1fr minmax(0,440px);gap:16px;align-items:stretch}
  .diagdash>.card{height:calc(100vh - 250px);min-height:380px;overflow:auto}
  @media(max-width:900px){.diagdash{grid-template-columns:1fr}.diagdash>.card{height:auto}.diagdash>.card:first-child{max-height:56vh}}
+ @media(max-width:560px){#diagTable .mhide{display:none}#diagTable td,#diagTable th{padding:7px 5px;font-size:12px}}
  /* 통계 모달 대시보드 그리드 — 카드 세로 고정높이 + 내부 스크롤(내용 부족해도 배경 카드는 채움, 넘치면 카드 안에서 스크롤) */
  .statgrid{display:flex;flex-wrap:wrap;gap:14px;margin-top:16px;align-items:stretch}
  .statgrid .sc{flex:1 1 320px;display:flex;flex-direction:column;background:#faf8f4;border:1px solid var(--line);border-radius:14px;padding:15px 16px;min-width:0}
@@ -1113,7 +1114,7 @@ function renderDiagDong(){
   _diagDong=sel?{p:sel,nat:nat,rank:rankOf.get(sel.adm_nm),total:all.length}:null;
   document.getElementById('diagCard').innerHTML=sel?diagDongCardHTML(sel,nat,rankOf.get(sel.adm_nm),all.length):'';
   var CAP=300,shown=list.slice(0,CAP);
-  var h='<tr><th>취약<br>순위</th><th>동</th><th>등급</th><th>종합</th><th style="text-align:left">최약 도메인</th><th>동일<br>유형%</th><th>사각</th></tr>';
+  var h='<tr><th>취약<br>순위</th><th>동</th><th>등급</th><th>종합</th><th style="text-align:left">최약 도메인</th><th class="mhide">동일<br>유형%</th><th class="mhide">사각</th></tr>';
   shown.forEach(function(p){var nv=nliW(p)||0,gr=gradeOf(p),wd=DKEYS.map(function(d){return [d,(p['score_'+d]||0)-nat[d]];}).sort(function(a,b){return a[1]-b[1];})[0],nb=bc(p),coh=p.nli_coh!=null?Math.max(1,Math.round(100-p.nli_coh)):null,sd=(p.full_nm||'').split(' ')[1]||'';
     h+='<tr onclick="pickDiagDong(\''+p.adm_nm+'\')" style="cursor:pointer'+(p.adm_nm===diagSel?';background:#e4f0e8;box-shadow:inset 3px 0 0 var(--ocean)':'')+'">'
       +'<td style="text-align:center;color:var(--mid)">'+rankOf.get(p.adm_nm)+'</td>'
@@ -1121,8 +1122,8 @@ function renderDiagDong(){
       +'<td style="text-align:center"><span style="color:'+GC[gr]+';font-weight:800">'+gr+'</span></td>'
       +'<td style="text-align:center"><b style="color:'+color(nv)+'">'+Math.round(nv)+'</b></td>'
       +'<td style="text-align:left"><span style="color:#b0603f">'+DOMINFO[wd[0]][0]+' '+SHORT[wd[0]]+'</span> <span class="muted">'+(wd[1]>=0?'+':'')+Math.round(wd[1])+'</span></td>'
-      +'<td style="text-align:center;color:var(--ocean)">'+(coh!=null?'상위 '+coh+'%':'—')+'</td>'
-      +'<td style="text-align:center;color:var(--terra);font-weight:700">'+(nb||'')+'</td></tr>';});
+      +'<td class="mhide" style="text-align:center;color:var(--ocean)">'+(coh!=null?'상위 '+coh+'%':'—')+'</td>'
+      +'<td class="mhide" style="text-align:center;color:var(--terra);font-weight:700">'+(nb||'')+'</td></tr>';});
   document.getElementById('diagTable').innerHTML=h+(list.length>CAP?'<tr><td colspan="7" class="muted" style="text-align:center;padding:8px">상위 '+CAP+'개 표시 · 검색으로 좁히세요 (전체 '+list.length.toLocaleString()+')</td></tr>':'');
 }
 function renderDiagSgg(){
@@ -1141,7 +1142,7 @@ function renderDiagSgg(){
   const sel=rows.find(r=>r.key===diagSel);
   diagCur=sel?{g:sel,rank:rankOf.get(sel.key),total:rows.length}:null;
   document.getElementById('diagCard').innerHTML=sel?diagCardHTML(sel,rankOf,rows.length):'';
-  let h='<tr><th>비교</th><th>취약<br>순위</th><th>지자체</th><th>평균<br>지수</th><th>최약 도메인</th><th>사각<br>지대</th><th>동</th></tr>';
+  let h='<tr><th>비교</th><th>취약<br>순위</th><th>지자체</th><th>평균<br>지수</th><th>최약 도메인</th><th class="mhide">사각<br>지대</th><th class="mhide">동</th></tr>';
   list.forEach(r=>{const w=r.rankDom[0],inc=diagCmp.includes(r.key);
     h+=`<tr onclick="pickDiag('${r.key}')" style="cursor:pointer${r.key===diagSel?';background:#e4f0e8;box-shadow:inset 3px 0 0 var(--ocean)':''}">
       <td style="text-align:center"><span onclick="event.stopPropagation();toggleDiagCmp('${r.key}')" title="비교 담기" style="cursor:pointer;font-weight:800;font-size:15px;color:${inc?'#2f6b4e':'#c9beac'}">${inc?'✓':'⊕'}</span></td>
@@ -1149,8 +1150,8 @@ function renderDiagSgg(){
       <td style="text-align:left"><b>${r.sgg}</b> <span class="muted">${r.sido.replace('특별자치도','').replace('특별자치시','').replace('광역시','').replace('특별시','').replace('자치도','')}</span></td>
       <td style="text-align:center"><b style="color:${color(r.nli)}">${r.nli.toFixed(1)}</b></td>
       <td style="text-align:left"><span style="color:#b0603f">${DOMINFO[w[0]][0]} ${SHORT[w[0]]}</span> <span class="muted">${w[1]>=0?'+':''}${Math.round(w[1])}</span></td>
-      <td style="text-align:center;color:var(--terra);font-weight:700">${r.blindN||''}</td>
-      <td style="text-align:center;color:var(--mid)">${r.dongs.length}</td></tr>`;});
+      <td class="mhide" style="text-align:center;color:var(--terra);font-weight:700">${r.blindN||''}</td>
+      <td class="mhide" style="text-align:center;color:var(--mid)">${r.dongs.length}</td></tr>`;});
   document.getElementById('diagTable').innerHTML=h;
 }
 function pickDiag(k){diagSel=k;if(!diagCmp.includes(k))diagCmp.push(k);renderDiag();if(IS_TOUCH)showDiagCardModal();}
