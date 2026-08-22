@@ -71,6 +71,31 @@ NLI가 집값과 보이는 상관(+0.55)은 **거의 전부 인구밀도로 매�
 
 ---
 
+## 아키텍처 (파이프라인)
+
+설정 주도(`datasets.yml`) · 재현 가능 · 정적 웹과 온프렘 API가 같은 스냅샷을 공유.
+
+```mermaid
+flowchart TD
+  A["SGIS 경계·인구·주택<br/>(2025 2Q)"] --> GF["build_geoframe.py<br/>지오프레임 → nli.duckdb"]
+  B["공공 표준데이터 32지표<br/>(심평원·소상공인·표준데이터…)"] --> SE["score_engine.py<br/>공간결합·밀도·근접성 → NLI"]
+  GF --> SE
+  SE --> AN["analyze_nli.py<br/>사각지대·결핍 판정"]
+  SE --> EX["export_map_geojson.py<br/>mapshaper 위상단순화 + 점수·가격 조인"]
+  C["국토부 아파트 실거래가"] --> EX
+  SE --> GP["generate_points.py<br/>시설 포인트(지연로딩)"]
+  EX --> BW["build_web.py"]
+  GP --> BW
+  BW --> IDX["index.html<br/>자체완결 Leaflet SPA"]
+  EX --> SRV["server/<br/>FastAPI + DuckDB (온프렘·Docker)"]
+  GP --> SRV
+  VER["verify_pipeline.py · 48 assert"] -. 정합성 검증 .-> IDX
+```
+
+- **한 방향 파이프라인** — 각 단계가 파일로 존재(`ingest.py`가 오케스트레이션). 중간 산출물은 gitignore, 배포엔 `index.html` 하나면 됨.
+- **좌표계 주의** — 시설 좌표를 EPSG:5179로 재투영(축순서) 후 `ST_Contains`로 동 귀속(DuckDB spatial).
+- **위상 보존 단순화** — mapshaper로 인접 동 공유경계 보존(흰 틈 방지).
+
 ## 파이프라인 재현
 
 ```bash

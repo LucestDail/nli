@@ -52,7 +52,7 @@ TEMPLATE = r'''<!DOCTYPE html>
 <style>
  :root{--aside-w:262px;
   --ocean:#173a4b;--ocean2:#22586c;--sky:#3f8fa8;--sage:#6f9e86;--terra:#c47c52;--amber:#d4a056;
-  --bg:#f5f3ee;--card:#ffffff;--ink:#16232e;--mid:#5b6b77;--light:#9aa7b2;--line:#ece7dd;--line2:#f4f0e9;
+  --bg:#f5f3ee;--card:#ffffff;--ink:#16232e;--mid:#5b6b77;--light:#6b7783;--line:#ece7dd;--line2:#f4f0e9;
   --serif:"Cormorant Garamond","Noto Serif KR",Georgia,serif;
   --sans:"Pretendard Variable",Pretendard,-apple-system,BlinkMacSystemFont,"Noto Sans KR",sans-serif;
   --r:14px;--r-lg:18px;--r-xl:26px;
@@ -603,7 +603,7 @@ function attachAC(input,box,onPick){
 function renderInsight(){var so=document.getElementById('diagSort');if(so&&!so.options.length){setDiagUnit(diagUnit);}else{renderDiag();}}
 function showTab(v){
   if(!['map','find','insight'].includes(v))v='map';
-  document.querySelectorAll('nav .tab').forEach(x=>x.classList.toggle('on',x.dataset.v===v));
+  document.querySelectorAll('nav .tab').forEach(x=>{const _on=x.dataset.v===v;x.classList.toggle('on',_on);x.setAttribute('aria-selected',_on?'true':'false');});
   const show = v==='map'?['map'] : v==='find'?['rec'] : ['diag'];
   document.getElementById('app').style.overflowY=(v==='map'?'hidden':'auto');
   ['map','rec','diag'].forEach(x=>{const el=document.getElementById('v-'+x);if(!el)return;
@@ -616,7 +616,7 @@ function showTab(v){
   else if(v==='insight')renderInsight();
   writeHash();
 }
-document.querySelectorAll('nav .tab').forEach(t=>t.onclick=()=>showTab(t.dataset.v));
+document.querySelectorAll('nav .tab').forEach(t=>{t.onclick=()=>showTab(t.dataset.v);t.setAttribute('role','tab');t.tabIndex=0;t.setAttribute('aria-selected',t.classList.contains('on')?'true':'false');t.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();showTab(t.dataset.v);}});});var _tl=document.querySelector('nav .tabs');if(_tl)_tl.setAttribute('role','tablist');
 
 
 let map,layer,mMetric='NLI',mMode='basic',popmin=0;
@@ -698,7 +698,7 @@ function mLegend(){const el=document.getElementById('legend');
   el.innerHTML=[[80,'상위 80–100'],[65,'65–80'],[50,'50–65'],[35,'35–50'],[20,'20–35'],[0,'하위 0–20']].map(b=>`<div><i style="background:${color(b[0])}"></i>${b[1]}</div>`).join('');}
 function detailHTML(p){
   const isf=fav.includes(p.adm_nm);
-  let h=`<span class="close" onclick="document.getElementById('detail').style.display='none';curDetail=null;writeHash()">✕</span>
+  let h=`<span class="close" role="button" tabindex="0" aria-label="닫기" onclick="document.getElementById('detail').style.display='none';curDetail=null;writeHash()">✕</span>
    <h4>${fullN(p)} <span class="g" style="background:${GC[gradeOf(p)]}">${gradeOf(p)}</span> <span class="heart" onclick="toggleFav('${p.adm_nm}')">${isf?'♥':'♡'}</span></h4>
    <div class="muted">${p.cohort} · 인구 ${(p.pop_total||0).toLocaleString()}명${p.nli_coh!=null?` · 동일 유형 내 상위 ${Math.max(1,Math.round(100-p.nli_coh))}%`:''} ${isBlind(p,'NLI')?'· <span class="warn">사각지대</span>':''}</div>
    ${p.price!=null?`<div class="muted" style="margin-top:3px">아파트 실거래 <b style="color:var(--terra)">평당 ${Math.round(p.price*3.3058).toLocaleString()}만원</b> <span style="font-size:10.5px">(㎡당 ${p.price.toLocaleString()}만)</span></div>`:''}
@@ -1335,6 +1335,9 @@ attachAC(document.getElementById('recBase'),document.getElementById('recbac'),re
 document.getElementById('commuteKm').oninput=function(){commuteKm=+this.value;document.getElementById('commuteKmV').textContent=commuteKm+'km';renderRank();writeHash();};
 document.getElementById('commuteClear').onclick=()=>{commuteBase=null;document.getElementById('commuteInfo').innerHTML='';document.getElementById('commuteKmWrap').style.display='none';document.getElementById('rankBase').value='';renderRank();writeHash();};
 document.querySelectorAll('select').forEach(customSelect);
+function initA11y(){document.querySelectorAll('.rmclose,.close,.cmpclose,a[onclick]:not([href])').forEach(function(el){el.setAttribute('role','button');if(!el.hasAttribute('tabindex'))el.tabIndex=0;var cl=el.classList;if(cl.contains('rmclose')||cl.contains('close')||cl.contains('cmpclose')){if(!el.getAttribute('aria-label'))el.setAttribute('aria-label','닫기');}});}
+initA11y();
+document.addEventListener('keydown',function(e){if(e.key!=='Enter'&&e.key!==' ')return;var el=document.activeElement;if(el&&el.getAttribute&&el.getAttribute('role')==='button'&&el.tagName!=='BUTTON'){e.preventDefault();el.click();}});
 // 모바일 사이드바 접이식
 (function(){const as=document.querySelector('#v-map aside'),bd=document.getElementById('asideBackdrop'),tg=document.getElementById('asideToggle');
   const close=()=>{as.classList.remove('open');bd.classList.remove('on')};
