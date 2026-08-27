@@ -622,7 +622,8 @@ document.querySelectorAll('nav .tab').forEach(t=>{t.onclick=()=>showTab(t.datase
 let map,layer,mMetric='NLI',mMode='basic',popmin=0;
 function initMap(){
   map=L.map('map',{preferCanvas:true,zoomSnap:0.25}).setView([36.55,127.75],7.6);
-  L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',{attribution:'&copy; OpenStreetMap &copy; CARTO',maxZoom:19}).addTo(map);
+  L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}',{attribution:'&copy; Esri, HERE, Garmin',maxZoom:19,maxNativeZoom:16}).addTo(map);
+  L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Reference/MapServer/tile/{z}/{y}/{x}',{maxZoom:19,maxNativeZoom:16}).addTo(map);
   layer=L.geoJSON(DATA,{style:mStyle,onEachFeature:(f,l)=>{f.properties._l=l;if(!IS_TOUCH){l.bindTooltip(()=>dongTip(f.properties),{sticky:true,direction:'top',className:'dtip',opacity:1});l.on('mouseover',()=>{l.setStyle({weight:1.6,color:'#16232e'});hideMapHint();});l.on('mouseout',()=>{if(l!==selL)layer.resetStyle(l)});}l.on('click',()=>showDetail(f.properties))}}).addTo(map);
   const sel=document.getElementById('metric');for(const k in METRICS){if(k==='grade')continue;let o=document.createElement('option');o.value=k;o.text=METRICS[k];sel.add(o)}
   sel.onchange=e=>{mMetric=e.target.value;mRedraw()};
