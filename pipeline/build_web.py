@@ -245,6 +245,7 @@ TEMPLATE = r'''<!DOCTYPE html>
  .dstip{position:absolute;pointer-events:none;background:#132a36;color:#fff;font-size:11.5px;line-height:1.55;padding:7px 10px;border-radius:8px;z-index:5;white-space:nowrap;box-shadow:0 6px 18px rgba(0,0,0,.28)}
  .leaflet-tooltip.dtip{background:#fff;border:1px solid var(--line);border-radius:11px;box-shadow:0 8px 24px -8px rgba(20,30,40,.35);padding:9px 12px;font-size:12px;color:var(--ink);min-width:150px}
  .leaflet-tooltip.dtip::before{border-top-color:#fff}
+ .leaflet-tile-pane{filter:grayscale(1) brightness(1.06) contrast(.94)}
  .dtip .dtiphd{font-weight:800;font-size:13px;margin-bottom:4px;display:flex;align-items:center;gap:6px}
  .dtip .dtiprow{font-size:11.5px;color:var(--mid);line-height:1.5}
  .dtip .dtipft{font-size:10.5px;color:var(--light);margin-top:4px}
