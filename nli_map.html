@@ -218,6 +218,7 @@
  .dstip{position:absolute;pointer-events:none;background:#132a36;color:#fff;font-size:11.5px;line-height:1.55;padding:7px 10px;border-radius:8px;z-index:5;white-space:nowrap;box-shadow:0 6px 18px rgba(0,0,0,.28)}
  .leaflet-tooltip.dtip{background:#fff;border:1px solid var(--line);border-radius:11px;box-shadow:0 8px 24px -8px rgba(20,30,40,.35);padding:9px 12px;font-size:12px;color:var(--ink);min-width:150px}
  .leaflet-tooltip.dtip::before{border-top-color:#fff}
+ .leaflet-tile-pane{filter:grayscale(1) brightness(1.06) contrast(.94)}
  .dtip .dtiphd{font-weight:800;font-size:13px;margin-bottom:4px;display:flex;align-items:center;gap:6px}
  .dtip .dtiprow{font-size:11.5px;color:var(--mid);line-height:1.5}
  .dtip .dtipft{font-size:10.5px;color:var(--light);margin-top:4px}
@@ -358,6 +359,7 @@
      <ul>
        <li><b>상대평가(참고용)</b> — "충분한가"가 아니라 "전국에서 상위 몇 %"입니다.</li>
        <li><b>도시성 반영</b> — 밀도·근접 기반이라 인구밀도(도시성)와 상관이 높습니다. 절대순위보다 <b>동일 도농유형 내 비교</b>와 <b>지역 내부 사각지대 진단</b>을 권합니다.</li>
+       <li><b>가중은 선택(정량화)</b> — 균등가중은 관행적 선택이나, 대안 가중 13종·무작위 500회 검증에서 순위상관 0.98~1.00·등급변동 중앙 9%로 등급은 <b>가중에 강건</b>합니다. 다만 밀도 상관은 <b>모든 가중에서 0.86~0.90</b>으로 재가중해도 벗어나지 못해, 위의 동일유형 비교로 대응합니다.</li>
        <li><b>개수 ≠ 용량</b> — 대형·소형 시설을 개수로 셉니다(병상·정원 미반영).</li>
        <li><b>공급측 관점</b> — 시설 존재·근접을 보며, 품질·이용·수요는 별도입니다.</li>
        <li><b>복지·돌봄</b>은 지오코딩 약 96% 커버(일부 결측 하향 편향 가능).</li>
@@ -595,7 +597,7 @@ document.querySelectorAll('nav .tab').forEach(t=>{t.onclick=()=>showTab(t.datase
 let map,layer,mMetric='NLI',mMode='basic',popmin=0;
 function initMap(){
   map=L.map('map',{preferCanvas:true,zoomSnap:0.25}).setView([36.55,127.75],7.6);
-  L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',{attribution:'&copy; OpenStreetMap &copy; CARTO',maxZoom:19}).addTo(map);
+  L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'&copy; OpenStreetMap contributors',maxZoom:19}).addTo(map);
   layer=L.geoJSON(DATA,{style:mStyle,onEachFeature:(f,l)=>{f.properties._l=l;if(!IS_TOUCH){l.bindTooltip(()=>dongTip(f.properties),{sticky:true,direction:'top',className:'dtip',opacity:1});l.on('mouseover',()=>{l.setStyle({weight:1.6,color:'#16232e'});hideMapHint();});l.on('mouseout',()=>{if(l!==selL)layer.resetStyle(l)});}l.on('click',()=>showDetail(f.properties))}}).addTo(map);
   const sel=document.getElementById('metric');for(const k in METRICS){if(k==='grade')continue;let o=document.createElement('option');o.value=k;o.text=METRICS[k];sel.add(o)}
   sel.onchange=e=>{mMetric=e.target.value;mRedraw()};
